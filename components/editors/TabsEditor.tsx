@@ -46,7 +46,7 @@ export default function TabsEditor({ state, dispatch }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-lp-main uppercase tracking-wider">Tabs</h3>
+        <h3 className="text-sm font-medium text-lp-text">Tabs</h3>
         <FieldCheckbox label="Visa" checked={state.showTabs} onChange={(v) => set('showTabs', v)} />
       </div>
       {state.showTabs && (
