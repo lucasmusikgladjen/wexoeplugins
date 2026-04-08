@@ -15,7 +15,7 @@ export default function ContentEditor({ state, dispatch }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-lp-main uppercase tracking-wider">Innehåll</h3>
+        <h3 className="text-sm font-medium text-lp-text">Innehåll</h3>
         <FieldCheckbox
           label="Visa"
           checked={state.showContent}
