@@ -17,12 +17,58 @@ interface Props {
 
 export default function EditorPanel({ state, dispatch, activeSection, onSectionClick }: Props) {
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const scrollDetectedRef = useRef(false);
+  const isProgrammaticScroll = useRef(false);
+  const activeSectionRef = useRef(activeSection);
+  activeSectionRef.current = activeSection;
 
+  // Auto-scroll editor to active section (skip when triggered by scroll detection)
   useEffect(() => {
+    if (scrollDetectedRef.current) {
+      scrollDetectedRef.current = false;
+      return;
+    }
     if (activeSection && sectionRefs.current[activeSection]) {
+      isProgrammaticScroll.current = true;
       sectionRefs.current[activeSection]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      setTimeout(() => { isProgrammaticScroll.current = false; }, 500);
     }
   }, [activeSection]);
+
+  // Detect which section is visible when user scrolls the editor
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      if (isProgrammaticScroll.current) return;
+
+      const sectionIds: SectionId[] = ['hero', 'content', 'sidebar', 'tabs', 'contact'];
+      const containerTop = container.getBoundingClientRect().top;
+      let closestSection: SectionId | null = null;
+      let closestDistance = Infinity;
+
+      for (const id of sectionIds) {
+        const el = sectionRefs.current[id];
+        if (el) {
+          const distance = Math.abs(el.getBoundingClientRect().top - containerTop);
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestSection = id;
+          }
+        }
+      }
+
+      if (closestSection && closestSection !== activeSectionRef.current) {
+        scrollDetectedRef.current = true;
+        onSectionClick(closestSection);
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [onSectionClick]);
 
   const sections: { id: SectionId; label: string }[] = [
     { id: 'hero', label: 'Hero' },
@@ -52,7 +98,7 @@ export default function EditorPanel({ state, dispatch, activeSection, onSectionC
       </div>
 
       {/* Editor sections */}
-      <div className="flex-1 overflow-y-auto editor-panel p-4 space-y-6">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto editor-panel p-4 space-y-6">
         <div
           ref={(el) => { sectionRefs.current.hero = el; }}
           className={`p-3 rounded-lg cursor-pointer transition-colors ${activeSection === 'hero' ? 'bg-blue-50 ring-1 ring-lp-main/20' : 'hover:bg-gray-50'}`}
