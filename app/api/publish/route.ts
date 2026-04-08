@@ -1,162 +1,181 @@
 import { NextResponse } from 'next/server';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { PageState } from '@/lib/types';
+import { createRecord, createRecords, TABLE_IDS } from '@/lib/airtable';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 
-// ── Build the prompt that tells Claude what to create in Airtable ─────
-function buildPublishPrompt(state: PageState): string {
-  const tabsJson = state.tabs.map((tab, i) => ({
-    index: i + 1,
-    name: tab.name,
-    type: tab.type,
-    ...(tab.type === 'textimage' && {
-      tiH2: tab.tiH2,
-      tiText: tab.tiText,
-      tiBenefits: tab.tiBenefits,
-      tiImage: tab.tiImage,
-      tiInverted: tab.tiInverted,
-    }),
-    ...(tab.type === 'fullmedia' && { fmUrl: tab.fmUrl }),
-    ...(tab.type === 'faq' && {
-      faqContent: tab.faqItems
-        .filter(f => f.question || f.answer)
-        .map(f => `Q: ${f.question}\nA: ${f.answer}`)
-        .join('\n\n'),
-    }),
-    ...(tab.type === 'calameo' && {
-      calTitle1: tab.calTitle1, calUrl1: tab.calUrl1,
-      calTitle2: tab.calTitle2, calUrl2: tab.calUrl2,
-      calTitle3: tab.calTitle3, calUrl3: tab.calUrl3,
-    }),
-    ...(tab.type === 'downloads' && { downloads: tab.downloads }),
-    ...(tab.type === 'compare' && {
-      compareTitle: tab.compareTitle,
-      compareColA: tab.compareColA,
-      compareColB: tab.compareColB,
-      compareRows: tab.compareRows
-        .filter(r => r.label || r.valueA || r.valueB)
-        .map(r => `${r.label} | ${r.valueA} | ${r.valueB}`)
-        .join('\n'),
-    }),
-    ...(tab.type === 'steps' && {
-      stepsTitle: tab.stepsTitle,
-      stepsRows: tab.stepsItems
-        .filter(s => s.title || s.description)
-        .map(s => `${s.title} | ${s.description}`)
-        .join('\n'),
-    }),
-  }));
+// ── Load Airtable schema once at module level ───────────────────────────
+const SCHEMA = readFileSync(
+  join(process.cwd(), 'lib', 'airtable-schema.md'),
+  'utf-8',
+);
 
-  return `Du ska skapa en landing page i Airtable. Följ instruktionerna exakt.
+// ── Build the user-data payload that Claude will transform ──────────────
+function buildDataPayload(state: PageState): string {
+  const tabsData = state.tabs.map((tab, i) => {
+    const base: Record<string, unknown> = {
+      index: i + 1,
+      name: tab.name,
+      type: tab.type,
+    };
 
-Base ID: appXoUcK68dQwASjF
-Landing Pages table ID: tbl8KDqGq0Ray1uqS
-LP Tabs table ID: tblvecOh3rAGmw3mw
-LP Downloads table ID: tblbLM827DzjWGjCR
+    switch (tab.type) {
+      case 'textimage':
+        Object.assign(base, {
+          tiH2: tab.tiH2,
+          tiText: tab.tiText,
+          tiBenefits: tab.tiBenefits,
+          tiImage: tab.tiImage,
+          tiInverted: tab.tiInverted,
+        });
+        break;
+      case 'fullmedia':
+        base.fmUrl = tab.fmUrl;
+        break;
+      case 'faq':
+        base.faqItems = tab.faqItems
+          .filter((f) => f.question || f.answer)
+          .map((f) => ({ q: f.question, a: f.answer }));
+        break;
+      case 'calameo':
+        Object.assign(base, {
+          calTitle1: tab.calTitle1, calUrl1: tab.calUrl1,
+          calTitle2: tab.calTitle2, calUrl2: tab.calUrl2,
+          calTitle3: tab.calTitle3, calUrl3: tab.calUrl3,
+        });
+        break;
+      case 'downloads':
+        base.downloads = tab.downloads
+          .filter((d) => d.name || d.fileUrl)
+          .map((d) => ({
+            name: d.name,
+            description: d.description,
+            fileUrl: d.fileUrl,
+            fileType: d.fileType,
+          }));
+        break;
+      case 'compare':
+        Object.assign(base, {
+          compareTitle: tab.compareTitle,
+          compareColA: tab.compareColA,
+          compareColB: tab.compareColB,
+          compareRows: tab.compareRows
+            .filter((r) => r.label || r.valueA || r.valueB)
+            .map((r) => ({ label: r.label, a: r.valueA, b: r.valueB })),
+        });
+        break;
+      case 'steps':
+        Object.assign(base, {
+          stepsTitle: tab.stepsTitle,
+          stepsItems: tab.stepsItems
+            .filter((s) => s.title || s.description)
+            .map((s) => ({ title: s.title, description: s.description })),
+        });
+        break;
+    }
 
-## Steg 1: Skapa Landing Page record
+    return base;
+  });
 
-Skapa EN record i Landing Pages-tabellen med följande data. Använd fältnamn (inte fält-ID). Utelämna fält som har tomt värde.
+  const data: Record<string, unknown> = {
+    slug: state.slug,
+    h1: state.h1,
+    heroDescription: state.heroDescription,
+    heroImage: state.heroImage,
+    heroCta1Text: state.heroCta1Text,
+    heroCta1Url: state.heroCta1Url,
+    heroCta2Text: state.heroCta2Text,
+    heroCta2Url: state.heroCta2Url,
+    contentH2: state.contentH2,
+    contentText: state.contentText,
+    contentBenefits: state.contentBenefits,
+    sidebarType: state.sidebarType,
+    contactName: state.contactName,
+    contactTitle: state.contactTitle,
+    contactEmail: state.contactEmail,
+    contactPhone: state.contactPhone,
+    contactImage: state.contactImage,
+    contactQuote: state.contactQuote,
+    colorMain: state.colorMain,
+    colorSecondary: state.colorSecondary,
+    showContent: state.showContent,
+    showSidebar: state.showSidebar,
+    showTabs: state.showTabs,
+    showContact: state.showContact,
+  };
 
-Landing Page data:
-- Name: "${state.slug}"
-- Slug: "${state.slug}"
-- H1: "${state.h1}"
-- Hero Description: "${state.heroDescription}"
-- Hero Image: "${state.heroImage}"
-- Hero CTA Text: "${state.heroCta1Text}"
-- Hero CTA URL: "${state.heroCta1Url}"
-- Hero CTA2 Text: "${state.heroCta2Text}"
-- Hero CTA2 URL: "${state.heroCta2Url}"
-- Content H2: "${state.contentH2}"
-- Content Text: ${JSON.stringify(state.contentText)}
-- Content Benefits: ${JSON.stringify(state.contentBenefits)}
-- Sidebar Type: "${state.sidebarType}"
-${state.sidebarType === 'case' ? `- Case Title: "${state.caseTitle}"
-- Case Description: "${state.caseDescription}"
-- Case Image: "${state.caseImage}"
-- Case Outcomes: ${JSON.stringify(state.caseOutcomes)}
-- Case CTA Text: "${state.caseCta}"
-- Case CTA URL: "${state.caseCtaUrl}"` : ''}
-${state.sidebarType === 'event' ? `- Event Type: "${state.eventType}"
-- Event Title: "${state.eventTitle}"
-- Event Description: "${state.eventDescription}"
-- Event Date: "${state.eventDate}"
-- Event Location: "${state.eventLocation}"
-- Event Webhook: "${state.eventWebhook}"` : ''}
-${state.sidebarType === 'leadmagnet' ? `- Magnet Title: "${state.magnetTitle}"
-- Magnet Format: "${state.magnetFormat}"
-- Magnet Description: "${state.magnetDescription}"
-- Magnet File URL: "${state.magnetFileUrl}"
-- Magnet Webhook: "${state.magnetWebhook}"` : ''}
-${state.sidebarType === 'calculator' ? `- Calc Title: "${state.calcTitle}"
-- Calc HTML: ${JSON.stringify(state.calcHtml)}` : ''}
-- Contact Name: "${state.contactName}"
-- Contact Title: "${state.contactTitle}"
-- Contact Email: "${state.contactEmail}"
-- Contact Phone: "${state.contactPhone}"
-- Contact Image: "${state.contactImage}"
-- Contact Quote: "${state.contactQuote}"
-- Color Main: "${state.colorMain}"
-- Color Secondary: "${state.colorSecondary}"
-- Show Content: ${state.showContent}
-- Show Sidebar: ${state.showSidebar}
-- Show Tabs: ${state.showTabs}
-- Show Contact: ${state.showContact}
+  // Include sidebar-specific fields
+  if (state.sidebarType === 'case') {
+    Object.assign(data, {
+      caseTitle: state.caseTitle,
+      caseDescription: state.caseDescription,
+      caseImage: state.caseImage,
+      caseOutcomes: state.caseOutcomes,
+      caseCta: state.caseCta,
+      caseCtaUrl: state.caseCtaUrl,
+    });
+  } else if (state.sidebarType === 'event') {
+    Object.assign(data, {
+      eventType: state.eventType,
+      eventTitle: state.eventTitle,
+      eventDescription: state.eventDescription,
+      eventDate: state.eventDate,
+      eventLocation: state.eventLocation,
+      eventWebhook: state.eventWebhook,
+    });
+  } else if (state.sidebarType === 'leadmagnet') {
+    Object.assign(data, {
+      magnetTitle: state.magnetTitle,
+      magnetFormat: state.magnetFormat,
+      magnetDescription: state.magnetDescription,
+      magnetFileUrl: state.magnetFileUrl,
+      magnetWebhook: state.magnetWebhook,
+    });
+  } else if (state.sidebarType === 'calculator') {
+    Object.assign(data, {
+      calcTitle: state.calcTitle,
+      calcHtml: state.calcHtml,
+    });
+  }
 
-## Steg 2: Skapa Tabs
+  if (tabsData.length > 0) {
+    data.tabs = tabsData;
+  }
 
-${state.tabs.length === 0 ? 'Inga tabs att skapa.' : `Skapa ${state.tabs.length} records i LP Tabs-tabellen. VARJE tab MÅSTE ha en linked record till Landing Page-recordet (fältet "Landing Page").
-
-Tabs data:
-${JSON.stringify(tabsJson, null, 2)}
-`}
-
-## Steg 3: Skapa Downloads
-
-${state.tabs.some(t => t.type === 'downloads' && t.downloads.length > 0) ?
-  `Skapa download-records i LP Downloads-tabellen, länkade till rätt tab via "LP Tab"-fältet.` :
-  'Inga downloads att skapa.'}
-
-## Formatregler (VIKTIGT)
-- Om benefits/outcomes ser ut som en paragraf eller kommaseparerad lista, splitta till en benefit per rad (\\n-separerad)
-- Om FAQ inte har Q:/A:-prefix, lägg till det
-- Om jämförelserader inte använder pipe-format (Label | Värde A | Värde B), konvertera dem
-- Om steg inte använder pipe-format (Rubrik | Beskrivning), konvertera dem
-- Utelämna helt tomma fält — skicka inte tomma strängar till Airtable
-- Boolean-fält (Show Content, Show Sidebar, etc.) ska ALLTID inkluderas
-- Tab "Order" ska vara 1-baserad index
-- Tab "Visa" ska alltid vara true
-- Download "Visa" ska alltid vara true
-
-## Output
-Svara med en sammanfattning av vad du skapade:
-- Landing Page record ID
-- Antal tabs skapade
-- Antal downloads skapade
-- Eventuella formateringskorrigeringar du gjorde`;
+  return JSON.stringify(data, null, 2);
 }
 
-// ── Main publish handler ──────────────────────────────────────────────
+// ── Expected JSON output shape from Claude ──────────────────────────────
+interface TransformResult {
+  landingPage: Record<string, unknown>;
+  tabs: Array<Record<string, unknown>>;
+  downloads: Array<{
+    tabIndex: number;
+    fields: Record<string, unknown>;
+  }>;
+}
+
+// ── Main publish handler ────────────────────────────────────────────────
 export async function POST(request: Request) {
   if (!ANTHROPIC_API_KEY) {
     return NextResponse.json(
-      { error: 'ANTHROPIC_API_KEY ej konfigurerad. Ställ in den i Vercel environment variables.' },
-      { status: 500 }
+      { error: 'ANTHROPIC_API_KEY ej konfigurerad.' },
+      { status: 500 },
     );
   }
   if (!AIRTABLE_API_KEY) {
     return NextResponse.json(
-      { error: 'AIRTABLE_API_KEY ej konfigurerad. Ställ in den i Vercel environment variables.' },
-      { status: 500 }
+      { error: 'AIRTABLE_API_KEY ej konfigurerad.' },
+      { status: 500 },
     );
   }
 
   try {
     const state: PageState = await request.json();
 
-    // Validation
     if (!state.slug?.trim()) {
       return NextResponse.json({ error: 'Slug är obligatoriskt' }, { status: 400 });
     }
@@ -164,85 +183,138 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'H1 (rubrik) är obligatoriskt' }, { status: 400 });
     }
 
-    const prompt = buildPublishPrompt(state);
+    const dataPayload = buildDataPayload(state);
 
-    // ── Call Claude with MCP connector (beta) to write to Airtable ──
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    // ── Step 1: Claude transforms data to Airtable-ready JSON ───────
+    const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'mcp-client-2025-11-20',
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 16384,
-        messages: [{ role: 'user', content: prompt }],
-        mcp_servers: [
+        max_tokens: 4096,
+        system: [
           {
-            type: 'url',
-            url: 'https://mcp.airtable.com/mcp',
-            name: 'airtable-mcp',
-            authorization_token: AIRTABLE_API_KEY,
+            type: 'text',
+            text: `Du är en datatransformerare. Du tar emot landing page-data i JSON-format och konverterar den till Airtable-redo JSON enligt schemat nedan.
+
+${SCHEMA}
+
+Svara med ENBART valid JSON (ingen markdown, ingen förklaring). Formatet:
+
+{
+  "landingPage": { <fältnamn>: <värde>, ... },
+  "tabs": [ { <fältnamn>: <värde>, ... }, ... ],
+  "downloads": [ { "tabIndex": <0-baserat index i tabs-arrayen>, "fields": { <fältnamn>: <värde>, ... } }, ... ]
+}
+
+Regler:
+- Använd exakta Airtable-fältnamn från schemat ovan
+- Utelämna fält med tomt värde (tomma strängar, null)
+- Inkludera ALLTID boolean-fält (Show Content, Show Sidebar, etc.)
+- Tabs: inkludera Name, Type, Order (1-baserat), Visa (alltid true), och typ-specifika fält
+- Tabs: inkludera INTE "Landing Page"-fältet — det läggs till av backend
+- Downloads: inkludera INTE "LP Tab"-fältet — det läggs till av backend
+- Downloads: inkludera Visa (alltid true)
+- Applicera formateringsreglerna (benefits-splitting, FAQ-format, pipe-format, etc.)`,
+            cache_control: { type: 'ephemeral' },
           },
         ],
-        tools: [
+        messages: [
           {
-            type: 'mcp_toolset',
-            mcp_server_name: 'airtable-mcp',
+            role: 'user',
+            content: `Transformera denna data till Airtable-format:\n\n${dataPayload}`,
           },
         ],
       }),
     });
 
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      const errMsg =
-        errData.error?.message || `Claude API error: ${response.status}`;
-      throw new Error(errMsg);
+    if (!claudeResponse.ok) {
+      const errData = await claudeResponse.json().catch(() => ({}));
+      throw new Error(
+        errData.error?.message || `Claude API error: ${claudeResponse.status}`,
+      );
     }
 
-    const data = await response.json();
+    const claudeData = await claudeResponse.json();
 
-    // ── Token usage tracking ─────────────────────────────────────────
-    // claude-sonnet-4-20250514 pricing (USD per 1M tokens)
-    const INPUT_PRICE_PER_M  = 3.00;
-    const OUTPUT_PRICE_PER_M = 15.00;
+    // ── Token tracking ──────────────────────────────────────────────
+    const INPUT_PRICE_PER_M = 3.0;
+    const OUTPUT_PRICE_PER_M = 15.0;
 
-    const usage = data.usage ?? {};
-    const inputTokens  = usage.input_tokens  ?? 0;
+    const usage = claudeData.usage ?? {};
+    const inputTokens = usage.input_tokens ?? 0;
     const outputTokens = usage.output_tokens ?? 0;
     const cacheWriteTokens = usage.cache_creation_input_tokens ?? 0;
-    const cacheReadTokens  = usage.cache_read_input_tokens     ?? 0;
-    const totalTokens  = inputTokens + outputTokens;
+    const cacheReadTokens = usage.cache_read_input_tokens ?? 0;
+    const totalTokens = inputTokens + outputTokens;
     const estimatedCostUsd =
-      (inputTokens  / 1_000_000) * INPUT_PRICE_PER_M +
+      (inputTokens / 1_000_000) * INPUT_PRICE_PER_M +
       (outputTokens / 1_000_000) * OUTPUT_PRICE_PER_M;
 
-    // Count MCP tool calls per step to explain the cost
-    const toolCallCounts: Record<string, number> = {};
-    let landingPageCalls = 0;
-    let tabCalls = 0;
-    let downloadCalls = 0;
-    let otherCalls = 0;
-    let totalToolCalls = 0;
-
-    if (data.content && Array.isArray(data.content)) {
-      for (const block of data.content) {
-        if (block.type === 'tool_use' && block.name) {
-          const name: string = block.name;
-          toolCallCounts[name] = (toolCallCounts[name] ?? 0) + 1;
-          totalToolCalls++;
-
-          // Heuristic: classify by table ID found in tool input
-          const inputStr = JSON.stringify(block.input ?? '');
-          if (inputStr.includes('tbl8KDqGq0Ray1uqS')) landingPageCalls++;
-          else if (inputStr.includes('tblvecOh3rAGmw3mw')) tabCalls++;
-          else if (inputStr.includes('tblbLM827DzjWGjCR')) downloadCalls++;
-          else otherCalls++;
-        }
+    // ── Parse Claude's JSON response ────────────────────────────────
+    let responseText = '';
+    if (claudeData.content && Array.isArray(claudeData.content)) {
+      for (const block of claudeData.content) {
+        if (block.type === 'text') responseText += block.text;
       }
+    }
+
+    // Strip markdown code fences if Claude added them
+    responseText = responseText
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/i, '')
+      .trim();
+
+    let transformed: TransformResult;
+    try {
+      transformed = JSON.parse(responseText);
+    } catch {
+      console.error('[publish] Claude returned invalid JSON:', responseText);
+      throw new Error('Claude returnerade ogiltig JSON. Försök igen.');
+    }
+
+    // ── Step 2: Create Landing Page via Airtable REST API ───────────
+    const lpRecord = await createRecord(
+      AIRTABLE_API_KEY,
+      TABLE_IDS.landingPages,
+      transformed.landingPage,
+    );
+
+    // ── Step 3: Create Tabs (linked to Landing Page) ────────────────
+    let tabRecords: Array<{ id: string; fields: Record<string, unknown> }> = [];
+    if (transformed.tabs && transformed.tabs.length > 0) {
+      const tabPayloads = transformed.tabs.map((tab) => ({
+        fields: {
+          ...tab,
+          'Landing Page': [lpRecord.id],
+        },
+      }));
+      tabRecords = await createRecords(
+        AIRTABLE_API_KEY,
+        TABLE_IDS.tabs,
+        tabPayloads,
+      );
+    }
+
+    // ── Step 4: Create Downloads (linked to Tabs) ───────────────────
+    let downloadCount = 0;
+    if (transformed.downloads && transformed.downloads.length > 0) {
+      const dlPayloads = transformed.downloads.map((dl) => ({
+        fields: {
+          ...dl.fields,
+          'LP Tab': [tabRecords[dl.tabIndex]?.id].filter(Boolean),
+        },
+      }));
+      const dlRecords = await createRecords(
+        AIRTABLE_API_KEY,
+        TABLE_IDS.downloads,
+        dlPayloads,
+      );
+      downloadCount = dlRecords.length;
     }
 
     const tokenUsage = {
@@ -252,66 +324,21 @@ export async function POST(request: Request) {
       cacheReadTokens,
       totalTokens,
       estimatedCostUsd: parseFloat(estimatedCostUsd.toFixed(4)),
-      toolCallBreakdown: {
-        landingPage: landingPageCalls,
-        tabs: tabCalls,
-        downloads: downloadCalls,
-        other: otherCalls,
-        total: totalToolCalls,
-      },
-      toolCallCounts,
     };
 
-    // Log to server console for easy debugging
     console.log('[publish] Token usage:', JSON.stringify(tokenUsage, null, 2));
-
-    // ── Extract record ID and counts from MCP tool results and text ──
-    let recordId: string | null = null;
-    let tabCount = 0;
-    let summaryText = '';
-
-    if (data.content && Array.isArray(data.content)) {
-      for (const block of data.content) {
-        // Look for record IDs in mcp_tool_result blocks
-        if (block.type === 'mcp_tool_result' && block.content) {
-          const contentStr = typeof block.content === 'string'
-            ? block.content
-            : JSON.stringify(block.content);
-
-          const recMatch = contentStr.match(/"id"\s*:\s*"(rec[A-Za-z0-9]+)"/g);
-          if (recMatch) {
-            if (!recordId) {
-              // First record = landing page
-              const idMatch = recMatch[0].match(/"(rec[A-Za-z0-9]+)"/);
-              if (idMatch) recordId = idMatch[1];
-            } else {
-              // Subsequent records = tabs
-              tabCount += recMatch.length;
-            }
-          }
-        }
-
-        // Also check text blocks for summary info
-        if (block.type === 'text' && typeof block.text === 'string') {
-          summaryText += block.text;
-          if (!recordId) {
-            const recMatch = block.text.match(/rec[A-Za-z0-9]{14,}/);
-            if (recMatch) recordId = recMatch[0];
-          }
-        }
-      }
-    }
 
     return NextResponse.json({
       success: true,
-      recordId,
+      recordId: lpRecord.id,
       slug: state.slug,
-      tabCount: tabCount || state.tabs.length,
-      summary: summaryText || undefined,
+      tabCount: tabRecords.length,
+      downloadCount,
       tokenUsage,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Okänt fel';
+    console.error('[publish] Error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

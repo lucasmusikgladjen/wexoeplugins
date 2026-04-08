@@ -17,13 +17,6 @@ interface TokenUsage {
   cacheReadTokens: number;
   totalTokens: number;
   estimatedCostUsd: number;
-  toolCallBreakdown: {
-    landingPage: number;
-    tabs: number;
-    downloads: number;
-    other: number;
-    total: number;
-  };
 }
 
 interface PublishResult {
@@ -49,7 +42,7 @@ export default function PublishDialog({ state, onClose }: Props) {
     setStep('Förbereder data...');
 
     try {
-      setStep('Skapar sida via Claude + Airtable MCP...');
+      setStep('Transformerar och publicerar...');
 
       const response = await fetch('/api/publish', {
         method: 'POST',
@@ -183,33 +176,6 @@ export default function PublishDialog({ state, onClose }: Props) {
                       <span className="font-mono font-semibold text-gray-800">
                         ${result.tokenUsage.estimatedCostUsd.toFixed(4)}
                       </span>
-                    </div>
-                  </div>
-                  <div className="bg-gray-50 px-3 py-2 border-t border-gray-200">
-                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Airtable-anrop per steg</p>
-                    <div className="space-y-1 text-xs text-gray-700">
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Steg 1 — Landing page</span>
-                        <span className="font-mono">{result.tokenUsage.toolCallBreakdown.landingPage} anrop</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Steg 2 — Tabs</span>
-                        <span className="font-mono">{result.tokenUsage.toolCallBreakdown.tabs} anrop</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Steg 3 — Downloads</span>
-                        <span className="font-mono">{result.tokenUsage.toolCallBreakdown.downloads} anrop</span>
-                      </div>
-                      {result.tokenUsage.toolCallBreakdown.other > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Övrigt (schema etc.)</span>
-                          <span className="font-mono">{result.tokenUsage.toolCallBreakdown.other} anrop</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between border-t border-gray-100 pt-1 font-medium">
-                        <span className="text-gray-600">Totalt antal anrop</span>
-                        <span className="font-mono">{result.tokenUsage.toolCallBreakdown.total}</span>
-                      </div>
                     </div>
                   </div>
                 </div>
