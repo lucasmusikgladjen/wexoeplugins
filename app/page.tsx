@@ -10,10 +10,16 @@ import PublishDialog from '@/components/PublishDialog';
 export default function BuilderPage() {
   const [state, dispatch] = useReducer(pageReducer, initialState);
   const [activeSection, setActiveSection] = useState<SectionId | null>('hero');
+  const [scrollTrigger, setScrollTrigger] = useState(0);
   const [showPublish, setShowPublish] = useState(false);
 
   const handleSectionClick = useCallback((section: SectionId) => {
     setActiveSection(section);
+  }, []);
+
+  const handleSectionFocus = useCallback((section: SectionId) => {
+    setActiveSection(section);
+    setScrollTrigger(prev => prev + 1);
   }, []);
 
   return (
@@ -92,6 +98,7 @@ export default function BuilderPage() {
             state={state}
             activeSection={activeSection}
             onSectionClick={handleSectionClick}
+            scrollTrigger={scrollTrigger}
           />
         </div>
 
@@ -102,6 +109,7 @@ export default function BuilderPage() {
             dispatch={dispatch}
             activeSection={activeSection}
             onSectionClick={handleSectionClick}
+            onSectionFocus={handleSectionFocus}
           />
         </div>
       </div>

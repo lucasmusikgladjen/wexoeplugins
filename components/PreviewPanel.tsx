@@ -11,9 +11,10 @@ interface Props {
   state: PageState;
   activeSection: SectionId | null;
   onSectionClick: (section: SectionId) => void;
+  scrollTrigger: number;
 }
 
-export default function PreviewPanel({ state, activeSection, onSectionClick }: Props) {
+export default function PreviewPanel({ state, activeSection, onSectionClick, scrollTrigger }: Props) {
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
@@ -21,7 +22,7 @@ export default function PreviewPanel({ state, activeSection, onSectionClick }: P
     if (target && sectionRefs.current[target]) {
       sectionRefs.current[target]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-  }, [activeSection]);
+  }, [activeSection, scrollTrigger]);
 
   return (
     <div className="h-full overflow-y-auto bg-gray-100 hide-scrollbar">

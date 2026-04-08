@@ -13,9 +13,10 @@ interface Props {
   dispatch: React.Dispatch<PageAction>;
   activeSection: SectionId | null;
   onSectionClick: (section: SectionId) => void;
+  onSectionFocus: (section: SectionId) => void;
 }
 
-export default function EditorPanel({ state, dispatch, activeSection, onSectionClick }: Props) {
+export default function EditorPanel({ state, dispatch, activeSection, onSectionClick, onSectionFocus }: Props) {
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const scrollDetectedRef = useRef(false);
@@ -45,6 +46,21 @@ export default function EditorPanel({ state, dispatch, activeSection, onSectionC
       if (isProgrammaticScroll.current) return;
 
       const sectionIds: SectionId[] = ['hero', 'content', 'sidebar', 'tabs', 'contact'];
+
+      // When near bottom, activate the last section
+      const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+      if (nearBottom) {
+        for (let i = sectionIds.length - 1; i >= 0; i--) {
+          if (sectionRefs.current[sectionIds[i]]) {
+            if (sectionIds[i] !== activeSectionRef.current) {
+              scrollDetectedRef.current = true;
+              onSectionClick(sectionIds[i]);
+            }
+            return;
+          }
+        }
+      }
+
       const containerTop = container.getBoundingClientRect().top;
       let closestSection: SectionId | null = null;
       let closestDistance = Infinity;
@@ -103,6 +119,7 @@ export default function EditorPanel({ state, dispatch, activeSection, onSectionC
           ref={(el) => { sectionRefs.current.hero = el; }}
           className={`p-3 rounded-lg cursor-pointer transition-colors ${activeSection === 'hero' ? 'bg-blue-50 ring-1 ring-lp-main/20' : 'hover:bg-gray-50'}`}
           onClick={() => onSectionClick('hero')}
+          onFocusCapture={() => onSectionFocus('hero')}
         >
           <HeroEditor state={state} dispatch={dispatch} />
         </div>
@@ -111,6 +128,7 @@ export default function EditorPanel({ state, dispatch, activeSection, onSectionC
           ref={(el) => { sectionRefs.current.content = el; }}
           className={`p-3 rounded-lg cursor-pointer transition-colors ${activeSection === 'content' ? 'bg-blue-50 ring-1 ring-lp-main/20' : 'hover:bg-gray-50'}`}
           onClick={() => onSectionClick('content')}
+          onFocusCapture={() => onSectionFocus('content')}
         >
           <ContentEditor state={state} dispatch={dispatch} />
         </div>
@@ -119,6 +137,7 @@ export default function EditorPanel({ state, dispatch, activeSection, onSectionC
           ref={(el) => { sectionRefs.current.sidebar = el; }}
           className={`p-3 rounded-lg cursor-pointer transition-colors ${activeSection === 'sidebar' ? 'bg-blue-50 ring-1 ring-lp-main/20' : 'hover:bg-gray-50'}`}
           onClick={() => onSectionClick('sidebar')}
+          onFocusCapture={() => onSectionFocus('sidebar')}
         >
           <SidebarEditor state={state} dispatch={dispatch} />
         </div>
@@ -127,6 +146,7 @@ export default function EditorPanel({ state, dispatch, activeSection, onSectionC
           ref={(el) => { sectionRefs.current.tabs = el; }}
           className={`p-3 rounded-lg cursor-pointer transition-colors ${activeSection === 'tabs' ? 'bg-blue-50 ring-1 ring-lp-main/20' : 'hover:bg-gray-50'}`}
           onClick={() => onSectionClick('tabs')}
+          onFocusCapture={() => onSectionFocus('tabs')}
         >
           <TabsEditor state={state} dispatch={dispatch} />
         </div>
@@ -135,6 +155,7 @@ export default function EditorPanel({ state, dispatch, activeSection, onSectionC
           ref={(el) => { sectionRefs.current.contact = el; }}
           className={`p-3 rounded-lg cursor-pointer transition-colors ${activeSection === 'contact' ? 'bg-blue-50 ring-1 ring-lp-main/20' : 'hover:bg-gray-50'}`}
           onClick={() => onSectionClick('contact')}
+          onFocusCapture={() => onSectionFocus('contact')}
         >
           <ContactEditor state={state} dispatch={dispatch} />
         </div>
