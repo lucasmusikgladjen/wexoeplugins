@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef, useEffect } from 'react';
 import { PageState, SectionId } from '@/lib/types';
 import HeroPreview from './preview/HeroPreview';
 import ContentPreview from './preview/ContentPreview';
@@ -13,8 +14,17 @@ interface Props {
 }
 
 export default function PreviewPanel({ state, activeSection, onSectionClick }: Props) {
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    const target = activeSection === 'sidebar' ? 'content' : activeSection;
+    if (target && sectionRefs.current[target]) {
+      sectionRefs.current[target]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [activeSection]);
+
   return (
-    <div className="h-full overflow-y-auto bg-gray-100">
+    <div className="h-full overflow-y-auto bg-gray-100 hide-scrollbar">
       <div className="max-w-[900px] mx-auto my-4 shadow-lg rounded-lg overflow-hidden bg-white">
         {/* Preview label */}
         <div className="bg-gray-50 border-b border-gray-200 px-4 py-1.5 flex items-center gap-2">
@@ -30,6 +40,7 @@ export default function PreviewPanel({ state, activeSection, onSectionClick }: P
 
         {/* Hero */}
         <div
+          ref={(el) => { sectionRefs.current.hero = el; }}
           className={`preview-section ${activeSection === 'hero' ? 'active' : ''}`}
           onClick={() => onSectionClick('hero')}
         >
@@ -39,6 +50,7 @@ export default function PreviewPanel({ state, activeSection, onSectionClick }: P
         {/* Content + Sidebar */}
         {(state.showContent || (state.showSidebar && state.sidebarType)) && (
           <div
+            ref={(el) => { sectionRefs.current.content = el; }}
             className={`preview-section ${activeSection === 'content' ? 'active' : ''}`}
             onClick={() => onSectionClick('content')}
           >
@@ -53,6 +65,7 @@ export default function PreviewPanel({ state, activeSection, onSectionClick }: P
         {/* Tabs */}
         {state.showTabs && state.tabs.length > 0 && (
           <div
+            ref={(el) => { sectionRefs.current.tabs = el; }}
             className={`preview-section ${activeSection === 'tabs' ? 'active' : ''}`}
             onClick={() => onSectionClick('tabs')}
           >
@@ -63,6 +76,7 @@ export default function PreviewPanel({ state, activeSection, onSectionClick }: P
         {/* Contact */}
         {state.showContact && (
           <div
+            ref={(el) => { sectionRefs.current.contact = el; }}
             className={`preview-section ${activeSection === 'contact' ? 'active' : ''}`}
             onClick={() => onSectionClick('contact')}
           >
