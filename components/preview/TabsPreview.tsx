@@ -35,7 +35,7 @@ export default function TabsPreview({ state }: Props) {
       </div>
 
       {/* Tab content */}
-      <div className="bg-white rounded-lg p-6 shadow-sm">
+      <div className={`bg-white rounded-lg shadow-sm ${tab.type === 'compare' ? 'pt-6 px-6' : 'p-6'}`}>
         <TabContent tab={tab} state={state} />
       </div>
     </div>
@@ -183,7 +183,7 @@ function CompareTab({ tab, mainColor }: { tab: Tab; mainColor: string }) {
   const rows = tab.compareRows.filter(r => r.label || r.valueA || r.valueB);
 
   return (
-    <div className="-mb-6">
+    <div>
       {tab.compareTitle && <h3 className="text-lg font-bold mb-4" style={{ color: mainColor }}>{tab.compareTitle}</h3>}
       {rows.length > 0 ? (
         <table className="w-full text-sm">
