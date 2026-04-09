@@ -113,7 +113,7 @@ export default function EditorPanel({ state, dispatch, activeSection, onSectionC
       </div>
 
       {/* Editor sections */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto editor-panel p-4 space-y-6">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto editor-panel p-4 space-y-10">
         <div
           ref={(el) => { sectionRefs.current.hero = el; }}
           className="cursor-pointer"

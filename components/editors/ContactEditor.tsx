@@ -15,7 +15,7 @@ export default function ContactEditor({ state, dispatch }: Props) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-[13px] text-gray-500">Kontaktperson</h3>
+        <h3 className="text-xl font-bold text-gray-900">Kontaktperson</h3>
         <FieldCheckbox label="Visa" checked={state.showContact} onChange={(v) => set('showContact', v)} />
       </div>
       {state.showContact && (
