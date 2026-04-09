@@ -9,24 +9,29 @@ import {
   NormalSection,
   LinkedProduct,
   LinkedSolution,
+  Division,
   emptyLinkedProduct,
   emptyLinkedSolution,
 } from '@/lib/product-area-types';
-import { FieldInput, FieldTextarea, FieldCheckbox } from '@/components/editors/FieldInput';
+import { FieldInput, FieldTextarea, FieldCheckbox, FieldColor } from '@/components/editors/FieldInput';
 import Collapsible from './Collapsible';
 import ProductAreaPreviewPanel from './preview/ProductAreaPreviewPanel';
 
 interface Props {
   initialState: ProductAreaState;
+  divisions: Division[];
 }
 
-export default function ProductAreaBuilder({ initialState }: Props) {
+export default function ProductAreaBuilder({ initialState, divisions }: Props) {
   const router = useRouter();
   const [state, setState] = useState<ProductAreaState>(initialState);
   const [activeSection, setActiveSection] = useState<ProductAreaSectionId | null>('hero');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [justSaved, setJustSaved] = useState(false);
+
+  const isCreate = state.mode === 'create';
+  const canSave = !!state.slug.trim() && !!state.h1.trim();
 
   // ── Setters ─────────────────────────────────────────────────────────
   function setField<K extends keyof ProductAreaState>(key: K, value: ProductAreaState[K]) {
@@ -80,6 +85,7 @@ export default function ProductAreaBuilder({ initialState }: Props) {
 
   // ── Save ─────────────────────────────────────────────────────────────
   async function handleSave() {
+    if (!canSave) return;
     setSaving(true);
     setError(null);
     try {
@@ -91,8 +97,15 @@ export default function ProductAreaBuilder({ initialState }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Sparning misslyckades');
 
-      // Merge back any newly-created record IDs returned by the server so the
-      // next save PATCHes them in place instead of trying to create again.
+      // Create mode: we now have a real recordId — redirect to the edit URL
+      // so reloading the page works and subsequent saves hit the update path.
+      if (data.mode === 'create' && data.recordId) {
+        router.replace(`/editor/product-area/${data.recordId}`);
+        return;
+      }
+
+      // Update mode: merge back any newly-created record IDs returned by the
+      // server so the next save PATCHes them in place instead of creating again.
       if (data.newProductIds || data.newSolutionIds) {
         setState((s) => ({
           ...s,
@@ -137,21 +150,26 @@ export default function ProductAreaBuilder({ initialState }: Props) {
             placeholder="min-sida"
             className="w-44 px-2 py-1 text-sm border border-gray-200 rounded-md focus:border-gray-400 focus:outline-none"
           />
-          <span className="text-[10px] uppercase tracking-wider text-gray-300 ml-2">Produktsida</span>
+          <span className="text-[10px] uppercase tracking-wider text-gray-300 ml-2">
+            {isCreate ? 'Ny produktsida' : 'Produktsida'}
+          </span>
         </div>
 
         <div className="flex-1" />
 
         {error && <span className="text-xs text-red-500 truncate max-w-xs">{error}</span>}
         {justSaved && !error && <span className="text-xs text-gray-400">Sparat ✓</span>}
+        {!canSave && !error && (
+          <span className="text-xs text-gray-300">Slug + H1 krävs</span>
+        )}
 
         <button
           onClick={handleSave}
-          disabled={saving}
-          className="px-4 py-1.5 rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          disabled={saving || !canSave}
+          className="px-4 py-1.5 rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
           style={{ background: '#11325D' }}
         >
-          {saving ? 'Sparar…' : 'Spara'}
+          {saving ? (isCreate ? 'Skapar…' : 'Sparar…') : isCreate ? 'Skapa' : 'Spara'}
         </button>
       </header>
 
@@ -171,7 +189,7 @@ export default function ProductAreaBuilder({ initialState }: Props) {
             <Collapsible title="Hero" meta={state.heroH2 || state.h1 || 'tom'} defaultOpen>
               <div className="space-y-3">
                 <FieldInput label="H1 (topbanner)" value={state.h1} onChange={(v) => setField('h1', v)} placeholder="Sidans huvudrubrik" />
-                <FieldInput label="Top BG (hex)" value={state.topBg} onChange={(v) => setField('topBg', v)} placeholder="#11325D" />
+                <FieldColor label="Top BG" value={state.topBg} onChange={(v) => setField('topBg', v)} defaultColor="#11325D" />
 
                 <div className="h-px bg-gray-100 my-4" />
 
@@ -186,8 +204,8 @@ export default function ProductAreaBuilder({ initialState }: Props) {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <FieldInput label="Hero BG (hex)" value={state.heroBg} onChange={(v) => setField('heroBg', v)} placeholder="#FFFFFF" />
-                  <FieldInput label="Hero Accent (hex)" value={state.heroAccent} onChange={(v) => setField('heroAccent', v)} placeholder="#F28C28" />
+                  <FieldColor label="Hero BG" value={state.heroBg} onChange={(v) => setField('heroBg', v)} defaultColor="#FFFFFF" />
+                  <FieldColor label="Hero Accent" value={state.heroAccent} onChange={(v) => setField('heroAccent', v)} defaultColor="#F28C28" />
                 </div>
               </div>
             </Collapsible>
@@ -217,7 +235,7 @@ export default function ProductAreaBuilder({ initialState }: Props) {
                     <FieldTextarea label="Text" value={section.text} onChange={(v) => setNormal(n as 1 | 2 | 3 | 4, { text: v })} rows={4} hint="markdown" />
                     <FieldTextarea label="Bullets" value={section.bullets} onChange={(v) => setNormal(n as 1 | 2 | 3 | 4, { bullets: v })} rows={3} hint="en per rad" />
                     <FieldInput label="Image URL" value={section.image} onChange={(v) => setNormal(n as 1 | 2 | 3 | 4, { image: v })} />
-                    <FieldInput label="Background (hex)" value={section.bg} onChange={(v) => setNormal(n as 1 | 2 | 3 | 4, { bg: v })} placeholder="#FFFFFF" />
+                    <FieldColor label="Background" value={section.bg} onChange={(v) => setNormal(n as 1 | 2 | 3 | 4, { bg: v })} defaultColor={n % 2 === 0 ? '#F8F9FA' : '#FFFFFF'} />
                     <div className="flex items-center gap-6 pt-1">
                       <FieldCheckbox
                         label="Reversed (bild till vänster)"
@@ -241,10 +259,10 @@ export default function ProductAreaBuilder({ initialState }: Props) {
               meta={`${state.products.length} länkade`}
               defaultOpen={state.products.length > 0 && state.products.length <= 3}
             >
-              <div className="mb-3 grid grid-cols-3 gap-3">
-                <FieldInput label="Toggle BG" value={state.toggleBg} onChange={(v) => setField('toggleBg', v)} />
-                <FieldInput label="Header BG" value={state.toggleHeaderBg} onChange={(v) => setField('toggleHeaderBg', v)} />
-                <FieldInput label="Accent" value={state.toggleAccent} onChange={(v) => setField('toggleAccent', v)} />
+              <div className="mb-3 space-y-3">
+                <FieldColor label="Toggle BG" value={state.toggleBg} onChange={(v) => setField('toggleBg', v)} defaultColor="#11325D" />
+                <FieldColor label="Header BG" value={state.toggleHeaderBg} onChange={(v) => setField('toggleHeaderBg', v)} defaultColor="#FFFFFF" />
+                <FieldColor label="Accent" value={state.toggleAccent} onChange={(v) => setField('toggleAccent', v)} defaultColor="#F28C28" />
               </div>
 
               <div className="space-y-2">
@@ -308,10 +326,8 @@ export default function ProductAreaBuilder({ initialState }: Props) {
             <Collapsible title="Lösningar" meta={`${state.solutions.length} länkade`}>
               <div className="mb-3 space-y-3">
                 <FieldInput label="Solutions Title" value={state.solutionsTitle} onChange={(v) => setField('solutionsTitle', v)} placeholder="Lösningar & koncept" />
-                <div className="grid grid-cols-2 gap-3">
-                  <FieldInput label="Solutions BG" value={state.solutionsBg} onChange={(v) => setField('solutionsBg', v)} />
-                  <FieldInput label="Card BG" value={state.solutionsCardBg} onChange={(v) => setField('solutionsCardBg', v)} />
-                </div>
+                <FieldColor label="Solutions BG" value={state.solutionsBg} onChange={(v) => setField('solutionsBg', v)} defaultColor="#FFFFFF" />
+                <FieldColor label="Card BG" value={state.solutionsCardBg} onChange={(v) => setField('solutionsCardBg', v)} defaultColor="#FFFFFF" />
               </div>
 
               <div className="space-y-2">
@@ -358,7 +374,7 @@ export default function ProductAreaBuilder({ initialState }: Props) {
                 </div>
                 <FieldInput label="Bild-URL" value={state.contactImage} onChange={(v) => setField('contactImage', v)} />
                 <FieldTextarea label="Citat/text" value={state.contactText} onChange={(v) => setField('contactText', v)} rows={3} />
-                <FieldInput label="Background (hex)" value={state.contactBg} onChange={(v) => setField('contactBg', v)} placeholder="#11325D" />
+                <FieldColor label="Background" value={state.contactBg} onChange={(v) => setField('contactBg', v)} defaultColor="#11325D" />
               </div>
             </Collapsible>
 
@@ -367,22 +383,52 @@ export default function ProductAreaBuilder({ initialState }: Props) {
               <div className="space-y-3">
                 <FieldInput label="Docs Title" value={state.docsTitle} onChange={(v) => setField('docsTitle', v)} placeholder="Dokumentation" />
                 <FieldInput label="Docs Iframe URL" value={state.docsIframe} onChange={(v) => setField('docsIframe', v)} />
-                <FieldInput label="Background (hex)" value={state.docsBg} onChange={(v) => setField('docsBg', v)} />
+                <FieldColor label="Background" value={state.docsBg} onChange={(v) => setField('docsBg', v)} defaultColor="#FFFFFF" />
               </div>
             </Collapsible>
 
             {/* ── Settings ─────────────────────────────────────────── */}
-            <Collapsible title="Inställningar" meta={[state.sideMenu && 'sidomeny', state.request && 'prisförfrågan'].filter(Boolean).join(' · ') || 'standard'}>
-              <div className="space-y-3">
+            <Collapsible
+              title="Inställningar"
+              meta={
+                [state.sideMenu && 'sidomeny', state.request && 'prisförfrågan', divisionName(state.division, divisions)]
+                  .filter(Boolean)
+                  .join(' · ') || 'standard'
+              }
+              defaultOpen={isCreate}
+            >
+              <div className="space-y-4">
                 <FieldCheckbox label="Sidomeny-läge (istället för togglelista)" checked={state.sideMenu} onChange={(v) => setField('sideMenu', v)} />
                 <FieldCheckbox label="Prisförfrågan-formulär" checked={state.request} onChange={(v) => setField('request', v)} />
                 <FieldCheckbox label="Default open (första produkten öppen)" checked={state.defaultOpen} onChange={(v) => setField('defaultOpen', v)} />
+
+                <div className="pt-3 border-t border-gray-100">
+                  <label className="block">
+                    <span className="text-[11px] text-gray-400">Division</span>
+                    <select
+                      value={state.division[0] ?? ''}
+                      onChange={(e) =>
+                        setField('division', e.target.value ? [e.target.value] : [])
+                      }
+                      className="mt-0.5 block w-full rounded bg-gray-100/80 px-3 py-2 text-sm text-gray-700 focus:bg-white focus:ring-1 focus:ring-gray-200 focus:outline-none"
+                    >
+                      <option value="">— Ingen —</option>
+                      {divisions.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
               </div>
             </Collapsible>
 
-            <div className="mt-10 text-center">
-              <p className="text-[11px] text-gray-300 font-mono">rec: {state.recordId}</p>
-            </div>
+            {state.recordId && (
+              <div className="mt-10 text-center">
+                <p className="text-[11px] text-gray-300 font-mono">rec: {state.recordId}</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -400,4 +446,12 @@ function applyNewIds<T extends { clientId: string; recordId: string }>(
     if (item.recordId || !newIds[item.clientId]) return item;
     return { ...item, recordId: newIds[item.clientId] };
   });
+}
+
+/** Resolve a division record-ID array to a display label for the Settings
+ *  collapsible meta line. */
+function divisionName(ids: string[], divisions: Division[]): string {
+  if (ids.length === 0) return '';
+  const match = divisions.find((d) => d.id === ids[0]);
+  return match?.name ?? '';
 }

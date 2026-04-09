@@ -245,8 +245,9 @@ export default function PageManager() {
           onSelect={(type) => {
             if (type === 'landing') {
               router.push('/editor');
+            } else if (type === 'product') {
+              router.push('/editor/product-area');
             }
-            // Product pages can't be created in v1 — the button is disabled below.
           }}
         />
       )}
@@ -261,11 +262,9 @@ function AddPageDialog({
   onClose: () => void;
   onSelect: (type: PageType) => void;
 }) {
-  // "Create new" is LP-only in v1; PA and Contact are deliberately not enabled here
-  // even though PA has an editor.
   const creatableTypes: Array<{ id: PageType; label: string; description: string; enabled: boolean }> = [
     { id: 'landing', label: 'Landing page', description: 'Kampanj- och konverteringssida', enabled: true },
-    { id: 'product', label: 'Produktsida', description: 'Går bara att redigera befintliga i v1', enabled: false },
+    { id: 'product', label: 'Produktsida', description: 'Produktområdesida med produkter och lösningar', enabled: true },
     { id: 'contact', label: 'Kontaktsida', description: 'Kommer snart', enabled: false },
   ];
 

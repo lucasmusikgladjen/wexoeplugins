@@ -66,7 +66,8 @@ export interface LinkedSolution {
 }
 
 export interface ProductAreaState {
-  mode: 'edit';
+  /** `create` before the record has ever been persisted; `edit` once it has an Airtable id. */
+  mode: 'edit' | 'create';
   recordId: string;
   slug: string;
 
@@ -128,6 +129,16 @@ export interface ProductAreaState {
   // Linked records
   products: LinkedProduct[];
   solutions: LinkedSolution[];
+
+  /** Division linked-record IDs (multipleRecordLinks — currently the UI
+   *  only exposes a single pick, but the state mirrors Airtable shape). */
+  division: string[];
+}
+
+/** Lightweight projection of a Division record for the picker UI. */
+export interface Division {
+  id: string;
+  name: string;
 }
 
 export type ProductAreaSectionId =
@@ -195,5 +206,67 @@ export function emptyLinkedSolution(): LinkedSolution {
     ctaText: '',
     order: 0,
     visa: true,
+  };
+}
+
+/** Initial state for a brand-new Product Area. All colour fields start empty
+ *  so the PHP plugin's built-in defaults (navy / orange / alternating grey)
+ *  render through `colorOr()` in the preview. */
+export function emptyProductAreaState(): ProductAreaState {
+  return {
+    mode: 'create',
+    recordId: '',
+    slug: '',
+
+    h1: '',
+    topBg: '',
+
+    heroH2: '',
+    heroText: '',
+    heroCtaText: '',
+    heroCtaUrl: '',
+    heroBenefits: '',
+    heroImage: '',
+    heroBg: '',
+    heroAccent: '',
+
+    npiTitle: '',
+    npiDescription: '',
+    npiImage: '',
+    npiLink: '',
+
+    toggleBg: '',
+    toggleHeaderBg: '',
+    toggleAccent: '',
+
+    solutionsTitle: '',
+    solutionsBg: '',
+    solutionsCardBg: '',
+
+    normal1: emptyNormalSection(),
+    normal2: emptyNormalSection(),
+    normal3: emptyNormalSection(),
+    normal4: emptyNormalSection(),
+
+    contactName: '',
+    contactTitle: '',
+    contactEmail: '',
+    contactPhone: '',
+    contactImage: '',
+    contactText: '',
+    contactBg: '',
+
+    docsTitle: '',
+    docsIframe: '',
+    docsBg: '',
+
+    sideMenu: false,
+    request: false,
+    defaultOpen: false,
+
+    products: [],
+    solutions: [],
+
+    division: [],
   };
 }

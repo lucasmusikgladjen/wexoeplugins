@@ -1,6 +1,18 @@
 import { getRecord, listRecords, AirtableRecord } from './airtable';
 import { PA_TABLE_IDS, productAreaStateFromRecords } from './product-area-mapper';
-import { ProductAreaState } from './product-area-types';
+import { ProductAreaState, Division } from './product-area-types';
+
+/** Fetch all Divisions (tiny table — no pagination concerns). */
+export async function loadDivisions(apiKey: string): Promise<Division[]> {
+  const records = await listRecords(apiKey, PA_TABLE_IDS.divisions, {
+    fields: ['Name'],
+    sort: [{ field: 'Name', direction: 'asc' }],
+  });
+  return records.map((r) => ({
+    id: r.id,
+    name: (r.fields.Name as string) || '',
+  }));
+}
 
 /** Fetches a Product Area record plus all linked Products, Articles, and
  *  Solutions, and returns a fully-populated ProductAreaState. */

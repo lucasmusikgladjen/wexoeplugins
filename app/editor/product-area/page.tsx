@@ -1,17 +1,11 @@
-import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import ProductAreaBuilder from '@/components/product-area/ProductAreaBuilder';
-import { loadProductAreaState, loadDivisions } from '@/lib/product-area-loader';
-import { ProductAreaState, Division } from '@/lib/product-area-types';
+import { loadDivisions } from '@/lib/product-area-loader';
+import { emptyProductAreaState, Division } from '@/lib/product-area-types';
 
 export const dynamic = 'force-dynamic';
 
-interface Props {
-  params: Promise<{ recordId: string }>;
-}
-
-export default async function EditProductAreaPage({ params }: Props) {
-  const { recordId } = await params;
+export default async function CreateProductAreaPage() {
   const apiKey = process.env.AIRTABLE_API_KEY;
 
   if (!apiKey) {
@@ -23,28 +17,28 @@ export default async function EditProductAreaPage({ params }: Props) {
     );
   }
 
-  let state: ProductAreaState;
-  try {
-    state = await loadProductAreaState(apiKey, recordId);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Okänt fel';
-    if (/not found|404/i.test(message)) notFound();
-    return <ErrorScreen title="Kunde inte hämta sidan" message={message} />;
-  }
-
   let divisions: Division[] = [];
   try {
     divisions = await loadDivisions(apiKey);
   } catch (err) {
-    console.error('[edit-product-area] Could not load divisions:', err);
+    // Non-fatal — user can still create without picking a division.
+    console.error('[create-product-area] Could not load divisions:', err);
   }
 
-  return <ProductAreaBuilder initialState={state} divisions={divisions} />;
+  return (
+    <ProductAreaBuilder
+      initialState={emptyProductAreaState()}
+      divisions={divisions}
+    />
+  );
 }
 
 function ErrorScreen({ title, message }: { title: string; message: string }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white" style={{ fontFamily: 'var(--font-dm-sans)' }}>
+    <div
+      className="min-h-screen flex items-center justify-center bg-white"
+      style={{ fontFamily: 'var(--font-dm-sans)' }}
+    >
       <div className="max-w-md text-center px-8">
         <h1 className="text-xl font-medium text-gray-900 mb-2">{title}</h1>
         <p className="text-sm text-gray-500 mb-6">{message}</p>

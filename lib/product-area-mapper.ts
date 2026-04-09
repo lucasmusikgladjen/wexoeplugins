@@ -29,6 +29,7 @@ export const PA_TABLE_IDS = {
   products: 'tblHafyCEyh7S3Y64',
   articles: 'tblb87eWIjnW3ttOL',
   solutions: 'tblc98m9MJcpbWAVU',
+  divisions: 'tblKam1tUTlR13atl',
 } as const;
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -202,6 +203,8 @@ export function productAreaStateFromRecords(args: {
 
     products: orderedProducts,
     solutions: orderedSolutions,
+
+    division: ((f['Division'] as string[] | undefined) ?? []).slice(),
   };
 }
 
@@ -269,6 +272,8 @@ export function productAreaPatchFields(state: ProductAreaState): Fields {
     'Side menu': state.sideMenu,
     Request: state.request,
     'Default open': state.defaultOpen,
+
+    Division: state.division,
   };
 }
 
