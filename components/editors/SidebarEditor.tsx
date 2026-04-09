@@ -23,7 +23,7 @@ export default function SidebarEditor({ state, dispatch }: Props) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-[13px] text-gray-500">Sidebar</h3>
+        <h3 className="text-xl font-bold text-gray-900">Sidebar</h3>
         <FieldCheckbox
           label="Visa"
           checked={state.showSidebar}
