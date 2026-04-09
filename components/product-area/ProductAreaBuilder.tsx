@@ -1,11 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ProductAreaState, NormalSection, LinkedProduct, LinkedSolution } from '@/lib/product-area-types';
+import {
+  ProductAreaState,
+  ProductAreaSectionId,
+  NormalSection,
+  LinkedProduct,
+  LinkedSolution,
+  emptyLinkedProduct,
+  emptyLinkedSolution,
+} from '@/lib/product-area-types';
 import { FieldInput, FieldTextarea, FieldCheckbox } from '@/components/editors/FieldInput';
 import Collapsible from './Collapsible';
+import ProductAreaPreviewPanel from './preview/ProductAreaPreviewPanel';
 
 interface Props {
   initialState: ProductAreaState;
@@ -14,11 +23,12 @@ interface Props {
 export default function ProductAreaBuilder({ initialState }: Props) {
   const router = useRouter();
   const [state, setState] = useState<ProductAreaState>(initialState);
+  const [activeSection, setActiveSection] = useState<ProductAreaSectionId | null>('hero');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [justSaved, setJustSaved] = useState(false);
 
-  // ── Generic setters ─────────────────────────────────────────────────
+  // ── Setters ─────────────────────────────────────────────────────────
   function setField<K extends keyof ProductAreaState>(key: K, value: ProductAreaState[K]) {
     setState((s) => ({ ...s, [key]: value }));
     setJustSaved(false);
@@ -46,6 +56,28 @@ export default function ProductAreaBuilder({ initialState }: Props) {
     setJustSaved(false);
   }
 
+  function addProduct() {
+    const newProduct = emptyLinkedProduct();
+    newProduct.order = state.products.length + 1;
+    newProduct.name = 'Ny produkt';
+    setState((s) => ({ ...s, products: [...s.products, newProduct] }));
+    setActiveSection('products');
+    setJustSaved(false);
+  }
+
+  function addSolution() {
+    const newSolution = emptyLinkedSolution();
+    newSolution.order = state.solutions.length + 1;
+    newSolution.name = 'Ny lösning';
+    setState((s) => ({ ...s, solutions: [...s.solutions, newSolution] }));
+    setActiveSection('solutions');
+    setJustSaved(false);
+  }
+
+  const handleSectionClick = useCallback((id: ProductAreaSectionId) => {
+    setActiveSection(id);
+  }, []);
+
   // ── Save ─────────────────────────────────────────────────────────────
   async function handleSave() {
     setSaving(true);
@@ -58,8 +90,18 @@ export default function ProductAreaBuilder({ initialState }: Props) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Sparning misslyckades');
+
+      // Merge back any newly-created record IDs returned by the server so the
+      // next save PATCHes them in place instead of trying to create again.
+      if (data.newProductIds || data.newSolutionIds) {
+        setState((s) => ({
+          ...s,
+          products: applyNewIds(s.products, data.newProductIds ?? {}),
+          solutions: applyNewIds(s.solutions, data.newSolutionIds ?? {}),
+        }));
+      }
+
       setJustSaved(true);
-      // Refresh server data in the background so the next visit sees fresh values
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Okänt fel');
@@ -70,12 +112,13 @@ export default function ProductAreaBuilder({ initialState }: Props) {
 
   // ── Render ───────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'var(--font-dm-sans)' }}>
+    <div className="h-screen flex flex-col" style={{ fontFamily: 'var(--font-dm-sans)' }}>
       {/* Toolbar */}
-      <header className="sticky top-0 z-20 h-14 border-b border-gray-100 bg-white/90 backdrop-blur flex items-center px-6 gap-4">
+      <header className="h-14 border-b border-gray-100 bg-white flex items-center px-4 gap-4 flex-shrink-0 z-10">
         <Link
           href="/"
           className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors"
+          title="Tillbaka till sidor"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -85,26 +128,22 @@ export default function ProductAreaBuilder({ initialState }: Props) {
 
         <div className="h-5 w-px bg-gray-200 mx-1" />
 
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-2">
           <span className="text-xs text-gray-400">Slug:</span>
           <input
             type="text"
             value={state.slug}
             onChange={(e) => setField('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
             placeholder="min-sida"
-            className="w-48 px-2 py-1 text-sm border border-gray-200 rounded-md focus:border-gray-400 focus:outline-none"
+            className="w-44 px-2 py-1 text-sm border border-gray-200 rounded-md focus:border-gray-400 focus:outline-none"
           />
-          <span className="text-xs uppercase tracking-wider text-gray-300 ml-2">Produktsida</span>
+          <span className="text-[10px] uppercase tracking-wider text-gray-300 ml-2">Produktsida</span>
         </div>
 
         <div className="flex-1" />
 
-        {error && (
-          <span className="text-xs text-red-500 mr-2 truncate max-w-xs">{error}</span>
-        )}
-        {justSaved && !error && (
-          <span className="text-xs text-gray-400 mr-2">Sparat ✓</span>
-        )}
+        {error && <span className="text-xs text-red-500 truncate max-w-xs">{error}</span>}
+        {justSaved && !error && <span className="text-xs text-gray-400">Sparat ✓</span>}
 
         <button
           onClick={handleSave}
@@ -116,217 +155,249 @@ export default function ProductAreaBuilder({ initialState }: Props) {
         </button>
       </header>
 
-      {/* Form body */}
-      <div className="max-w-3xl mx-auto px-8 py-12">
-        <div className="mb-10">
-          <h1 className="text-2xl font-medium text-gray-900 tracking-tight">
-            {state.h1 || state.slug || 'Produktsida'}
-          </h1>
-          <p className="text-sm text-gray-400 mt-1">
-            Produktsida — {state.products.length} produkter, {state.solutions.length} lösningar
-          </p>
+      {/* 2-pane layout: preview + editor */}
+      <div className="flex-1 flex min-h-0">
+        <div className="flex-[65] min-w-0">
+          <ProductAreaPreviewPanel
+            state={state}
+            activeSection={activeSection}
+            onSectionClick={handleSectionClick}
+          />
         </div>
 
-        {/* ── Hero ──────────────────────────────────────────────────── */}
-        <Collapsible title="Hero" meta={state.heroH2 || state.h1 || 'tom'} defaultOpen>
-          <div className="space-y-3">
-            <FieldInput label="H1 (topbanner)" value={state.h1} onChange={(v) => setField('h1', v)} placeholder="Sidans huvudrubrik" />
-            <FieldInput label="Top BG (hex)" value={state.topBg} onChange={(v) => setField('topBg', v)} placeholder="#11325D" />
-
-            <div className="h-px bg-gray-100 my-4" />
-
-            <FieldInput label="Hero H2" value={state.heroH2} onChange={(v) => setField('heroH2', v)} />
-            <FieldTextarea label="Hero Text" value={state.heroText} onChange={(v) => setField('heroText', v)} rows={4} hint="markdown" />
-            <FieldTextarea label="Hero Benefits" value={state.heroBenefits} onChange={(v) => setField('heroBenefits', v)} rows={3} hint="en per rad" />
-            <FieldInput label="Hero Image URL" value={state.heroImage} onChange={(v) => setField('heroImage', v)} />
-
-            <div className="grid grid-cols-2 gap-3">
-              <FieldInput label="CTA Text" value={state.heroCtaText} onChange={(v) => setField('heroCtaText', v)} />
-              <FieldInput label="CTA URL" value={state.heroCtaUrl} onChange={(v) => setField('heroCtaUrl', v)} />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <FieldInput label="Hero BG (hex)" value={state.heroBg} onChange={(v) => setField('heroBg', v)} placeholder="#F5F6F8" />
-              <FieldInput label="Hero Accent (hex)" value={state.heroAccent} onChange={(v) => setField('heroAccent', v)} placeholder="#F28C28" />
-            </div>
-          </div>
-        </Collapsible>
-
-        {/* ── NPI Card ──────────────────────────────────────────────── */}
-        <Collapsible title="NPI-kort" meta={state.npiTitle || 'tom'}>
-          <div className="space-y-3">
-            <FieldInput label="NPI Title" value={state.npiTitle} onChange={(v) => setField('npiTitle', v)} placeholder="Visas bara om ifylld" />
-            <FieldTextarea label="NPI Description" value={state.npiDescription} onChange={(v) => setField('npiDescription', v)} rows={3} />
-            <FieldInput label="NPI Image URL" value={state.npiImage} onChange={(v) => setField('npiImage', v)} />
-            <FieldInput label="NPI Link URL" value={state.npiLink} onChange={(v) => setField('npiLink', v)} />
-          </div>
-        </Collapsible>
-
-        {/* ── Normal 1–4 ────────────────────────────────────────────── */}
-        {[1, 2, 3, 4].map((n) => {
-          const section = state[`normal${n}` as 'normal1' | 'normal2' | 'normal3' | 'normal4'];
-          const metaParts = [
-            section.h2 || 'tom',
-            section.upp ? 'upp' : null,
-            section.reversed ? 'reversed' : null,
-          ].filter(Boolean).join(' · ');
-          return (
-            <Collapsible key={n} title={`Innehåll ${n}`} meta={metaParts}>
+        <div className="flex-[35] min-w-[380px] max-w-[520px] border-l border-gray-100 bg-white overflow-y-auto editor-panel">
+          <div className="px-6 py-6">
+            {/* ── Hero ─────────────────────────────────────────────── */}
+            <Collapsible title="Hero" meta={state.heroH2 || state.h1 || 'tom'} defaultOpen>
               <div className="space-y-3">
-                <FieldInput label="H2" value={section.h2} onChange={(v) => setNormal(n as 1 | 2 | 3 | 4, { h2: v })} />
-                <FieldTextarea label="Text" value={section.text} onChange={(v) => setNormal(n as 1 | 2 | 3 | 4, { text: v })} rows={4} hint="markdown" />
-                <FieldTextarea label="Bullets" value={section.bullets} onChange={(v) => setNormal(n as 1 | 2 | 3 | 4, { bullets: v })} rows={3} hint="en per rad" />
-                <FieldInput label="Image URL" value={section.image} onChange={(v) => setNormal(n as 1 | 2 | 3 | 4, { image: v })} />
-                <FieldInput label="Background (hex)" value={section.bg} onChange={(v) => setNormal(n as 1 | 2 | 3 | 4, { bg: v })} placeholder="#FFFFFF" />
-                <div className="flex items-center gap-6 pt-1">
-                  <FieldCheckbox label="Reversed (bild till vänster)" checked={section.reversed} onChange={(v) => setNormal(n as 1 | 2 | 3 | 4, { reversed: v })} />
-                  {n === 1 && (
-                    <FieldCheckbox label="Rendera före produkter" checked={section.upp} onChange={(v) => setNormal(n as 1 | 2 | 3 | 4, { upp: v })} />
-                  )}
+                <FieldInput label="H1 (topbanner)" value={state.h1} onChange={(v) => setField('h1', v)} placeholder="Sidans huvudrubrik" />
+                <FieldInput label="Top BG (hex)" value={state.topBg} onChange={(v) => setField('topBg', v)} placeholder="#11325D" />
+
+                <div className="h-px bg-gray-100 my-4" />
+
+                <FieldInput label="Hero H2" value={state.heroH2} onChange={(v) => setField('heroH2', v)} />
+                <FieldTextarea label="Hero Text" value={state.heroText} onChange={(v) => setField('heroText', v)} rows={4} hint="markdown" />
+                <FieldTextarea label="Hero Benefits" value={state.heroBenefits} onChange={(v) => setField('heroBenefits', v)} rows={3} hint="en per rad" />
+                <FieldInput label="Hero Image URL" value={state.heroImage} onChange={(v) => setField('heroImage', v)} />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <FieldInput label="CTA Text" value={state.heroCtaText} onChange={(v) => setField('heroCtaText', v)} />
+                  <FieldInput label="CTA URL" value={state.heroCtaUrl} onChange={(v) => setField('heroCtaUrl', v)} />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <FieldInput label="Hero BG (hex)" value={state.heroBg} onChange={(v) => setField('heroBg', v)} placeholder="#FFFFFF" />
+                  <FieldInput label="Hero Accent (hex)" value={state.heroAccent} onChange={(v) => setField('heroAccent', v)} placeholder="#F28C28" />
                 </div>
               </div>
             </Collapsible>
-          );
-        })}
 
-        {/* ── Products (linked, editable) ───────────────────────────── */}
-        <Collapsible title="Produkter" meta={`${state.products.length} länkade`} defaultOpen={state.products.length > 0 && state.products.length <= 3}>
-          <div className="mb-3 grid grid-cols-3 gap-3">
-            <FieldInput label="Toggle BG (hex)" value={state.toggleBg} onChange={(v) => setField('toggleBg', v)} />
-            <FieldInput label="Header BG (hex)" value={state.toggleHeaderBg} onChange={(v) => setField('toggleHeaderBg', v)} />
-            <FieldInput label="Accent (hex)" value={state.toggleAccent} onChange={(v) => setField('toggleAccent', v)} />
-          </div>
+            {/* ── NPI ─────────────────────────────────────────────── */}
+            <Collapsible title="NPI-kort" meta={state.npiTitle || 'tom'}>
+              <div className="space-y-3">
+                <FieldInput label="NPI Title" value={state.npiTitle} onChange={(v) => setField('npiTitle', v)} placeholder="Visas bara om ifylld" />
+                <FieldTextarea label="NPI Description" value={state.npiDescription} onChange={(v) => setField('npiDescription', v)} rows={3} />
+                <FieldInput label="NPI Image URL" value={state.npiImage} onChange={(v) => setField('npiImage', v)} />
+                <FieldInput label="NPI Link URL" value={state.npiLink} onChange={(v) => setField('npiLink', v)} />
+              </div>
+            </Collapsible>
 
-          {state.products.length === 0 && (
-            <p className="text-xs text-gray-400 italic">Inga produkter länkade till den här sidan.</p>
-          )}
-
-          <div className="space-y-2">
-            {state.products.map((product, i) => (
-              <Collapsible
-                key={product.recordId}
-                title={product.name || '(namnlös produkt)'}
-                meta={`${product.articles.length} artiklar${product.horizontal ? ' · horisontell' : ''}${!product.visa ? ' · dold' : ''}`}
-              >
-                <div className="space-y-3">
-                  <FieldInput label="Namn" value={product.name} onChange={(v) => patchProduct(i, { name: v })} />
-                  <FieldInput label="Header side menu (fallback till namn)" value={product.headerSideMenu} onChange={(v) => patchProduct(i, { headerSideMenu: v })} />
-                  <FieldInput label="Ecosystem Description" value={product.ecosystemDescription} onChange={(v) => patchProduct(i, { ecosystemDescription: v })} />
-                  <FieldTextarea label="Description" value={product.description} onChange={(v) => patchProduct(i, { description: v })} rows={4} hint="markdown" />
-                  <FieldTextarea label="Bullets" value={product.bullets} onChange={(v) => patchProduct(i, { bullets: v })} rows={3} hint="en per rad" />
-                  <FieldInput label="Image URL" value={product.image} onChange={(v) => patchProduct(i, { image: v })} />
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <FieldInput label="Button 1 Text" value={product.button1Text} onChange={(v) => patchProduct(i, { button1Text: v })} />
-                    <FieldInput label="Button 1 URL" value={product.button1Url} onChange={(v) => patchProduct(i, { button1Url: v })} />
-                    <FieldInput label="Button 2 Text" value={product.button2Text} onChange={(v) => patchProduct(i, { button2Text: v })} />
-                    <FieldInput label="Button 2 URL" value={product.button2Url} onChange={(v) => patchProduct(i, { button2Url: v })} />
+            {/* ── Normal 1–4 ───────────────────────────────────────── */}
+            {[1, 2, 3, 4].map((n) => {
+              const section = state[`normal${n}` as 'normal1' | 'normal2' | 'normal3' | 'normal4'];
+              const metaParts = [
+                section.h2 || 'tom',
+                section.upp ? 'upp' : null,
+                section.reversed ? 'reversed' : null,
+              ].filter(Boolean).join(' · ');
+              return (
+                <Collapsible key={n} title={`Innehåll ${n}`} meta={metaParts}>
+                  <div className="space-y-3">
+                    <FieldInput label="H2" value={section.h2} onChange={(v) => setNormal(n as 1 | 2 | 3 | 4, { h2: v })} />
+                    <FieldTextarea label="Text" value={section.text} onChange={(v) => setNormal(n as 1 | 2 | 3 | 4, { text: v })} rows={4} hint="markdown" />
+                    <FieldTextarea label="Bullets" value={section.bullets} onChange={(v) => setNormal(n as 1 | 2 | 3 | 4, { bullets: v })} rows={3} hint="en per rad" />
+                    <FieldInput label="Image URL" value={section.image} onChange={(v) => setNormal(n as 1 | 2 | 3 | 4, { image: v })} />
+                    <FieldInput label="Background (hex)" value={section.bg} onChange={(v) => setNormal(n as 1 | 2 | 3 | 4, { bg: v })} placeholder="#FFFFFF" />
+                    <div className="flex items-center gap-6 pt-1">
+                      <FieldCheckbox
+                        label="Reversed (bild till vänster)"
+                        checked={section.reversed}
+                        onChange={(v) => setNormal(n as 1 | 2 | 3 | 4, { reversed: v })}
+                      />
+                      <FieldCheckbox
+                        label="Rendera före produkter"
+                        checked={section.upp}
+                        onChange={(v) => setNormal(n as 1 | 2 | 3 | 4, { upp: v })}
+                      />
+                    </div>
                   </div>
+                </Collapsible>
+              );
+            })}
 
-                  <div className="grid grid-cols-3 gap-3 items-center">
-                    <FieldInput label="Order" type="number" value={String(product.order)} onChange={(v) => patchProduct(i, { order: parseInt(v, 10) || 0 })} />
-                    <FieldCheckbox label="Visa" checked={product.visa} onChange={(v) => patchProduct(i, { visa: v })} />
-                    <FieldCheckbox label="Horizontal" checked={product.horizontal} onChange={(v) => patchProduct(i, { horizontal: v })} />
-                  </div>
+            {/* ── Products ─────────────────────────────────────────── */}
+            <Collapsible
+              title="Produkter"
+              meta={`${state.products.length} länkade`}
+              defaultOpen={state.products.length > 0 && state.products.length <= 3}
+            >
+              <div className="mb-3 grid grid-cols-3 gap-3">
+                <FieldInput label="Toggle BG" value={state.toggleBg} onChange={(v) => setField('toggleBg', v)} />
+                <FieldInput label="Header BG" value={state.toggleHeaderBg} onChange={(v) => setField('toggleHeaderBg', v)} />
+                <FieldInput label="Accent" value={state.toggleAccent} onChange={(v) => setField('toggleAccent', v)} />
+              </div>
 
-                  {/* Read-only articles */}
-                  {product.articles.length > 0 && (
-                    <div className="mt-4 pt-3 border-t border-gray-100">
-                      <p className="text-[11px] uppercase tracking-wider text-gray-300 mb-2">
-                        Artiklar ({product.articles.length}) — läsläge
-                      </p>
-                      <div className="space-y-1">
-                        {product.articles.map((a) => (
-                          <div key={a.recordId} className="flex items-baseline justify-between gap-3 text-xs">
-                            <span className="text-gray-700 truncate">{a.name || '(namnlös)'}</span>
-                            <span className="font-mono text-gray-300 whitespace-nowrap">{a.artikelnummer || '—'}</span>
+              <div className="space-y-2">
+                {state.products.map((product, i) => (
+                  <Collapsible
+                    key={product.clientId}
+                    title={product.name || '(namnlös produkt)'}
+                    meta={`${product.articles.length} artiklar${product.horizontal ? ' · horisontell' : ''}${!product.visa ? ' · dold' : ''}${!product.recordId ? ' · ny' : ''}`}
+                  >
+                    <div className="space-y-3">
+                      <FieldInput label="Namn" value={product.name} onChange={(v) => patchProduct(i, { name: v })} />
+                      <FieldInput label="Header side menu (fallback till namn)" value={product.headerSideMenu} onChange={(v) => patchProduct(i, { headerSideMenu: v })} />
+                      <FieldInput label="Ecosystem Description" value={product.ecosystemDescription} onChange={(v) => patchProduct(i, { ecosystemDescription: v })} />
+                      <FieldTextarea label="Description" value={product.description} onChange={(v) => patchProduct(i, { description: v })} rows={4} hint="markdown" />
+                      <FieldTextarea label="Bullets" value={product.bullets} onChange={(v) => patchProduct(i, { bullets: v })} rows={3} hint="en per rad" />
+                      <FieldInput label="Image URL" value={product.image} onChange={(v) => patchProduct(i, { image: v })} />
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <FieldInput label="Button 1 Text" value={product.button1Text} onChange={(v) => patchProduct(i, { button1Text: v })} />
+                        <FieldInput label="Button 1 URL" value={product.button1Url} onChange={(v) => patchProduct(i, { button1Url: v })} />
+                        <FieldInput label="Button 2 Text" value={product.button2Text} onChange={(v) => patchProduct(i, { button2Text: v })} />
+                        <FieldInput label="Button 2 URL" value={product.button2Url} onChange={(v) => patchProduct(i, { button2Url: v })} />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3 items-center">
+                        <FieldInput label="Order" type="number" value={String(product.order)} onChange={(v) => patchProduct(i, { order: parseInt(v, 10) || 0 })} />
+                        <FieldCheckbox label="Visa" checked={product.visa} onChange={(v) => patchProduct(i, { visa: v })} />
+                        <FieldCheckbox label="Horizontal" checked={product.horizontal} onChange={(v) => patchProduct(i, { horizontal: v })} />
+                      </div>
+
+                      {product.articles.length > 0 && (
+                        <div className="mt-4 pt-3 border-t border-gray-100">
+                          <p className="text-[11px] uppercase tracking-wider text-gray-300 mb-2">
+                            Artiklar ({product.articles.length}) — läsläge
+                          </p>
+                          <div className="space-y-1">
+                            {product.articles.map((a) => (
+                              <div key={a.recordId} className="flex items-baseline justify-between gap-3 text-xs">
+                                <span className="text-gray-700 truncate">{a.name || '(namnlös)'}</span>
+                                <span className="font-mono text-gray-300 whitespace-nowrap">{a.artikelnummer || '—'}</span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        </div>
+                      )}
+                    </div>
+                  </Collapsible>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={addProduct}
+                className="mt-3 w-full py-2 text-xs text-gray-400 hover:text-gray-700 border border-dashed border-gray-200 rounded-md hover:border-gray-300 transition-colors"
+              >
+                + Ny produkt
+              </button>
+            </Collapsible>
+
+            {/* ── Solutions ────────────────────────────────────────── */}
+            <Collapsible title="Lösningar" meta={`${state.solutions.length} länkade`}>
+              <div className="mb-3 space-y-3">
+                <FieldInput label="Solutions Title" value={state.solutionsTitle} onChange={(v) => setField('solutionsTitle', v)} placeholder="Lösningar & koncept" />
+                <div className="grid grid-cols-2 gap-3">
+                  <FieldInput label="Solutions BG" value={state.solutionsBg} onChange={(v) => setField('solutionsBg', v)} />
+                  <FieldInput label="Card BG" value={state.solutionsCardBg} onChange={(v) => setField('solutionsCardBg', v)} />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {state.solutions.map((sol, i) => (
+                  <Collapsible
+                    key={sol.clientId}
+                    title={sol.name || '(namnlös lösning)'}
+                    meta={[sol.category, !sol.recordId && 'ny'].filter(Boolean).join(' · ') || undefined}
+                  >
+                    <div className="space-y-3">
+                      <FieldInput label="Namn" value={sol.name} onChange={(v) => patchSolution(i, { name: v })} />
+                      <FieldInput label="Kategori" value={sol.category} onChange={(v) => patchSolution(i, { category: v })} />
+                      <FieldTextarea label="Beskrivning" value={sol.description} onChange={(v) => patchSolution(i, { description: v })} rows={3} />
+                      <FieldInput label="Image URL" value={sol.image} onChange={(v) => patchSolution(i, { image: v })} />
+                      <FieldInput label="Länk-URL" value={sol.url} onChange={(v) => patchSolution(i, { url: v })} />
+                      <FieldInput label="CTA Text" value={sol.ctaText} onChange={(v) => patchSolution(i, { ctaText: v })} placeholder="Läs mer" />
+
+                      <div className="grid grid-cols-2 gap-3 items-center">
+                        <FieldInput label="Order" type="number" value={String(sol.order)} onChange={(v) => patchSolution(i, { order: parseInt(v, 10) || 0 })} />
+                        <FieldCheckbox label="Visa" checked={sol.visa} onChange={(v) => patchSolution(i, { visa: v })} />
                       </div>
                     </div>
-                  )}
-                </div>
-              </Collapsible>
-            ))}
-          </div>
-        </Collapsible>
+                  </Collapsible>
+                ))}
+              </div>
 
-        {/* ── Solutions (linked, editable) ──────────────────────────── */}
-        <Collapsible title="Lösningar" meta={`${state.solutions.length} länkade`}>
-          <div className="mb-3 space-y-3">
-            <FieldInput label="Solutions Title" value={state.solutionsTitle} onChange={(v) => setField('solutionsTitle', v)} placeholder="Lösningar & Koncept" />
-            <div className="grid grid-cols-2 gap-3">
-              <FieldInput label="Solutions BG (hex)" value={state.solutionsBg} onChange={(v) => setField('solutionsBg', v)} />
-              <FieldInput label="Card BG (hex)" value={state.solutionsCardBg} onChange={(v) => setField('solutionsCardBg', v)} />
-            </div>
-          </div>
-
-          {state.solutions.length === 0 && (
-            <p className="text-xs text-gray-400 italic">Inga lösningar länkade till den här sidan.</p>
-          )}
-
-          <div className="space-y-2">
-            {state.solutions.map((sol, i) => (
-              <Collapsible
-                key={sol.recordId}
-                title={sol.name || '(namnlös lösning)'}
-                meta={sol.category || undefined}
+              <button
+                type="button"
+                onClick={addSolution}
+                className="mt-3 w-full py-2 text-xs text-gray-400 hover:text-gray-700 border border-dashed border-gray-200 rounded-md hover:border-gray-300 transition-colors"
               >
-                <div className="space-y-3">
-                  <FieldInput label="Namn" value={sol.name} onChange={(v) => patchSolution(i, { name: v })} />
-                  <FieldInput label="Kategori" value={sol.category} onChange={(v) => patchSolution(i, { category: v })} />
-                  <FieldTextarea label="Beskrivning" value={sol.description} onChange={(v) => patchSolution(i, { description: v })} rows={3} />
-                  <FieldInput label="Image URL" value={sol.image} onChange={(v) => patchSolution(i, { image: v })} />
-                  <FieldInput label="Länk-URL" value={sol.url} onChange={(v) => patchSolution(i, { url: v })} />
-                  <FieldInput label="CTA Text" value={sol.ctaText} onChange={(v) => patchSolution(i, { ctaText: v })} placeholder="Läs mer" />
+                + Ny lösning
+              </button>
+            </Collapsible>
 
-                  <div className="grid grid-cols-2 gap-3 items-center">
-                    <FieldInput label="Order" type="number" value={String(sol.order)} onChange={(v) => patchSolution(i, { order: parseInt(v, 10) || 0 })} />
-                    <FieldCheckbox label="Visa" checked={sol.visa} onChange={(v) => patchSolution(i, { visa: v })} />
-                  </div>
+            {/* ── Contact ──────────────────────────────────────────── */}
+            <Collapsible title="Kontaktperson" meta={state.contactName || 'tom'}>
+              <div className="space-y-3">
+                <FieldInput label="Namn" value={state.contactName} onChange={(v) => setField('contactName', v)} />
+                <FieldInput label="Titel" value={state.contactTitle} onChange={(v) => setField('contactTitle', v)} />
+                <div className="grid grid-cols-2 gap-3">
+                  <FieldInput label="Email" value={state.contactEmail} onChange={(v) => setField('contactEmail', v)} />
+                  <FieldInput label="Telefon" value={state.contactPhone} onChange={(v) => setField('contactPhone', v)} />
                 </div>
-              </Collapsible>
-            ))}
-          </div>
-        </Collapsible>
+                <FieldInput label="Bild-URL" value={state.contactImage} onChange={(v) => setField('contactImage', v)} />
+                <FieldTextarea label="Citat/text" value={state.contactText} onChange={(v) => setField('contactText', v)} rows={3} />
+                <FieldInput label="Background (hex)" value={state.contactBg} onChange={(v) => setField('contactBg', v)} placeholder="#11325D" />
+              </div>
+            </Collapsible>
 
-        {/* ── Contact ───────────────────────────────────────────────── */}
-        <Collapsible title="Kontaktperson" meta={state.contactName || 'tom'}>
-          <div className="space-y-3">
-            <FieldInput label="Namn" value={state.contactName} onChange={(v) => setField('contactName', v)} />
-            <FieldInput label="Titel" value={state.contactTitle} onChange={(v) => setField('contactTitle', v)} />
-            <div className="grid grid-cols-2 gap-3">
-              <FieldInput label="Email" value={state.contactEmail} onChange={(v) => setField('contactEmail', v)} />
-              <FieldInput label="Telefon" value={state.contactPhone} onChange={(v) => setField('contactPhone', v)} />
+            {/* ── Docs ─────────────────────────────────────────────── */}
+            <Collapsible title="Dokumentation" meta={state.docsIframe ? 'aktiv' : 'tom'}>
+              <div className="space-y-3">
+                <FieldInput label="Docs Title" value={state.docsTitle} onChange={(v) => setField('docsTitle', v)} placeholder="Dokumentation" />
+                <FieldInput label="Docs Iframe URL" value={state.docsIframe} onChange={(v) => setField('docsIframe', v)} />
+                <FieldInput label="Background (hex)" value={state.docsBg} onChange={(v) => setField('docsBg', v)} />
+              </div>
+            </Collapsible>
+
+            {/* ── Settings ─────────────────────────────────────────── */}
+            <Collapsible title="Inställningar" meta={[state.sideMenu && 'sidomeny', state.request && 'prisförfrågan'].filter(Boolean).join(' · ') || 'standard'}>
+              <div className="space-y-3">
+                <FieldCheckbox label="Sidomeny-läge (istället för togglelista)" checked={state.sideMenu} onChange={(v) => setField('sideMenu', v)} />
+                <FieldCheckbox label="Prisförfrågan-formulär" checked={state.request} onChange={(v) => setField('request', v)} />
+                <FieldCheckbox label="Default open (första produkten öppen)" checked={state.defaultOpen} onChange={(v) => setField('defaultOpen', v)} />
+              </div>
+            </Collapsible>
+
+            <div className="mt-10 text-center">
+              <p className="text-[11px] text-gray-300 font-mono">rec: {state.recordId}</p>
             </div>
-            <FieldInput label="Bild-URL" value={state.contactImage} onChange={(v) => setField('contactImage', v)} />
-            <FieldTextarea label="Citat/text" value={state.contactText} onChange={(v) => setField('contactText', v)} rows={3} />
-            <FieldInput label="Background (hex)" value={state.contactBg} onChange={(v) => setField('contactBg', v)} placeholder="#11325D" />
           </div>
-        </Collapsible>
-
-        {/* ── Docs ──────────────────────────────────────────────────── */}
-        <Collapsible title="Dokumentation" meta={state.docsIframe ? 'aktiv' : 'tom'}>
-          <div className="space-y-3">
-            <FieldInput label="Docs Title" value={state.docsTitle} onChange={(v) => setField('docsTitle', v)} placeholder="Dokumentation" />
-            <FieldInput label="Docs Iframe URL" value={state.docsIframe} onChange={(v) => setField('docsIframe', v)} />
-            <FieldInput label="Background (hex)" value={state.docsBg} onChange={(v) => setField('docsBg', v)} />
-          </div>
-        </Collapsible>
-
-        {/* ── Settings ──────────────────────────────────────────────── */}
-        <Collapsible title="Inställningar" meta={[state.sideMenu && 'sidomeny', state.request && 'prisförfrågan'].filter(Boolean).join(' · ') || 'standard'}>
-          <div className="space-y-3">
-            <FieldCheckbox label="Sidomeny-läge (istället för togglelista)" checked={state.sideMenu} onChange={(v) => setField('sideMenu', v)} />
-            <FieldCheckbox label="Prisförfrågan-formulär" checked={state.request} onChange={(v) => setField('request', v)} />
-            <FieldCheckbox label="Default open (första produkten öppen)" checked={state.defaultOpen} onChange={(v) => setField('defaultOpen', v)} />
-          </div>
-        </Collapsible>
-
-        <div className="mt-10 text-center">
-          <p className="text-[11px] text-gray-300 font-mono">rec: {state.recordId}</p>
         </div>
       </div>
     </div>
   );
+}
+
+// Merge newly-assigned Airtable record IDs into client-side state. The server
+// returns a map of clientId → new recordId after create.
+function applyNewIds<T extends { clientId: string; recordId: string }>(
+  items: T[],
+  newIds: Record<string, string>,
+): T[] {
+  return items.map((item) => {
+    if (item.recordId || !newIds[item.clientId]) return item;
+    return { ...item, recordId: newIds[item.clientId] };
+  });
 }

@@ -27,8 +27,11 @@ export interface LinkedArticleReadonly {
   varianter: string;
 }
 
-/** Editable projection of a linked Product record. */
+/** Editable projection of a linked Product record.
+ *  `recordId` is empty for products that have been added client-side but not
+ *  yet saved; `clientId` is a stable React key that survives saves. */
 export interface LinkedProduct {
+  clientId: string;
   recordId: string;
   name: string;
   headerSideMenu: string;
@@ -47,8 +50,10 @@ export interface LinkedProduct {
   articles: LinkedArticleReadonly[];
 }
 
-/** Editable projection of a linked Solutions & Concepts record. */
+/** Editable projection of a linked Solutions & Concepts record.
+ *  Same `clientId` convention as LinkedProduct. */
 export interface LinkedSolution {
+  clientId: string;
   recordId: string;
   name: string;
   image: string;
@@ -147,5 +152,48 @@ export function emptyNormalSection(): NormalSection {
     reversed: false,
     bg: '',
     upp: false,
+  };
+}
+
+let clientIdCounter = 0;
+/** Generate a stable, unique client-side ID (not an Airtable record ID). */
+export function generateClientId(prefix: string): string {
+  clientIdCounter += 1;
+  return `${prefix}-${Date.now()}-${clientIdCounter}`;
+}
+
+export function emptyLinkedProduct(): LinkedProduct {
+  return {
+    clientId: generateClientId('new-product'),
+    recordId: '',
+    name: '',
+    headerSideMenu: '',
+    description: '',
+    ecosystemDescription: '',
+    bullets: '',
+    image: '',
+    button1Text: '',
+    button1Url: '',
+    button2Text: '',
+    button2Url: '',
+    horizontal: false,
+    order: 0,
+    visa: true,
+    articles: [],
+  };
+}
+
+export function emptyLinkedSolution(): LinkedSolution {
+  return {
+    clientId: generateClientId('new-solution'),
+    recordId: '',
+    name: '',
+    image: '',
+    url: '',
+    description: '',
+    category: '',
+    ctaText: '',
+    order: 0,
+    visa: true,
   };
 }

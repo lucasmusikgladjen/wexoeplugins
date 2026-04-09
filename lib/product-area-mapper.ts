@@ -16,6 +16,7 @@ import {
   LinkedProduct,
   LinkedSolution,
   LinkedArticleReadonly,
+  generateClientId,
 } from './product-area-types';
 import { AirtableRecord } from './airtable';
 
@@ -82,6 +83,7 @@ function productFromRecord(
     .map(articleFromRecord);
 
   return {
+    clientId: generateClientId('loaded-product'),
     recordId: r.id,
     name: str(r.fields, 'Name'),
     headerSideMenu: str(r.fields, 'Header side menu'),
@@ -102,6 +104,7 @@ function productFromRecord(
 
 function solutionFromRecord(r: AirtableRecord): LinkedSolution {
   return {
+    clientId: generateClientId('loaded-solution'),
     recordId: r.id,
     name: str(r.fields, 'Name'),
     image: str(r.fields, 'Image'),

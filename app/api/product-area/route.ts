@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import {
   listRecords,
+  createRecord,
   updateRecord,
   updateRecords,
 } from '@/lib/airtable';
@@ -59,7 +60,7 @@ export async function GET(request: Request) {
   }
 }
 
-// ─── POST: save (update only — v1 doesn't create new PAs) ──────────────────
+// ─── POST: save (update + create new linked records) ──────────────────────
 
 export async function POST(request: Request) {
   if (!AIRTABLE_API_KEY) {
@@ -79,16 +80,53 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Slug är obligatoriskt' }, { status: 400 });
     }
 
-    // 1. PATCH the Product Area record itself
+    // ── 1. CREATE any new products (no recordId yet) ──────────────────
+    const newProductIds: Record<string, string> = {};
+    for (const product of state.products) {
+      if (product.recordId) continue;
+      const created = await createRecord(
+        AIRTABLE_API_KEY,
+        PA_TABLE_IDS.products,
+        productPatchFields(product),
+      );
+      newProductIds[product.clientId] = created.id;
+    }
+
+    // ── 2. CREATE any new solutions ───────────────────────────────────
+    const newSolutionIds: Record<string, string> = {};
+    for (const solution of state.solutions) {
+      if (solution.recordId) continue;
+      const created = await createRecord(
+        AIRTABLE_API_KEY,
+        PA_TABLE_IDS.solutions,
+        solutionPatchFields(solution),
+      );
+      newSolutionIds[solution.clientId] = created.id;
+    }
+
+    // ── 3. Build full ordered ID arrays (existing + newly created) ───
+    const productIdOrder = state.products.map(
+      (p) => p.recordId || newProductIds[p.clientId],
+    );
+    const solutionIdOrder = state.solutions.map(
+      (s) => s.recordId || newSolutionIds[s.clientId],
+    );
+
+    // ── 4. PATCH the Product Area record itself — including updated
+    //       Products / Solutions link arrays in case the ordering changed
+    //       or new records were added.
     await updateRecord(
       AIRTABLE_API_KEY,
       PA_TABLE_IDS.productAreas,
       state.recordId,
-      productAreaPatchFields(state),
+      {
+        ...productAreaPatchFields(state),
+        Products: productIdOrder,
+        Solutions: solutionIdOrder,
+      },
     );
 
-    // 2. PATCH linked Products (by recordId). Skip any entries missing a
-    //    recordId — v1 doesn't support creating new products.
+    // ── 5. PATCH existing linked products ─────────────────────────────
     const productUpdates = state.products
       .filter((p) => p.recordId)
       .map((p) => ({
@@ -99,7 +137,7 @@ export async function POST(request: Request) {
       await updateRecords(AIRTABLE_API_KEY, PA_TABLE_IDS.products, productUpdates);
     }
 
-    // 3. PATCH linked Solutions (by recordId)
+    // ── 6. PATCH existing linked solutions ────────────────────────────
     const solutionUpdates = state.solutions
       .filter((s) => s.recordId)
       .map((s) => ({
@@ -114,8 +152,12 @@ export async function POST(request: Request) {
       success: true,
       recordId: state.recordId,
       slug: state.slug,
+      productsCreated: Object.keys(newProductIds).length,
       productsUpdated: productUpdates.length,
+      solutionsCreated: Object.keys(newSolutionIds).length,
       solutionsUpdated: solutionUpdates.length,
+      newProductIds,
+      newSolutionIds,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Okänt fel';
