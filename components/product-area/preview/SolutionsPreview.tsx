@@ -138,6 +138,10 @@ export default function SolutionsPreview({ state, active, onSelect }: Props) {
                       margin: '0 0 16px 0',
                       padding: 0,
                       flex: 1,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 4,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
                     }}
                   >
                     {sol.description}

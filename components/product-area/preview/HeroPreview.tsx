@@ -33,16 +33,15 @@ export default function HeroPreview({ state, active, onSelect }: Props) {
         style={{
           padding: '60px 40px',
           display: 'flex',
-          gap: 50,
+          gap: 40,
           alignItems: 'flex-start',
           maxWidth: 1270,
           margin: '0 auto',
-          flexWrap: 'wrap',
         }}
       >
-        {/* Left column */}
+        {/* Left column — text + CTA (3/5 width) */}
         {hasLeft && (
-          <div style={{ flex: '1 1 58%', minWidth: 260 }}>
+          <div style={{ flex: '3 1 0%', minWidth: 0 }}>
             {state.heroH2.trim() && (
               <h2
                 style={{
@@ -106,9 +105,9 @@ function NpiCard({ state }: { state: ProductAreaState }) {
   return (
     <div
       style={{
-        flex: '1 1 34%',
-        minWidth: 250,
-        maxWidth: 380,
+        flex: '2 1 0%',
+        minWidth: 0,
+        maxWidth: 420,
         background: '#FFFFFF',
         borderRadius: 10,
         overflow: 'hidden',
@@ -194,13 +193,13 @@ function HeroBenefits({ state, textColor }: { state: ProductAreaState; textColor
   return (
     <div
       style={{
-        flex: '1 1 38%',
-        minWidth: 280,
+        flex: '2 1 0%',
+        minWidth: 0,
         background: '#F8F9FA',
         border: '1px solid #E8E8E8',
         borderRadius: 10,
         padding: '30px 28px',
-        alignSelf: 'center',
+        alignSelf: 'flex-start',
       }}
     >
       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
@@ -229,7 +228,7 @@ function HeroBenefits({ state, textColor }: { state: ProductAreaState; textColor
 
 function HeroImage({ state }: { state: ProductAreaState }) {
   return (
-    <div style={{ flex: '1 1 38%', minWidth: 280, alignSelf: 'center' }}>
+    <div style={{ flex: '2 1 0%', minWidth: 0, alignSelf: 'center' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={state.heroImage}
