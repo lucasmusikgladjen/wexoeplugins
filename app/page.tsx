@@ -59,6 +59,9 @@ export default function PageManager() {
   const [query, setQuery] = useState('');
   const [activeType, setActiveType] = useState<PageType | 'all'>('all');
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [copyTarget, setCopyTarget] = useState<PageRow | null>(null);
+  // Bumped after a successful copy to force the list effect to re-fetch.
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -98,7 +101,7 @@ export default function PageManager() {
       });
 
     return () => { cancelled = true; };
-  }, []);
+  }, [refreshKey]);
 
   const filteredPages = useMemo(() => {
     if (!pages) return [];
@@ -211,10 +214,10 @@ export default function PageManager() {
         {pages && filteredPages.length > 0 && (
           <ul className="space-y-px">
             {filteredPages.map((page) => (
-              <li key={`${page.type}-${page.id}`}>
+              <li key={`${page.type}-${page.id}`} className="relative group">
                 <Link
                   href={editPathFor(page)}
-                  className="block py-5 border-b border-gray-100 group transition-colors hover:bg-gray-50/50 -mx-4 px-4 rounded"
+                  className="block py-5 border-b border-gray-100 transition-colors hover:bg-gray-50/50 -mx-4 px-4 rounded"
                 >
                   <div className="flex items-baseline justify-between gap-6">
                     <div className="min-w-0 flex-1">
@@ -222,7 +225,7 @@ export default function PageManager() {
                         {page.name || page.slug || 'Ingen titel'}
                       </p>
                     </div>
-                    <div className="flex items-baseline gap-3 whitespace-nowrap">
+                    <div className="flex items-baseline gap-3 whitespace-nowrap pr-20">
                       <span className="text-[10px] uppercase tracking-wider text-gray-300">
                         {TYPE_LABEL[page.type]}
                       </span>
@@ -230,6 +233,20 @@ export default function PageManager() {
                     </div>
                   </div>
                 </Link>
+                {/* Hover-only Kopiera button — sits on top of the link so it
+                    intercepts the click without navigating away. */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setCopyTarget(page);
+                  }}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 px-3 py-1 text-xs text-gray-400 hover:text-gray-900 hover:bg-white border border-gray-200 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto transition-opacity"
+                  title="Kopiera sidan"
+                >
+                  Kopiera
+                </button>
               </li>
             ))}
           </ul>
@@ -245,6 +262,17 @@ export default function PageManager() {
             } else if (type === 'product') {
               router.push('/editor/product-area');
             }
+          }}
+        />
+      )}
+
+      {copyTarget && (
+        <CopyPageDialog
+          source={copyTarget}
+          onClose={() => setCopyTarget(null)}
+          onCopied={() => {
+            setCopyTarget(null);
+            setRefreshKey((k) => k + 1);
           }}
         />
       )}
@@ -317,6 +345,119 @@ function AddPageDialog({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function CopyPageDialog({
+  source,
+  onClose,
+  onCopied,
+}: {
+  source: PageRow;
+  onClose: () => void;
+  onCopied: () => void;
+}) {
+  const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const defaultName = `${source.name || 'Sida'} COPY`;
+  const defaultSlug = `${source.slug || 'page'}-copy`;
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      const apiType = source.type === 'product' ? 'product-area' : 'landing';
+      const res = await fetch('/api/copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: apiType,
+          sourceId: source.id,
+          name: name.trim() || undefined,
+          slug: slug.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Kopiering misslyckades');
+      onCopied();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Okänt fel');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <form
+        onSubmit={handleSubmit}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden"
+      >
+        <div className="px-6 pt-6 pb-2">
+          <h2 className="text-lg font-medium text-gray-900">Kopiera sida</h2>
+          <p className="text-sm text-gray-400 mt-0.5">
+            Dupliceras från <span className="text-gray-600">{source.name || source.slug}</span>
+          </p>
+        </div>
+
+        <div className="px-6 py-4 space-y-3">
+          <label className="block">
+            <span className="text-[11px] text-gray-400">Namn</span>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={defaultName}
+              autoFocus
+              className="mt-0.5 block w-full rounded bg-gray-100/80 px-3 py-2 text-sm text-gray-700 placeholder:text-gray-300 focus:bg-white focus:ring-1 focus:ring-gray-200 focus:outline-none"
+            />
+          </label>
+          <label className="block">
+            <span className="text-[11px] text-gray-400">Slug</span>
+            <input
+              type="text"
+              value={slug}
+              onChange={(e) =>
+                setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+              }
+              placeholder={defaultSlug}
+              className="mt-0.5 block w-full rounded bg-gray-100/80 px-3 py-2 text-sm text-gray-700 placeholder:text-gray-300 focus:bg-white focus:ring-1 focus:ring-gray-200 focus:outline-none font-mono"
+            />
+          </label>
+
+          {error && (
+            <p className="text-xs text-red-500">{error}</p>
+          )}
+        </div>
+
+        <div className="px-6 py-3 flex justify-end gap-3 border-t border-gray-100">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="text-sm text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-40"
+          >
+            Avbryt
+          </button>
+          <button
+            type="submit"
+            disabled={busy}
+            className="px-4 py-1.5 rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ background: '#11325D' }}
+          >
+            {busy ? 'Kopierar…' : 'Kopiera'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
