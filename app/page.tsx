@@ -214,45 +214,44 @@ export default function PageManager() {
         {pages && filteredPages.length > 0 && (
           <ul className="space-y-px">
             {filteredPages.map((page) => (
-              <li key={`${page.type}-${page.id}`} className="relative group">
-                <Link
-                  href={editPathFor(page)}
-                  className="block py-5 border-b border-gray-100 transition-colors hover:bg-gray-50/50 -mx-4 px-4 rounded"
-                >
-                  <div className="flex items-baseline gap-3">
-                    {/* Title + slug grouped together on the left */}
-                    <p className="text-base text-gray-900 truncate group-hover:text-lp-main transition-colors">
+              <li key={`${page.type}-${page.id}`} className="group">
+                <div className="flex items-baseline gap-3 py-5 border-b border-gray-100 -mx-4 px-4 rounded transition-colors hover:bg-gray-50/50">
+                  {/* Link wraps the title + slug only so the Kopiera button
+                      stays a sibling, avoiding invalid <button> inside <a>
+                      nesting. The Link takes flex-1 so the whole left side of
+                      the row (including the empty space after the slug) is
+                      still a clickable anchor. */}
+                  <Link
+                    href={editPathFor(page)}
+                    className="flex items-baseline gap-3 min-w-0 flex-1"
+                  >
+                    <p className="text-base text-gray-900 truncate min-w-0 group-hover:text-lp-main transition-colors">
                       {page.name || page.slug || 'Ingen titel'}
                     </p>
-                    <span className="text-xs text-gray-300 font-mono whitespace-nowrap">
+                    <span className="text-xs text-gray-300 font-mono whitespace-nowrap flex-none">
                       /{page.slug}
                     </span>
+                  </Link>
 
-                    {/* Spacer pushes the rest to the right */}
-                    <div className="flex-1" />
+                  {/* Kopiera button — sibling of the Link, hidden until the
+                      row is hovered (pointer-events-none so touch taps still
+                      fall through to the Link). */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCopyTarget(page);
+                    }}
+                    className="flex-none px-2.5 py-0.5 text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto transition-opacity"
+                    title="Kopiera sidan"
+                  >
+                    Kopiera
+                  </button>
 
-                    {/* Kopiera button fades in on row hover — sits inside the
-                        Link so the layout stays stable whether or not it's
-                        visible. Click handler stops propagation so activating
-                        the button doesn't navigate to the edit page. */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setCopyTarget(page);
-                      }}
-                      className="px-2.5 py-0.5 text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto transition-opacity"
-                      title="Kopiera sidan"
-                    >
-                      Kopiera
-                    </button>
-
-                    <span className="text-[10px] uppercase tracking-wider text-gray-300 whitespace-nowrap">
-                      {TYPE_LABEL[page.type]}
-                    </span>
-                  </div>
-                </Link>
+                  <span className="flex-none text-[10px] uppercase tracking-wider text-gray-300 whitespace-nowrap">
+                    {TYPE_LABEL[page.type]}
+                  </span>
+                </div>
               </li>
             ))}
           </ul>
