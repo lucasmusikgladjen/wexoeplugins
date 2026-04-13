@@ -8,6 +8,8 @@ import CollapsibleCard from './CollapsibleCard';
 interface Props {
   state: ProductAreaState;
   setNormal: (n: 1 | 2 | 3 | 4, patch: Partial<NormalSection>) => void;
+  visible: boolean;
+  onToggleVisible: (v: boolean) => void;
 }
 
 /** True when a block has *any* content filled in — used to decide whether to
@@ -16,7 +18,7 @@ function hasContent(n: NormalSection): boolean {
   return !!(n.h2.trim() || n.text.trim() || n.bullets.trim() || n.image.trim());
 }
 
-export default function ContentBlocksEditor({ state, setNormal }: Props) {
+export default function ContentBlocksEditor({ state, setNormal, visible, onToggleVisible }: Props) {
   const sections = [state.normal1, state.normal2, state.normal3, state.normal4];
 
   // Auto-reveal enough slots on mount to cover all filled blocks — even if
@@ -52,9 +54,12 @@ export default function ContentBlocksEditor({ state, setNormal }: Props) {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-xl font-bold text-gray-900">Innehåll</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-xl font-bold text-gray-900">Innehåll</h3>
+        <FieldCheckbox label="Visa" checked={visible} onChange={onToggleVisible} />
+      </div>
 
-      {Array.from({ length: visibleCount }).map((_, i) => {
+      {visible && Array.from({ length: visibleCount }).map((_, i) => {
         const n = (i + 1) as 1 | 2 | 3 | 4;
         const section = sections[i];
         return (
@@ -115,7 +120,7 @@ export default function ContentBlocksEditor({ state, setNormal }: Props) {
         );
       })}
 
-      {visibleCount < 4 && (
+      {visible && visibleCount < 4 && (
         <button
           type="button"
           onClick={addBlock}

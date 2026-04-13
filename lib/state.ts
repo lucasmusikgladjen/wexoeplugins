@@ -100,10 +100,10 @@ export const initialState: PageState = {
   contactImage: '',
   contactQuote: '',
 
-  showContent: true,
-  showSidebar: true,
-  showTabs: true,
-  showContact: true,
+  showContent: false,
+  showSidebar: false,
+  showTabs: false,
+  showContact: false,
 
   colorMain: '#11325D',
   colorSecondary: '#F28C28',

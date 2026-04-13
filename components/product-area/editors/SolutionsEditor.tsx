@@ -7,6 +7,8 @@ import CollapsibleCard from './CollapsibleCard';
 interface Props {
   state: ProductAreaState;
   setField: <K extends keyof ProductAreaState>(key: K, value: ProductAreaState[K]) => void;
+  visible: boolean;
+  onToggleVisible: (v: boolean) => void;
 }
 
 /** A solution is "filled" once it has a name — used for default-collapse. */
@@ -14,7 +16,7 @@ function hasContent(s: LinkedSolution): boolean {
   return !!s.name.trim();
 }
 
-export default function SolutionsEditor({ state, setField }: Props) {
+export default function SolutionsEditor({ state, setField, visible, onToggleVisible }: Props) {
   const patchSolution = (index: number, patch: Partial<LinkedSolution>) => {
     setField(
       'solutions',
@@ -47,7 +49,13 @@ export default function SolutionsEditor({ state, setField }: Props) {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-xl font-bold text-gray-900">Lösningar</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-xl font-bold text-gray-900">Lösningar</h3>
+        <FieldCheckbox label="Visa" checked={visible} onChange={onToggleVisible} />
+      </div>
+
+      {visible && (
+      <>
 
       <FieldInput
         label="Rubrik"
@@ -138,6 +146,8 @@ export default function SolutionsEditor({ state, setField }: Props) {
           defaultColor="#FFFFFF"
         />
       </div>
+      </>
+      )}
     </div>
   );
 }

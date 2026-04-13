@@ -8,6 +8,8 @@ import ButtonFieldset from '@/components/editors/ButtonFieldset';
 interface Props {
   state: ProductAreaState;
   setField: <K extends keyof ProductAreaState>(key: K, value: ProductAreaState[K]) => void;
+  visible: boolean;
+  onToggleVisible: (v: boolean) => void;
 }
 
 /** A product is considered "filled" once it has a name — used to decide
@@ -16,7 +18,7 @@ function hasContent(p: LinkedProduct): boolean {
   return !!p.name.trim();
 }
 
-export default function ProductsEditor({ state, setField }: Props) {
+export default function ProductsEditor({ state, setField, visible, onToggleVisible }: Props) {
   const patchProduct = (index: number, patch: Partial<LinkedProduct>) => {
     setField(
       'products',
@@ -49,8 +51,13 @@ export default function ProductsEditor({ state, setField }: Props) {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-xl font-bold text-gray-900">Produkter</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-xl font-bold text-gray-900">Produkter</h3>
+        <FieldCheckbox label="Visa" checked={visible} onChange={onToggleVisible} />
+      </div>
 
+      {visible && (
+      <>
       {state.products.map((product, i) => (
         <CollapsibleCard
           key={product.clientId}
@@ -191,6 +198,8 @@ export default function ProductsEditor({ state, setField }: Props) {
           defaultColor="#F28C28"
         />
       </div>
+      </>
+      )}
     </div>
   );
 }

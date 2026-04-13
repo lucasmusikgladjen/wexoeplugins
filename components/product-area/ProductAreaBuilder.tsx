@@ -40,6 +40,41 @@ export default function ProductAreaBuilder({ initialState, divisions }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [justSaved, setJustSaved] = useState(false);
 
+  // Client-only per-section visibility for the preview + editor bodies.
+  // Not persisted to Airtable — just a UX switch so a fresh page starts
+  // with only the Hero visible and everything else collapsed until the
+  // user explicitly enables it. For edit mode we default sections "on"
+  // if the loaded record already has content in them.
+  const [visibility, setVisibility] = useState<{
+    content: boolean;
+    products: boolean;
+    solutions: boolean;
+    contact: boolean;
+  }>(() => {
+    if (initialState.mode === 'create') {
+      return { content: false, products: false, solutions: false, contact: false };
+    }
+    const hasContent = [
+      initialState.normal1,
+      initialState.normal2,
+      initialState.normal3,
+      initialState.normal4,
+    ].some((n) => n.h2.trim() || n.text.trim());
+    return {
+      content: hasContent,
+      products: initialState.products.length > 0,
+      solutions: initialState.solutions.length > 0,
+      contact: !!initialState.contactName.trim(),
+    };
+  });
+
+  const setVisible = useCallback(
+    (key: keyof typeof visibility, value: boolean) => {
+      setVisibility((v) => ({ ...v, [key]: value }));
+    },
+    [],
+  );
+
   const isCreate = state.mode === 'create';
   const canSave = !!state.slug.trim() && !!state.h1.trim();
 
@@ -241,6 +276,7 @@ export default function ProductAreaBuilder({ initialState, divisions }: Props) {
             activeSection={activeSection}
             onSectionClick={handleSectionClick}
             scrollTrigger={scrollTrigger}
+            visibility={visibility}
           />
         </div>
 
@@ -287,7 +323,12 @@ export default function ProductAreaBuilder({ initialState, divisions }: Props) {
               onClick={() => handleSectionClick('content')}
               onFocusCapture={() => handleSectionFocus('content')}
             >
-              <ContentBlocksEditor state={state} setNormal={setNormal} />
+              <ContentBlocksEditor
+                state={state}
+                setNormal={setNormal}
+                visible={visibility.content}
+                onToggleVisible={(v) => setVisible('content', v)}
+              />
             </div>
 
             <div
@@ -298,7 +339,12 @@ export default function ProductAreaBuilder({ initialState, divisions }: Props) {
               onClick={() => handleSectionClick('products')}
               onFocusCapture={() => handleSectionFocus('products')}
             >
-              <ProductsEditor state={state} setField={setField} />
+              <ProductsEditor
+                state={state}
+                setField={setField}
+                visible={visibility.products}
+                onToggleVisible={(v) => setVisible('products', v)}
+              />
             </div>
 
             <div
@@ -309,7 +355,12 @@ export default function ProductAreaBuilder({ initialState, divisions }: Props) {
               onClick={() => handleSectionClick('solutions')}
               onFocusCapture={() => handleSectionFocus('solutions')}
             >
-              <SolutionsEditor state={state} setField={setField} />
+              <SolutionsEditor
+                state={state}
+                setField={setField}
+                visible={visibility.solutions}
+                onToggleVisible={(v) => setVisible('solutions', v)}
+              />
             </div>
 
             <div
@@ -320,7 +371,12 @@ export default function ProductAreaBuilder({ initialState, divisions }: Props) {
               onClick={() => handleSectionClick('contact')}
               onFocusCapture={() => handleSectionFocus('contact')}
             >
-              <ContactEditor state={state} setField={setField} />
+              <ContactEditor
+                state={state}
+                setField={setField}
+                visible={visibility.contact}
+                onToggleVisible={(v) => setVisible('contact', v)}
+              />
             </div>
 
             <div

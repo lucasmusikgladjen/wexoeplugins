@@ -9,6 +9,13 @@ import ProductsPreview from './ProductsPreview';
 import SolutionsPreview from './SolutionsPreview';
 import ContactPreview from './ContactPreview';
 
+interface Visibility {
+  content: boolean;
+  products: boolean;
+  solutions: boolean;
+  contact: boolean;
+}
+
 interface Props {
   state: ProductAreaState;
   activeSection: ProductAreaSectionId | null;
@@ -17,6 +24,9 @@ interface Props {
    *  preview to scroll so the active section lands in the centre of the
    *  visible area. Mirrors the Landing Page editor's behaviour. */
   scrollTrigger: number;
+  /** Client-only per-section visibility. Sections turned off are hidden
+   *  from the preview regardless of whether they have content. */
+  visibility: Visibility;
 }
 
 /**
@@ -38,6 +48,7 @@ export default function ProductAreaPreviewPanel({
   activeSection,
   onSectionClick,
   scrollTrigger,
+  visibility,
 }: Props) {
   const pageRef = useRef<HTMLDivElement>(null);
 
@@ -93,7 +104,7 @@ export default function ProductAreaPreviewPanel({
           <TopBannerPreview state={state} active={activeSection} onSelect={onSectionClick} />
           <HeroPreview state={state} active={activeSection} onSelect={onSectionClick} />
 
-          {early.map(({ n, section }) => (
+          {visibility.content && early.map(({ n, section }) => (
             <NormalSectionPreview
               key={`early-${n}`}
               n={n}
@@ -103,10 +114,14 @@ export default function ProductAreaPreviewPanel({
             />
           ))}
 
-          <ProductsPreview state={state} active={activeSection} onSelect={onSectionClick} />
-          <SolutionsPreview state={state} active={activeSection} onSelect={onSectionClick} />
+          {visibility.products && (
+            <ProductsPreview state={state} active={activeSection} onSelect={onSectionClick} />
+          )}
+          {visibility.solutions && (
+            <SolutionsPreview state={state} active={activeSection} onSelect={onSectionClick} />
+          )}
 
-          {late.map(({ n, section }) => (
+          {visibility.content && late.map(({ n, section }) => (
             <NormalSectionPreview
               key={`late-${n}`}
               n={n}
@@ -116,7 +131,9 @@ export default function ProductAreaPreviewPanel({
             />
           ))}
 
-          <ContactPreview state={state} active={activeSection} onSelect={onSectionClick} />
+          {visibility.contact && (
+            <ContactPreview state={state} active={activeSection} onSelect={onSectionClick} />
+          )}
         </div>
 
         {/* Empty-state hint overlay when the whole state is pristine. */}

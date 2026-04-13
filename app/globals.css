@@ -41,19 +41,13 @@ body {
   scrollbar-width: none;
 }
 
-/* Scrollbar styling for editor panel */
+/* Editor panel — scroll functionality without a visible scrollbar. */
+.editor-panel {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 .editor-panel::-webkit-scrollbar {
-  width: 6px;
-}
-.editor-panel::-webkit-scrollbar-track {
-  background: transparent;
-}
-.editor-panel::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
-}
-.editor-panel::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  display: none;
 }
 
 /* Preview section hover/active states */

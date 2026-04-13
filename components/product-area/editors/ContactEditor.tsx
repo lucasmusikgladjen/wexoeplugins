@@ -1,17 +1,25 @@
 'use client';
 
 import { ProductAreaState } from '@/lib/product-area-types';
-import { FieldInput, FieldTextarea, FieldColor } from '@/components/editors/FieldInput';
+import { FieldInput, FieldTextarea, FieldColor, FieldCheckbox } from '@/components/editors/FieldInput';
 
 interface Props {
   state: ProductAreaState;
   setField: <K extends keyof ProductAreaState>(key: K, value: ProductAreaState[K]) => void;
+  visible: boolean;
+  onToggleVisible: (v: boolean) => void;
 }
 
-export default function ContactEditor({ state, setField }: Props) {
+export default function ContactEditor({ state, setField, visible, onToggleVisible }: Props) {
   return (
     <div className="space-y-3">
-      <h3 className="text-xl font-bold text-gray-900">Kontaktperson</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-xl font-bold text-gray-900">Kontaktperson</h3>
+        <FieldCheckbox label="Visa" checked={visible} onChange={onToggleVisible} />
+      </div>
+
+      {visible && (
+      <>
 
       <FieldInput
         label="Namn"
@@ -59,6 +67,9 @@ export default function ContactEditor({ state, setField }: Props) {
         onChange={(v) => setField('contactBg', v)}
         defaultColor="#11325D"
       />
+
+      </>
+      )}
     </div>
   );
 }
