@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Wexoe Team Rack TEST
+ * Plugin Name: Wexoe Team Rack
  * Description: Visar teammedlemmar som CompactLogix I/O-moduler via Wexoe Core (testversion).
  * Version: 2.0.0-test
  * Author: Wexoe
@@ -20,7 +20,7 @@ class WexoeTeamRackTest {
     
     
     public function __construct() {
-        add_shortcode('wexoe_team_rack_test', array($this, 'render_shortcode'));
+        add_shortcode('wexoe_team_rack', array($this, 'render_shortcode'));
     }
     
     /**
@@ -200,7 +200,7 @@ class WexoeTeamRackTest {
                 return '<div style="background:#ffeeba;border:1px solid #856404;padding:15px;margin:20px 0;border-radius:4px;color:#856404;">
                     <strong>⚠️ Wexoe Team Rack:</strong> Inga teammedlemmar hittades.<br>
                     Kontrollera att det finns personer med Visa=TRUE i Airtable.<br>
-                    <small>Använd [wexoe_team_rack_test debug="true"] för mer info.</small>
+                    <small>Använd [wexoe_team_rack debug="true"] för mer info.</small>
                 </div>';
             }
             return '';

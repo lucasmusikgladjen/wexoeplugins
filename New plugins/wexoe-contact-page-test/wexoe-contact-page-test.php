@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Wexoe Contact Page TEST
+ * Plugin Name: Wexoe Contact Page
  * Description: Modern kontaktsida med dynamisk status och webhook-integration. Migrerad till Wexoe Core-infrastruktur (testversion).
  * Version: 2.0.0-test
  * Author: Wexoe
@@ -19,7 +19,7 @@ function wexoe_cp_test_core_ready() {
 class Wexoe_Contact_Page_Test {
     
     public function __construct() {
-        add_shortcode('wexoe_contact_test', array($this, 'render_shortcode'));
+        add_shortcode('wexoe_contact', array($this, 'render_shortcode'));
     }
     
     public function render_shortcode($atts) {

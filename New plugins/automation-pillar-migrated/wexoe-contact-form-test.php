@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Wexoe Contact Form TEST
+ * Plugin Name: Wexoe Contact Form
  * Description: Konverteringsoptimerat kontaktformulär för Wexoe (testversion).
  * Version: 1.4.0-test
  * Author: Wexoe
@@ -13,7 +13,7 @@ class WexoeContactFormTest {
     private $webhook_url = 'https://hook.eu1.make.com/sulae2u3lux9g9dqfabtsdngiwz46s6g';
     
     public function __construct() {
-        add_shortcode('wexoe_contact_form_test', array($this, 'render_shortcode'));
+        add_shortcode('wexoe_contact_form', array($this, 'render_shortcode'));
         add_action('wp_ajax_wexoe_contact_submit_test', array($this, 'handle_submission'));
         add_action('wp_ajax_nopriv_wexoe_contact_submit_test', array($this, 'handle_submission'));
     }
