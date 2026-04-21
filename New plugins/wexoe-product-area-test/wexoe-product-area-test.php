@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Wexoe Product Area
- * Description: Modular product area pages driven by Airtable data. Use [wexoe_product_area slug="plc"] to render.
- * Version: 2.3.0-test
+ * Description: Modular product area pages driven by Airtable CMS data via Wexoe Core. Use [wexoe_product_area slug="plc"] to render.
+ * Version: 3.0.0
  * Author: Wexoe
  * Text Domain: wexoe-product-area
  */
