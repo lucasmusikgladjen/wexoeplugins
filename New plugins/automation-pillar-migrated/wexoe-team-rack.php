@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Wexoe Team Rack
- * Description: Visar teammedlemmar som CompactLogix I/O-moduler via Wexoe Core (testversion).
- * Version: 2.0.0-test
+ * Description: Visar teammedlemmar som CompactLogix I/O-moduler via Wexoe Core.
+ * Version: 2.0.0
  * Author: Wexoe
  */
 

@@ -2,15 +2,15 @@
 /**
  * Plugin Name:       Wexoe Product Navigation
  * Plugin URI:        https://wexoe.se
- * Description:       Modulär produktnavigation migrerad till Wexoe Core. Testversion för parallellkörning.
- * Version:           2.1.0-test
+ * Description:       Modulär produktnavigation migrerad till Wexoe Core. Parallell version för migrering.
+ * Version:           2.1.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Wexoe
  * Author URI:        https://wexoe.se
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       wexoe-product-nav-test
+ * Text Domain:       wexoe-product-nav
  * Domain Path:       /languages
  * 
  * @package Wexoe_Product_Nav

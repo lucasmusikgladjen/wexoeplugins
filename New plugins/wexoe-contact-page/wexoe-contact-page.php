@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Wexoe Contact Page
- * Description: Modern kontaktsida med dynamisk status och webhook-integration. Migrerad till Wexoe Core-infrastruktur (testversion).
- * Version: 2.0.0-test
+ * Description: Modern kontaktsida med dynamisk status och webhook-integration. Migrerad till Wexoe Core-infrastruktur.
+ * Version: 2.0.0
  * Author: Wexoe
  */
 

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Wexoe Landing Page
  * Description: Modular, high-converting landing pages driven by Wexoe Core data. Use [wexoe_landing slug="fjarraccess"] to render.
- * Version: 2.0.0-test
+ * Version: 2.0.0
  * Author: Wexoe
  * Text Domain: wexoe-landing-page
  */

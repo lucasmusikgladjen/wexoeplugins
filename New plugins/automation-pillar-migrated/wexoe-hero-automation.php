@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Wexoe Hero Automation
  * Plugin URI: https://wexoeindustry.se
- * Description: En hero-sektion för industriell automation (testversion). Använd shortcode [wexoe_hero_automation].
- * Version: 1.1.0-test
+ * Description: En hero-sektion för industriell automation. Använd shortcode [wexoe_hero_automation].
+ * Version: 1.1.0
  * Author: Wexoe
  * Author URI: https://wexoeindustry.se
  * License: GPL v2 or later

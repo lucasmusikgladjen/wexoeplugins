@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Wexoe Audience Hero
- * Description: Dynamic hero + value section for audience landing pages. Data via Wexoe Core. Parallel test version of the original Wexoe Audience Hero plugin.
- * Version: 2.0.0-test
+ * Description: Dynamic hero + value section for audience landing pages. Data via Wexoe Core. Parallel version of the original Wexoe Audience Hero plugin.
+ * Version: 2.0.0
  * Author: Wexoe
  */
 

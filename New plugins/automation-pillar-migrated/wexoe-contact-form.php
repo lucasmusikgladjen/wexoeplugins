@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Wexoe Contact Form
- * Description: Konverteringsoptimerat kontaktformulär för Wexoe (testversion).
- * Version: 1.4.0-test
+ * Description: Konverteringsoptimerat kontaktformulär för Wexoe.
+ * Version: 1.4.0
  * Author: Wexoe
  */
 

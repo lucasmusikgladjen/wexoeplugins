@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Wexoe Offerings Tabs
- * Description: Tabbad sektion för kundtyper (OEM, Integratörer, Slutkunder) migrerad till Wexoe Core (testversion).
- * Version: 2.0.0-test
+ * Description: Tabbad sektion för kundtyper (OEM, Integratörer, Slutkunder) migrerad till Wexoe Core.
+ * Version: 2.0.0
  * Author: Wexoe
  */
 
