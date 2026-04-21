@@ -13,8 +13,8 @@ if (!defined('ABSPATH')) exit;
    CORE CHECK
    ============================================================ */
 
-if (!function_exists('wexoe_lp_test_core_ready')) {
-function wexoe_lp_test_core_ready() {
+if (!function_exists('wexoe_lp_core_ready')) {
+function wexoe_lp_core_ready() {
     return class_exists('\\Wexoe\\Core\\Core')
         && method_exists('\\Wexoe\\Core\\Core', 'entity');
 }
@@ -24,14 +24,14 @@ function wexoe_lp_test_core_ready() {
    HELPERS
    ============================================================ */
 
-if (!function_exists('wexoe_lp_test_field')) {
-function wexoe_lp_test_field($data, $field, $default = '') {
+if (!function_exists('wexoe_lp_field')) {
+function wexoe_lp_field($data, $field, $default = '') {
     return isset($data[$field]) && $data[$field] !== '' && $data[$field] !== null ? $data[$field] : $default;
 }
 }
 
-if (!function_exists('wexoe_lp_test_lines_to_array')) {
-function wexoe_lp_test_lines_to_array($text) {
+if (!function_exists('wexoe_lp_lines_to_array')) {
+function wexoe_lp_lines_to_array($text) {
     if (is_array($text)) {
         return array_values(array_filter(array_map('trim', $text), function($l) { return $l !== ''; }));
     }
@@ -39,20 +39,20 @@ function wexoe_lp_test_lines_to_array($text) {
 }
 }
 
-if (!function_exists('wexoe_lp_test_md')) {
-function wexoe_lp_test_md($text) {
+if (!function_exists('wexoe_lp_md')) {
+function wexoe_lp_md($text) {
     return \Wexoe\Core\Helpers\Markdown::to_inline((string) $text);
 }
 }
 
-if (!function_exists('wexoe_lp_test_hex')) {
-function wexoe_lp_test_hex($value, $default) {
+if (!function_exists('wexoe_lp_hex')) {
+function wexoe_lp_hex($value, $default) {
     return \Wexoe\Core\Helpers\Color::normalize_hex((string) $value) ?: $default;
 }
 }
 
-if (!function_exists('wexoe_lp_test_youtube_id')) {
-function wexoe_lp_test_youtube_id($url) {
+if (!function_exists('wexoe_lp_youtube_id')) {
+function wexoe_lp_youtube_id($url) {
     return \Wexoe\Core\Helpers\YouTube::extract_id((string) $url);
 }
 }
@@ -61,7 +61,7 @@ function wexoe_lp_test_youtube_id($url) {
  * Parse FAQ text field into array of Q&A pairs
  * Format: Q: Question\nA: Answer\n\nQ: Question 2\nA: Answer 2
  */
-function wexoe_lp_test_parse_faq($text) {
+function wexoe_lp_parse_faq($text) {
     if (empty($text)) return [];
     $blocks = preg_split('/\n\s*\n/', $text);
     $faqs = [];
@@ -86,9 +86,9 @@ function wexoe_lp_test_parse_faq($text) {
 /**
  * Parse compare rows: "Label | Value A | Value B" per line
  */
-function wexoe_lp_test_parse_compare_rows($text) {
+function wexoe_lp_parse_compare_rows($text) {
     if (empty($text)) return [];
-    $lines = wexoe_lp_test_lines_to_array($text);
+    $lines = wexoe_lp_lines_to_array($text);
     $rows = [];
     foreach ($lines as $line) {
         $parts = array_map('trim', explode('|', $line));
@@ -102,9 +102,9 @@ function wexoe_lp_test_parse_compare_rows($text) {
 /**
  * Parse steps: "Title | Description" per line
  */
-function wexoe_lp_test_parse_steps($text) {
+function wexoe_lp_parse_steps($text) {
     if (empty($text)) return [];
-    $lines = wexoe_lp_test_lines_to_array($text);
+    $lines = wexoe_lp_lines_to_array($text);
     $steps = [];
     foreach ($lines as $line) {
         $parts = array_map('trim', explode('|', $line, 2));
@@ -116,14 +116,14 @@ function wexoe_lp_test_parse_steps($text) {
 /**
  * Render compare cell value — replace ✓/✕ with styled icons
  */
-function wexoe_lp_test_compare_cell($val) {
+function wexoe_lp_compare_cell($val) {
     $val = esc_html($val);
     $val = str_replace('✓', '<span class="wexoe-lp-cmp-check">✓</span>', $val);
     $val = str_replace('✕', '<span class="wexoe-lp-cmp-cross">✕</span>', $val);
     return $val;
 }
 
-function wexoe_lp_test_get_ids($data, $field) {
+function wexoe_lp_get_ids($data, $field) {
     return (isset($data[$field]) && is_array($data[$field])) ? $data[$field] : [];
 }
 
@@ -134,22 +134,22 @@ function wexoe_lp_test_get_ids($data, $field) {
 /**
  * HERO
  */
-function wexoe_lp_test_render_hero($data, $id) {
-    $h1 = wexoe_lp_test_field($data, 'h1', '');
+function wexoe_lp_render_hero($data, $id) {
+    $h1 = wexoe_lp_field($data, 'h1', '');
     if (empty($h1)) return '';
 
-    $desc = wexoe_lp_test_field($data, 'hero_description', '');
-    $image = wexoe_lp_test_field($data, 'hero_image', '');
-    $cta1_text = wexoe_lp_test_field($data, 'hero_cta_text', 'Kontakta oss');
-    $cta1_url = wexoe_lp_test_field($data, 'hero_cta_url', '/kontakt/');
-    $cta2_text = wexoe_lp_test_field($data, 'hero_cta2_text', '');
-    $cta2_url = wexoe_lp_test_field($data, 'hero_cta2_url', '');
+    $desc = wexoe_lp_field($data, 'hero_description', '');
+    $image = wexoe_lp_field($data, 'hero_image', '');
+    $cta1_text = wexoe_lp_field($data, 'hero_cta_text', 'Kontakta oss');
+    $cta1_url = wexoe_lp_field($data, 'hero_cta_url', '/kontakt/');
+    $cta2_text = wexoe_lp_field($data, 'hero_cta2_text', '');
+    $cta2_url = wexoe_lp_field($data, 'hero_cta2_url', '');
 
     $html = '<section class="wexoe-lp-hero wexoe-lp-fullwidth">';
     $html .= '<div class="wexoe-lp-hero-shapes"><div class="wexoe-lp-hero-shape1"></div><div class="wexoe-lp-hero-shape2"></div></div>';
     $html .= '<div class="wexoe-lp-hero-text">';
     $html .= '<h1 class="wexoe-lp-hero-h1">'.esc_html($h1).'</h1>';
-    if ($desc) $html .= '<p class="wexoe-lp-hero-desc">'.wexoe_lp_test_md($desc).'</p>';
+    if ($desc) $html .= '<p class="wexoe-lp-hero-desc">'.wexoe_lp_md($desc).'</p>';
     $html .= '<div class="wexoe-lp-hero-buttons">';
     $html .= '<a href="'.esc_url($cta1_url).'" class="wexoe-lp-btn-primary">'.esc_html($cta1_text).' <span>&rarr;</span></a>';
     if ($cta2_text && $cta2_url) {
@@ -166,14 +166,14 @@ function wexoe_lp_test_render_hero($data, $id) {
 /**
  * CONTENT + SIDEBAR
  */
-function wexoe_lp_test_render_content_sidebar($data, $id) {
-    $show_content = wexoe_lp_test_field($data, 'show_content', true);
-    $show_sidebar = wexoe_lp_test_field($data, 'show_sidebar', true);
-    $sidebar_type = wexoe_lp_test_field($data, 'sidebar_type', '');
+function wexoe_lp_render_content_sidebar($data, $id) {
+    $show_content = wexoe_lp_field($data, 'show_content', true);
+    $show_sidebar = wexoe_lp_field($data, 'show_sidebar', true);
+    $sidebar_type = wexoe_lp_field($data, 'sidebar_type', '');
 
-    $h2 = wexoe_lp_test_field($data, 'content_h2', '');
-    $text = wexoe_lp_test_field($data, 'content_text', '');
-    $benefits = wexoe_lp_test_lines_to_array(wexoe_lp_test_field($data, 'content_benefits', ''));
+    $h2 = wexoe_lp_field($data, 'content_h2', '');
+    $text = wexoe_lp_field($data, 'content_text', '');
+    $benefits = wexoe_lp_lines_to_array(wexoe_lp_field($data, 'content_benefits', ''));
 
     $has_content = !empty($h2) || !empty($text);
     $has_sidebar = !empty($sidebar_type);
@@ -189,10 +189,10 @@ function wexoe_lp_test_render_content_sidebar($data, $id) {
     if ($has_content && $show_content) {
         $html .= '<div class="wexoe-lp-content-main">';
         if ($h2) $html .= '<h2 class="wexoe-lp-content-h2">'.esc_html($h2).'</h2>';
-        if ($text) $html .= '<div class="wexoe-lp-content-text">'.wexoe_lp_test_md($text).'</div>';
+        if ($text) $html .= '<div class="wexoe-lp-content-text">'.wexoe_lp_md($text).'</div>';
         if (!empty($benefits)) {
             $html .= '<ul class="wexoe-lp-benefit-list">';
-            foreach ($benefits as $b) $html .= '<li><span class="wexoe-lp-check">&#10003;</span> '.wexoe_lp_test_md($b).'</li>';
+            foreach ($benefits as $b) $html .= '<li><span class="wexoe-lp-check">&#10003;</span> '.wexoe_lp_md($b).'</li>';
             $html .= '</ul>';
         }
         $html .= '</div>';
@@ -202,10 +202,10 @@ function wexoe_lp_test_render_content_sidebar($data, $id) {
     if ($has_sidebar && $show_sidebar) {
         $html .= '<div class="wexoe-lp-sidebar">';
         switch ($sidebar_type) {
-            case 'case': $html .= wexoe_lp_test_render_sidebar_case($data, $id); break;
-            case 'calculator': $html .= wexoe_lp_test_render_sidebar_calculator($data, $id); break;
-            case 'event': $html .= wexoe_lp_test_render_sidebar_event($data, $id); break;
-            case 'leadmagnet': $html .= wexoe_lp_test_render_sidebar_leadmagnet($data, $id); break;
+            case 'case': $html .= wexoe_lp_render_sidebar_case($data, $id); break;
+            case 'calculator': $html .= wexoe_lp_render_sidebar_calculator($data, $id); break;
+            case 'event': $html .= wexoe_lp_render_sidebar_event($data, $id); break;
+            case 'leadmagnet': $html .= wexoe_lp_render_sidebar_leadmagnet($data, $id); break;
         }
         $html .= '</div>';
     }
@@ -214,20 +214,20 @@ function wexoe_lp_test_render_content_sidebar($data, $id) {
     return $html;
 }
 
-function wexoe_lp_test_render_sidebar_case($data, $id) {
-    $title = wexoe_lp_test_field($data, 'case_title', '');
-    $desc = wexoe_lp_test_field($data, 'case_description', '');
-    $image = wexoe_lp_test_field($data, 'case_image', '');
-    $outcomes = wexoe_lp_test_lines_to_array(wexoe_lp_test_field($data, 'case_outcomes', ''));
-    $cta_text = wexoe_lp_test_field($data, 'case_cta_text', '');
-    $cta_url = wexoe_lp_test_field($data, 'case_cta_url', '');
+function wexoe_lp_render_sidebar_case($data, $id) {
+    $title = wexoe_lp_field($data, 'case_title', '');
+    $desc = wexoe_lp_field($data, 'case_description', '');
+    $image = wexoe_lp_field($data, 'case_image', '');
+    $outcomes = wexoe_lp_lines_to_array(wexoe_lp_field($data, 'case_outcomes', ''));
+    $cta_text = wexoe_lp_field($data, 'case_cta_text', '');
+    $cta_url = wexoe_lp_field($data, 'case_cta_url', '');
 
     $html = '<div class="wexoe-lp-sb-badge wexoe-lp-sb-badge-text">KUNDCASE</div>';
     if ($title) $html .= '<h3 class="wexoe-lp-sb-title">'.esc_html($title).'</h3>';
     if ($image) $html .= '<img class="wexoe-lp-sb-case-img" src="'.esc_url($image).'" alt="'.esc_attr($title).'" loading="lazy"/>';
-    if ($desc) $html .= '<p class="wexoe-lp-sb-desc">'.wexoe_lp_test_md($desc).'</p>';
+    if ($desc) $html .= '<p class="wexoe-lp-sb-desc">'.wexoe_lp_md($desc).'</p>';
     foreach ($outcomes as $o) {
-        $html .= '<div class="wexoe-lp-sb-outcome"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#10B981" opacity="0.15"/><path d="M6 10.5L8.5 13L14 7.5" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>'.wexoe_lp_test_md($o).'</span></div>';
+        $html .= '<div class="wexoe-lp-sb-outcome"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#10B981" opacity="0.15"/><path d="M6 10.5L8.5 13L14 7.5" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>'.wexoe_lp_md($o).'</span></div>';
     }
     if ($cta_text && $cta_url) {
         $html .= '<a href="'.esc_url($cta_url).'" class="wexoe-lp-sb-cta-link">'.esc_html($cta_text).' &rarr;</a>';
@@ -235,9 +235,9 @@ function wexoe_lp_test_render_sidebar_case($data, $id) {
     return $html;
 }
 
-function wexoe_lp_test_render_sidebar_calculator($data, $id) {
-    $title = wexoe_lp_test_field($data, 'calc_title', '');
-    $calc_html = wexoe_lp_test_field($data, 'calc_html', '');
+function wexoe_lp_render_sidebar_calculator($data, $id) {
+    $title = wexoe_lp_field($data, 'calc_title', '');
+    $calc_html = wexoe_lp_field($data, 'calc_html', '');
 
     $html = '<div class="wexoe-lp-sb-badge wexoe-lp-sb-badge-text">BERÄKNA</div>';
     if ($title) $html .= '<h3 class="wexoe-lp-sb-title">'.esc_html($title).'</h3>';
@@ -245,18 +245,18 @@ function wexoe_lp_test_render_sidebar_calculator($data, $id) {
     return $html;
 }
 
-function wexoe_lp_test_render_sidebar_event($data, $id) {
-    $type = wexoe_lp_test_field($data, 'event_type', '');
-    $title = wexoe_lp_test_field($data, 'event_title', '');
-    $desc = wexoe_lp_test_field($data, 'event_description', '');
-    $date = wexoe_lp_test_field($data, 'event_date', '');
-    $location = wexoe_lp_test_field($data, 'event_location', '');
-    $webhook = wexoe_lp_test_field($data, 'event_webhook', '');
+function wexoe_lp_render_sidebar_event($data, $id) {
+    $type = wexoe_lp_field($data, 'event_type', '');
+    $title = wexoe_lp_field($data, 'event_title', '');
+    $desc = wexoe_lp_field($data, 'event_description', '');
+    $date = wexoe_lp_field($data, 'event_date', '');
+    $location = wexoe_lp_field($data, 'event_location', '');
+    $webhook = wexoe_lp_field($data, 'event_webhook', '');
 
     $html = '';
     if ($type) $html .= '<div class="wexoe-lp-sb-event-type">'.esc_html($type).'</div>';
     if ($title) $html .= '<h3 class="wexoe-lp-sb-title">'.esc_html($title).'</h3>';
-    if ($desc) $html .= '<p class="wexoe-lp-sb-desc">'.wexoe_lp_test_md($desc).'</p>';
+    if ($desc) $html .= '<p class="wexoe-lp-sb-desc">'.wexoe_lp_md($desc).'</p>';
 
     $html .= '<div class="wexoe-lp-sb-event-meta">';
     if ($date) $html .= '<div class="wexoe-lp-sb-meta-item"><svg width="16" height="16" fill="none" viewBox="0 0 16 16"><rect x="1" y="2" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M1 6h14" stroke="currentColor" stroke-width="1.5"/><path d="M5 1v2M11 1v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>'.esc_html($date).'</span></div>';
@@ -272,12 +272,12 @@ function wexoe_lp_test_render_sidebar_event($data, $id) {
     return $html;
 }
 
-function wexoe_lp_test_render_sidebar_leadmagnet($data, $id) {
-    $title = wexoe_lp_test_field($data, 'magnet_title', '');
-    $format = wexoe_lp_test_field($data, 'magnet_format', '');
-    $desc = wexoe_lp_test_field($data, 'magnet_description', '');
-    $file_url = wexoe_lp_test_field($data, 'magnet_file_url', '');
-    $webhook = wexoe_lp_test_field($data, 'magnet_webhook', '');
+function wexoe_lp_render_sidebar_leadmagnet($data, $id) {
+    $title = wexoe_lp_field($data, 'magnet_title', '');
+    $format = wexoe_lp_field($data, 'magnet_format', '');
+    $desc = wexoe_lp_field($data, 'magnet_description', '');
+    $file_url = wexoe_lp_field($data, 'magnet_file_url', '');
+    $webhook = wexoe_lp_field($data, 'magnet_webhook', '');
 
     $html = '<div class="wexoe-lp-sb-badge wexoe-lp-sb-badge-text" style="color:var(--lp-main) !important;">GRATIS RESURS</div>';
     $html .= '<div class="wexoe-lp-sb-magnet-asset">';
@@ -286,7 +286,7 @@ function wexoe_lp_test_render_sidebar_leadmagnet($data, $id) {
     if ($title) $html .= '<h4>'.esc_html($title).'</h4>';
     if ($format) $html .= '<p>'.esc_html($format).'</p>';
     $html .= '</div></div>';
-    if ($desc) $html .= '<p class="wexoe-lp-sb-desc">'.wexoe_lp_test_md($desc).'</p>';
+    if ($desc) $html .= '<p class="wexoe-lp-sb-desc">'.wexoe_lp_md($desc).'</p>';
 
     $html .= '<div class="wexoe-lp-sb-form" data-type="leadmagnet" data-webhook="'.esc_attr($webhook).'" data-file="'.esc_attr($file_url).'">';
     $html .= '<input type="email" class="wexoe-lp-sb-input" placeholder="Din e-postadress" required/>';
@@ -300,9 +300,9 @@ function wexoe_lp_test_render_sidebar_leadmagnet($data, $id) {
 /**
  * TABS
  */
-function wexoe_lp_test_render_tabs($tabs, $downloads_map, $data, $id) {
+function wexoe_lp_render_tabs($tabs, $downloads_map, $data, $id) {
     if (empty($tabs)) return '';
-    $show = wexoe_lp_test_field($data, 'show_tabs', true);
+    $show = wexoe_lp_field($data, 'show_tabs', true);
     if (!$show) return '';
 
     // Pill bar
@@ -311,7 +311,7 @@ function wexoe_lp_test_render_tabs($tabs, $downloads_map, $data, $id) {
     $html .= '<div class="wexoe-lp-tabs-nav">';
     foreach ($tabs as $i => $tab) {
         $active = ($i === 0) ? ' wexoe-lp-tab-active' : '';
-        $html .= '<button class="wexoe-lp-tab-btn'.$active.'" data-tab="'.$id.'-tab-'.$i.'">'.esc_html(wexoe_lp_test_field($tab, 'name', 'Tab '.($i+1))).'</button>';
+        $html .= '<button class="wexoe-lp-tab-btn'.$active.'" data-tab="'.$id.'-tab-'.$i.'">'.esc_html(wexoe_lp_field($tab, 'name', 'Tab '.($i+1))).'</button>';
     }
     $html .= '</div></div>';
 
@@ -320,20 +320,20 @@ function wexoe_lp_test_render_tabs($tabs, $downloads_map, $data, $id) {
     $html .= '<div class="wexoe-lp-container">';
     foreach ($tabs as $i => $tab) {
         $active = ($i === 0) ? ' wexoe-lp-tab-panel-active' : '';
-        $type = wexoe_lp_test_field($tab, 'tab_type', '');
+        $type = wexoe_lp_field($tab, 'tab_type', '');
         $html .= '<div class="wexoe-lp-tab-panel'.$active.'" id="'.$id.'-tab-'.$i.'">';
         switch ($type) {
-            case 'textimage': $html .= wexoe_lp_test_render_tab_textimage($tab, $id); break;
-            case 'fullmedia': $html .= wexoe_lp_test_render_tab_fullmedia($tab, $id); break;
-            case 'faq': $html .= wexoe_lp_test_render_tab_faq($tab, $id); break;
-            case 'calameo': $html .= wexoe_lp_test_render_tab_calameo($tab, $id); break;
+            case 'textimage': $html .= wexoe_lp_render_tab_textimage($tab, $id); break;
+            case 'fullmedia': $html .= wexoe_lp_render_tab_fullmedia($tab, $id); break;
+            case 'faq': $html .= wexoe_lp_render_tab_faq($tab, $id); break;
+            case 'calameo': $html .= wexoe_lp_render_tab_calameo($tab, $id); break;
             case 'downloads':
-                $dl_ids = wexoe_lp_test_get_ids($tab, 'download_ids');
+                $dl_ids = wexoe_lp_get_ids($tab, 'download_ids');
                 $dls = isset($downloads_map[$tab['_record_id']]) ? $downloads_map[$tab['_record_id']] : [];
-                $html .= wexoe_lp_test_render_tab_downloads($tab, $dls, $id);
+                $html .= wexoe_lp_render_tab_downloads($tab, $dls, $id);
                 break;
-            case 'compare': $html .= wexoe_lp_test_render_tab_compare($tab, $id); break;
-            case 'steps': $html .= wexoe_lp_test_render_tab_steps($tab, $id); break;
+            case 'compare': $html .= wexoe_lp_render_tab_compare($tab, $id); break;
+            case 'steps': $html .= wexoe_lp_render_tab_steps($tab, $id); break;
         }
         $html .= '</div>';
     }
@@ -341,20 +341,20 @@ function wexoe_lp_test_render_tabs($tabs, $downloads_map, $data, $id) {
     return $html;
 }
 
-function wexoe_lp_test_render_tab_textimage($tab, $id) {
-    $h2 = wexoe_lp_test_field($tab, 'ti_h2', '');
-    $text = wexoe_lp_test_field($tab, 'ti_text', '');
-    $benefits = wexoe_lp_test_lines_to_array(wexoe_lp_test_field($tab, 'ti_benefits', ''));
-    $image = wexoe_lp_test_field($tab, 'ti_image', '');
+function wexoe_lp_render_tab_textimage($tab, $id) {
+    $h2 = wexoe_lp_field($tab, 'ti_h2', '');
+    $text = wexoe_lp_field($tab, 'ti_text', '');
+    $benefits = wexoe_lp_lines_to_array(wexoe_lp_field($tab, 'ti_benefits', ''));
+    $image = wexoe_lp_field($tab, 'ti_image', '');
     $inverted = !empty($tab['ti_inverted']);
 
     $html = '<div class="wexoe-lp-tab-textimg'.($inverted ? ' wexoe-lp-tab-textimg-inv' : '').'">';
     $html .= '<div class="wexoe-lp-tab-textimg-text">';
     if ($h2) $html .= '<h3>'.esc_html($h2).'</h3>';
-    if ($text) $html .= '<div class="wexoe-lp-tab-ti-body">'.wexoe_lp_test_md($text).'</div>';
+    if ($text) $html .= '<div class="wexoe-lp-tab-ti-body">'.wexoe_lp_md($text).'</div>';
     if (!empty($benefits)) {
         $html .= '<ul class="wexoe-lp-tab-ti-list">';
-        foreach ($benefits as $b) $html .= '<li><span class="wexoe-lp-check">&#10003;</span> '.wexoe_lp_test_md($b).'</li>';
+        foreach ($benefits as $b) $html .= '<li><span class="wexoe-lp-check">&#10003;</span> '.wexoe_lp_md($b).'</li>';
         $html .= '</ul>';
     }
     $html .= '</div>';
@@ -365,11 +365,11 @@ function wexoe_lp_test_render_tab_textimage($tab, $id) {
     return $html;
 }
 
-function wexoe_lp_test_render_tab_fullmedia($tab, $id) {
-    $url = wexoe_lp_test_field($tab, 'fm_url', '');
+function wexoe_lp_render_tab_fullmedia($tab, $id) {
+    $url = wexoe_lp_field($tab, 'fm_url', '');
     if (empty($url)) return '';
 
-    $yt_id = wexoe_lp_test_youtube_id($url);
+    $yt_id = wexoe_lp_youtube_id($url);
     $html = '<div class="wexoe-lp-tab-fullmedia">';
     if ($yt_id) {
         $html .= '<div class="wexoe-lp-tab-video-wrap"><iframe src="https://www.youtube-nocookie.com/embed/'.$yt_id.'?rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>';
@@ -380,8 +380,8 @@ function wexoe_lp_test_render_tab_fullmedia($tab, $id) {
     return $html;
 }
 
-function wexoe_lp_test_render_tab_faq($tab, $id) {
-    $faqs = wexoe_lp_test_parse_faq(wexoe_lp_test_field($tab, 'faq_items', ''));
+function wexoe_lp_render_tab_faq($tab, $id) {
+    $faqs = wexoe_lp_parse_faq(wexoe_lp_field($tab, 'faq_items', ''));
     if (empty($faqs)) return '';
 
     $html = '<div class="wexoe-lp-tab-faq">';
@@ -389,19 +389,19 @@ function wexoe_lp_test_render_tab_faq($tab, $id) {
         $open = ($i === 0) ? ' wexoe-lp-faq-open' : '';
         $html .= '<div class="wexoe-lp-faq-item'.$open.'">';
         $html .= '<div class="wexoe-lp-faq-q"><span>'.esc_html($faq['q']).'</span><svg class="wexoe-lp-faq-chevron" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
-        $html .= '<div class="wexoe-lp-faq-a"><div class="wexoe-lp-faq-a-inner">'.wexoe_lp_test_md($faq['a']).'</div></div>';
+        $html .= '<div class="wexoe-lp-faq-a"><div class="wexoe-lp-faq-a-inner">'.wexoe_lp_md($faq['a']).'</div></div>';
         $html .= '</div>';
     }
     $html .= '</div>';
     return $html;
 }
 
-function wexoe_lp_test_render_tab_calameo($tab, $id) {
+function wexoe_lp_render_tab_calameo($tab, $id) {
     $html = '<div class="wexoe-lp-tab-calameo">';
-    $calameos = wexoe_lp_test_field($tab, 'calameos', []);
+    $calameos = wexoe_lp_field($tab, 'calameos', []);
     foreach ($calameos as $calameo) {
-        $title = wexoe_lp_test_field($calameo, 'title', '');
-        $src = wexoe_lp_test_field($calameo, 'src', '');
+        $title = wexoe_lp_field($calameo, 'title', '');
+        $src = wexoe_lp_field($calameo, 'src', '');
         if (empty($src)) continue;
         $html .= '<div class="wexoe-lp-calameo-block">';
         if ($title) $html .= '<h4>'.esc_html($title).'</h4>';
@@ -412,17 +412,17 @@ function wexoe_lp_test_render_tab_calameo($tab, $id) {
     return $html;
 }
 
-function wexoe_lp_test_render_tab_downloads($tab, $downloads, $id) {
+function wexoe_lp_render_tab_downloads($tab, $downloads, $id) {
     if (empty($downloads)) return '<p style="text-align:center;opacity:0.6;">Inga nedladdningar kopplade.</p>';
 
     $html = '<div class="wexoe-lp-tab-downloads">';
     $html .= '<div class="wexoe-lp-dl-grid">';
     foreach ($downloads as $dl) {
-        $name = wexoe_lp_test_field($dl, 'name', '');
-        $desc = wexoe_lp_test_field($dl, 'description', '');
-        $thumb = wexoe_lp_test_field($dl, 'thumbnail', '');
-        $file = wexoe_lp_test_field($dl, 'file_url', '');
-        $btn = wexoe_lp_test_field($dl, 'button_text', 'Ladda ner PDF');
+        $name = wexoe_lp_field($dl, 'name', '');
+        $desc = wexoe_lp_field($dl, 'description', '');
+        $thumb = wexoe_lp_field($dl, 'thumbnail', '');
+        $file = wexoe_lp_field($dl, 'file_url', '');
+        $btn = wexoe_lp_field($dl, 'button_text', 'Ladda ner PDF');
 
         $html .= '<div class="wexoe-lp-dl-card">';
         if ($thumb) $html .= '<img class="wexoe-lp-dl-thumb" src="'.esc_url($thumb).'" alt="'.esc_attr($name).'" loading="lazy"/>';
@@ -436,11 +436,11 @@ function wexoe_lp_test_render_tab_downloads($tab, $downloads, $id) {
     return $html;
 }
 
-function wexoe_lp_test_render_tab_compare($tab, $id) {
-    $title = wexoe_lp_test_field($tab, 'compare_title', '');
-    $col_a = wexoe_lp_test_field($tab, 'compare_col_a', 'A');
-    $col_b = wexoe_lp_test_field($tab, 'compare_col_b', 'B');
-    $rows = wexoe_lp_test_parse_compare_rows(wexoe_lp_test_field($tab, 'compare_rows', ''));
+function wexoe_lp_render_tab_compare($tab, $id) {
+    $title = wexoe_lp_field($tab, 'compare_title', '');
+    $col_a = wexoe_lp_field($tab, 'compare_col_a', 'A');
+    $col_b = wexoe_lp_field($tab, 'compare_col_b', 'B');
+    $rows = wexoe_lp_parse_compare_rows(wexoe_lp_field($tab, 'compare_rows', ''));
     if (empty($rows)) return '';
 
     $html = '<div class="wexoe-lp-tab-compare">';
@@ -449,15 +449,15 @@ function wexoe_lp_test_render_tab_compare($tab, $id) {
     $html .= '<thead><tr><th></th><th>'.esc_html($col_a).'</th><th class="wexoe-lp-cmp-highlight">'.esc_html($col_b).'</th></tr></thead>';
     $html .= '<tbody>';
     foreach ($rows as $row) {
-        $html .= '<tr><td>'.esc_html($row['label']).'</td><td>'.wexoe_lp_test_compare_cell($row['a']).'</td><td class="wexoe-lp-cmp-highlight">'.wexoe_lp_test_compare_cell($row['b']).'</td></tr>';
+        $html .= '<tr><td>'.esc_html($row['label']).'</td><td>'.wexoe_lp_compare_cell($row['a']).'</td><td class="wexoe-lp-cmp-highlight">'.wexoe_lp_compare_cell($row['b']).'</td></tr>';
     }
     $html .= '</tbody></table></div></div>';
     return $html;
 }
 
-function wexoe_lp_test_render_tab_steps($tab, $id) {
-    $title = wexoe_lp_test_field($tab, 'steps_title', '');
-    $steps = wexoe_lp_test_parse_steps(wexoe_lp_test_field($tab, 'steps', ''));
+function wexoe_lp_render_tab_steps($tab, $id) {
+    $title = wexoe_lp_field($tab, 'steps_title', '');
+    $steps = wexoe_lp_parse_steps(wexoe_lp_field($tab, 'steps', ''));
     if (empty($steps)) return '';
 
     $html = '<div class="wexoe-lp-tab-steps">';
@@ -477,17 +477,17 @@ function wexoe_lp_test_render_tab_steps($tab, $id) {
 /**
  * CONTACT PERSON
  */
-function wexoe_lp_test_render_contact($data, $id) {
-    $name = wexoe_lp_test_field($data, 'contact_name', '');
+function wexoe_lp_render_contact($data, $id) {
+    $name = wexoe_lp_field($data, 'contact_name', '');
     if (empty($name)) return '';
-    $show = wexoe_lp_test_field($data, 'show_contact', true);
+    $show = wexoe_lp_field($data, 'show_contact', true);
     if (!$show) return '';
 
-    $title = wexoe_lp_test_field($data, 'contact_title', '');
-    $email = wexoe_lp_test_field($data, 'contact_email', '');
-    $phone = wexoe_lp_test_field($data, 'contact_phone', '');
-    $image = wexoe_lp_test_field($data, 'contact_image', '');
-    $quote = wexoe_lp_test_field($data, 'contact_quote', '');
+    $title = wexoe_lp_field($data, 'contact_title', '');
+    $email = wexoe_lp_field($data, 'contact_email', '');
+    $phone = wexoe_lp_field($data, 'contact_phone', '');
+    $image = wexoe_lp_field($data, 'contact_image', '');
+    $quote = wexoe_lp_field($data, 'contact_quote', '');
 
     $html = '<section class="wexoe-lp-contact-section">';
     $html .= '<div class="wexoe-lp-container">';
@@ -517,7 +517,7 @@ function wexoe_lp_test_render_contact($data, $id) {
    CSS
    ============================================================ */
 
-function wexoe_lp_test_render_css($id, $main_color, $secondary_color) {
+function wexoe_lp_render_css($id, $main_color, $secondary_color) {
     $mc = $main_color;
     $sc = $secondary_color;
 
@@ -763,7 +763,7 @@ function wexoe_lp_test_render_css($id, $main_color, $secondary_color) {
    JAVASCRIPT
    ============================================================ */
 
-function wexoe_lp_test_render_js($id) {
+function wexoe_lp_render_js($id) {
     return '
     <script>
     (function() {
@@ -856,7 +856,7 @@ function wexoe_lp_test_render_js($id) {
    SHORTCODE
    ============================================================ */
 
-function wexoe_landing_page_test_shortcode($atts) {
+function wexoe_landing_page_shortcode($atts) {
     $atts = shortcode_atts([
         'slug' => '',
         'debug' => 'false',
@@ -867,8 +867,8 @@ function wexoe_landing_page_test_shortcode($atts) {
     $slug = sanitize_text_field($atts['slug']);
     $debug = ($atts['debug'] === 'true');
 
-    if (!wexoe_lp_test_core_ready()) {
-        return '<p style="color:red;font-weight:bold;">Wexoe Landing Page TEST: Wexoe Core-pluginet är inte aktivt.</p>';
+    if (!wexoe_lp_core_ready()) {
+        return '<p style="color:red;font-weight:bold;">Wexoe Landing Page: Wexoe Core-pluginet är inte aktivt.</p>';
     }
 
     $pages_repo = \Wexoe\Core\Core::entity('landing_pages');
@@ -876,7 +876,7 @@ function wexoe_landing_page_test_shortcode($atts) {
     $downloads_repo = \Wexoe\Core\Core::entity('lp_downloads');
 
     if (!$pages_repo || !$tabs_repo || !$downloads_repo) {
-        return '<p style="color:red;font-weight:bold;">Wexoe Landing Page TEST: En eller flera Wexoe Core-entiteter saknas (landing_pages, lp_tabs, lp_downloads).</p>';
+        return '<p style="color:red;font-weight:bold;">Wexoe Landing Page: En eller flera Wexoe Core-entiteter saknas (landing_pages, lp_tabs, lp_downloads).</p>';
     }
 
     if ($atts['nocache'] === 'true') {
@@ -896,7 +896,7 @@ function wexoe_landing_page_test_shortcode($atts) {
     }
 
     // Fetch linked tabs
-    $tab_ids = wexoe_lp_test_get_ids($data, 'tab_ids');
+    $tab_ids = wexoe_lp_get_ids($data, 'tab_ids');
     $all_tabs = $tabs_repo->find_by_ids($tab_ids);
     $all_tabs = array_filter($all_tabs, function($tab) {
         return !empty($tab['visa']);
@@ -909,8 +909,8 @@ function wexoe_landing_page_test_shortcode($atts) {
     // Fetch downloads for tabs that need them
     $downloads_map = [];
     foreach ($tabs as $tab) {
-        if (wexoe_lp_test_field($tab, 'tab_type', '') === 'downloads') {
-            $dl_ids = wexoe_lp_test_get_ids($tab, 'download_ids');
+        if (wexoe_lp_field($tab, 'tab_type', '') === 'downloads') {
+            $dl_ids = wexoe_lp_get_ids($tab, 'download_ids');
             if (!empty($dl_ids)) {
                 $dls_all = $downloads_repo->find_by_ids($dl_ids);
                 $dls_all = array_filter($dls_all, function($dl) {
@@ -925,8 +925,8 @@ function wexoe_landing_page_test_shortcode($atts) {
     }
 
     // Colors
-    $main_color = wexoe_lp_test_hex(wexoe_lp_test_field($data, 'color_main', ''), '#11325D');
-    $secondary_color = wexoe_lp_test_hex(wexoe_lp_test_field($data, 'color_secondary', ''), '#F28C28');
+    $main_color = wexoe_lp_hex(wexoe_lp_field($data, 'color_main', ''), '#11325D');
+    $secondary_color = wexoe_lp_hex(wexoe_lp_field($data, 'color_secondary', ''), '#F28C28');
 
     $id = 'wexoe-lp-' . uniqid();
     $html = '';
@@ -942,7 +942,7 @@ function wexoe_landing_page_test_shortcode($atts) {
     }
 
     // CSS
-    $html .= wexoe_lp_test_render_css($id, $main_color, $secondary_color);
+    $html .= wexoe_lp_render_css($id, $main_color, $secondary_color);
 
     // Remove Enfold padding
     if ($atts['remove_padding'] === 'true') {
@@ -954,17 +954,17 @@ function wexoe_landing_page_test_shortcode($atts) {
     $html .= '<div id="' . $id . '" class="wexoe-lp-wrapper">';
 
     // Sections
-    $html .= wexoe_lp_test_render_hero($data, $id);
-    $html .= wexoe_lp_test_render_content_sidebar($data, $id);
-    $html .= wexoe_lp_test_render_tabs($tabs, $downloads_map, $data, $id);
-    $html .= wexoe_lp_test_render_contact($data, $id);
+    $html .= wexoe_lp_render_hero($data, $id);
+    $html .= wexoe_lp_render_content_sidebar($data, $id);
+    $html .= wexoe_lp_render_tabs($tabs, $downloads_map, $data, $id);
+    $html .= wexoe_lp_render_contact($data, $id);
 
     $html .= '</div>';
 
     // JavaScript
-    $html .= wexoe_lp_test_render_js($id);
+    $html .= wexoe_lp_render_js($id);
 
     return $html;
 }
 
-add_shortcode('wexoe_landing', 'wexoe_landing_page_test_shortcode');
+add_shortcode('wexoe_landing', 'wexoe_landing_page_shortcode');

@@ -8,14 +8,14 @@
 
 if (!defined('ABSPATH')) exit;
 
-class WexoeContactFormTest {
+class WexoeContactForm {
     
     private $webhook_url = 'https://hook.eu1.make.com/sulae2u3lux9g9dqfabtsdngiwz46s6g';
     
     public function __construct() {
         add_shortcode('wexoe_contact_form', array($this, 'render_shortcode'));
-        add_action('wp_ajax_wexoe_contact_submit_test', array($this, 'handle_submission'));
-        add_action('wp_ajax_nopriv_wexoe_contact_submit_test', array($this, 'handle_submission'));
+        add_action('wp_ajax_wexoe_contact_submit', array($this, 'handle_submission'));
+        add_action('wp_ajax_nopriv_wexoe_contact_submit', array($this, 'handle_submission'));
     }
     
     /**
@@ -23,7 +23,7 @@ class WexoeContactFormTest {
      */
     public function handle_submission() {
         // Verifiera nonce
-        if (!wp_verify_nonce($_POST['nonce'], 'wexoe_contact_nonce_test')) {
+        if (!wp_verify_nonce($_POST['nonce'], 'wexoe_contact_nonce')) {
             wp_send_json_error('Säkerhetsfel. Ladda om sidan och försök igen.');
             return;
         }
@@ -712,7 +712,7 @@ CSS;
      * Render HTML
      */
     private function render_html($id, $atts, $is_inverted = false, $trust_signals = array(), $options = array()) {
-        $nonce = wp_create_nonce('wexoe_contact_nonce_test');
+        $nonce = wp_create_nonce('wexoe_contact_nonce');
         $inverted_class = $is_inverted ? ' inverted' : '';
         
         ob_start();
@@ -868,7 +868,7 @@ CSS;
                 
                 // Collect form data
                 const formData = new FormData(form);
-                formData.append('action', 'wexoe_contact_submit_test');
+                formData.append('action', 'wexoe_contact_submit');
                 formData.append('nonce', nonce);
                 formData.append('page_url', window.location.href);
                 
@@ -923,4 +923,4 @@ JS;
 }
 
 // Initiera plugin
-new WexoeContactFormTest();
+new WexoeContactForm();

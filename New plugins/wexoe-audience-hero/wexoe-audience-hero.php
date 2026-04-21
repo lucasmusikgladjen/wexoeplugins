@@ -8,14 +8,14 @@
 
 if (!defined('ABSPATH')) exit;
 
-if (!function_exists('wexoe_ah_test_core_ready')) {
-function wexoe_ah_test_core_ready() {
+if (!function_exists('wexoe_ah_core_ready')) {
+function wexoe_ah_core_ready() {
     return class_exists('\\Wexoe\\Core\\Core')
         && method_exists('\\Wexoe\\Core\\Core', 'entity');
 }
 }
 
-class Wexoe_Audience_Hero_Test {
+class Wexoe_Audience_Hero {
 
     public function __construct() {
         add_shortcode('wexoe_audience', array($this, 'render_shortcode'));
@@ -82,7 +82,7 @@ class Wexoe_Audience_Hero_Test {
             return '<p style="color:red;">Wexoe Audience Hero: slug parameter required</p>';
         }
 
-        if (!wexoe_ah_test_core_ready()) {
+        if (!wexoe_ah_core_ready()) {
             return '<p style="color:red;">Wexoe Audience Hero: Wexoe Core-pluginet är inte aktivt.</p>';
         }
 
@@ -788,4 +788,4 @@ class Wexoe_Audience_Hero_Test {
 }
 
 // Initialize
-new Wexoe_Audience_Hero_Test();
+new Wexoe_Audience_Hero();

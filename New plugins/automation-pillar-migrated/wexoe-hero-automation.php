@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class Wexoe_Hero_Automation_Test {
+class Wexoe_Hero_Automation {
 
     public function __construct() {
         add_shortcode('wexoe_hero_automation', array($this, 'render_shortcode'));
@@ -421,4 +421,4 @@ class Wexoe_Hero_Automation_Test {
     }
 }
 
-new Wexoe_Hero_Automation_Test();
+new Wexoe_Hero_Automation();

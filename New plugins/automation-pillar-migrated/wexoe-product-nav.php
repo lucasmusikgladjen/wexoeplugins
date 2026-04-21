@@ -69,11 +69,11 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('WEXOE_PN_TEST_VERSION', '2.1.0-test');
+define('WEXOE_PN_VERSION', '2.1.0');
 
 
-if (!function_exists('wexoe_pn_test_core_ready')) {
-function wexoe_pn_test_core_ready() {
+if (!function_exists('wexoe_pn_core_ready')) {
+function wexoe_pn_core_ready() {
     return class_exists('\Wexoe\Core\Core')
         && method_exists('\Wexoe\Core\Core', 'entity');
 }
@@ -89,7 +89,7 @@ function wexoe_pn_test_core_ready() {
  * @since 1.0.0
  * @since 2.0.0 Refactored to fetch all data from Airtable
  */
-class Wexoe_Product_Nav_Test {
+class Wexoe_Product_Nav {
 
     /**
      * Airtable API credentials
@@ -151,7 +151,7 @@ class Wexoe_Product_Nav_Test {
             'featured_2' => null
         );
 
-        if (!wexoe_pn_test_core_ready()) {
+        if (!wexoe_pn_core_ready()) {
             return $result;
         }
 
@@ -706,8 +706,8 @@ class Wexoe_Product_Nav_Test {
      * @return string HTML output
      */
     public function render_shortcode($atts) {
-        if (!wexoe_pn_test_core_ready()) {
-            return '<p style="color:red;">Wexoe Product Navigation TEST: Wexoe Core-pluginet är inte aktivt.</p>';
+        if (!wexoe_pn_core_ready()) {
+            return '<p style="color:red;">Wexoe Product Navigation: Wexoe Core-pluginet är inte aktivt.</p>';
         }
 
         // Parse shortcode attributes with defaults
@@ -838,4 +838,4 @@ class Wexoe_Product_Nav_Test {
 }
 
 // Initialize plugin
-new Wexoe_Product_Nav_Test();
+new Wexoe_Product_Nav();

@@ -9,14 +9,14 @@
 if (!defined('ABSPATH')) exit;
 
 
-if (!function_exists('wexoe_offerings_test_core_ready')) {
-function wexoe_offerings_test_core_ready() {
+if (!function_exists('wexoe_offerings_core_ready')) {
+function wexoe_offerings_core_ready() {
     return class_exists('\\Wexoe\\Core\\Core')
         && method_exists('\\Wexoe\\Core\\Core', 'entity');
 }
 }
 
-class Wexoe_Offerings_Tabs_Test {
+class Wexoe_Offerings_Tabs {
     
     
     public function __construct() {
@@ -52,7 +52,7 @@ class Wexoe_Offerings_Tabs_Test {
      * Hämta data via Wexoe Core
      */
     private function fetch_data($division = '') {
-        if (!wexoe_offerings_test_core_ready()) {
+        if (!wexoe_offerings_core_ready()) {
             return array('error' => 'Wexoe Core-pluginet är inte aktivt.');
         }
 
@@ -628,7 +628,7 @@ class Wexoe_Offerings_Tabs_Test {
 }
 
 // Init
-new Wexoe_Offerings_Tabs_Test();
+new Wexoe_Offerings_Tabs();
 
 // Load Google Fonts
 add_action('wp_head', function() {

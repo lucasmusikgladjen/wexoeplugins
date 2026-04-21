@@ -9,14 +9,14 @@
 if (!defined('ABSPATH')) exit;
 
 
-if (!function_exists('wexoe_cp_test_core_ready')) {
-function wexoe_cp_test_core_ready() {
+if (!function_exists('wexoe_cp_core_ready')) {
+function wexoe_cp_core_ready() {
     return class_exists('\\Wexoe\\Core\\Core')
         && method_exists('\\Wexoe\\Core\\Core', 'entity');
 }
 }
 
-class Wexoe_Contact_Page_Test {
+class Wexoe_Contact_Page {
     
     public function __construct() {
         add_shortcode('wexoe_contact', array($this, 'render_shortcode'));
@@ -25,8 +25,8 @@ class Wexoe_Contact_Page_Test {
     public function render_shortcode($atts) {
         $atts = shortcode_atts(array(), $atts);
 
-        if (!wexoe_cp_test_core_ready()) {
-            return '<p style="color:red;">Wexoe Contact Page TEST: Wexoe Core-pluginet är inte aktivt.</p>';
+        if (!wexoe_cp_core_ready()) {
+            return '<p style="color:red;">Wexoe Contact Page: Wexoe Core-pluginet är inte aktivt.</p>';
         }
 
         // Generate unique ID for CSS scoping
@@ -1374,4 +1374,4 @@ class Wexoe_Contact_Page_Test {
 }
 
 // Initialize
-new Wexoe_Contact_Page_Test();
+new Wexoe_Contact_Page();

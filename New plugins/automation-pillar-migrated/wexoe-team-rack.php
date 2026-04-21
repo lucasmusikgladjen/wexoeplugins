@@ -9,14 +9,14 @@
 if (!defined('ABSPATH')) exit;
 
 
-if (!function_exists('wexoe_team_rack_test_core_ready')) {
-function wexoe_team_rack_test_core_ready() {
+if (!function_exists('wexoe_team_rack_core_ready')) {
+function wexoe_team_rack_core_ready() {
     return class_exists('\Wexoe\Core\Core')
         && method_exists('\Wexoe\Core\Core', 'entity');
 }
 }
 
-class WexoeTeamRackTest {
+class WexoeTeamRack {
     
     
     public function __construct() {
@@ -27,7 +27,7 @@ class WexoeTeamRackTest {
      * Hämta teammedlemmar från Airtable
      */
     private function get_team_members($tag = null) {
-        if (!wexoe_team_rack_test_core_ready()) {
+        if (!wexoe_team_rack_core_ready()) {
             return array();
         }
 
@@ -189,8 +189,8 @@ class WexoeTeamRackTest {
             return $debug_output;
         }
         
-        if (!wexoe_team_rack_test_core_ready()) {
-            return '<div style="background:#fee;border:1px solid #c00;padding:15px;margin:20px 0;border-radius:4px;"><strong>⚠️ Wexoe Team Rack TEST:</strong> Wexoe Core-pluginet är inte aktivt.</div>';
+        if (!wexoe_team_rack_core_ready()) {
+            return '<div style="background:#fee;border:1px solid #c00;padding:15px;margin:20px 0;border-radius:4px;"><strong>⚠️ Wexoe Team Rack:</strong> Wexoe Core-pluginet är inte aktivt.</div>';
         }
         
         $members = $this->get_team_members($atts['tag'] ?: null);
@@ -1064,4 +1064,4 @@ CSS;
 }
 
 // Initiera plugin
-new WexoeTeamRackTest();
+new WexoeTeamRack();

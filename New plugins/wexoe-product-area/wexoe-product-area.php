@@ -26,7 +26,7 @@ if (!defined('WEXOE_PA_TABLE_CUSTOMERS')) define('WEXOE_PA_TABLE_CUSTOMERS', 'Cu
 /**
  * Check if a hex color is dark (luminance < 0.5)
  */
-function wexoe_pa_test_is_dark_bg($hex) {
+function wexoe_pa_is_dark_bg($hex) {
     $hex = ltrim($hex, '#');
     if (strlen($hex) === 3) {
         $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
@@ -41,22 +41,22 @@ function wexoe_pa_test_is_dark_bg($hex) {
 /**
  * Get text color based on background
  */
-function wexoe_pa_test_text_color($bg_hex) {
-    return wexoe_pa_test_is_dark_bg($bg_hex) ? '#FFFFFF' : '#041327';
+function wexoe_pa_text_color($bg_hex) {
+    return wexoe_pa_is_dark_bg($bg_hex) ? '#FFFFFF' : '#041327';
 }
 
 /**
  * Get secondary text color (lighter) based on background
  */
-function wexoe_pa_test_text_secondary($bg_hex) {
-    return wexoe_pa_test_is_dark_bg($bg_hex) ? '#FFFFFF' : '#555555';
+function wexoe_pa_text_secondary($bg_hex) {
+    return wexoe_pa_is_dark_bg($bg_hex) ? '#FFFFFF' : '#555555';
 }
 
 /**
  * Split long text field into array of non-empty lines
  */
-if (!function_exists('wexoe_pa_test_lines_to_array')) {
-function wexoe_pa_test_lines_to_array($text) {
+if (!function_exists('wexoe_pa_lines_to_array')) {
+function wexoe_pa_lines_to_array($text) {
     return \Wexoe\Core\Helpers\Lines::to_array((string) $text);
 }
 }
@@ -66,8 +66,8 @@ function wexoe_pa_test_lines_to_array($text) {
  * Supports: **bold**, *italic*, [link](url), `code`, ~~strikethrough~~, line breaks
  * Does NOT support: headers, lists, images (use dedicated fields for those)
  */
-if (!function_exists('wexoe_pa_test_md')) {
-function wexoe_pa_test_md($text) {
+if (!function_exists('wexoe_pa_md')) {
+function wexoe_pa_md($text) {
     return \Wexoe\Core\Helpers\Markdown::to_inline((string) $text);
 }
 }
@@ -75,8 +75,8 @@ function wexoe_pa_test_md($text) {
 /**
  * Get a field value with fallback
  */
-if (!function_exists('wexoe_pa_test_field')) {
-function wexoe_pa_test_field($data, $field, $default = '') {
+if (!function_exists('wexoe_pa_field')) {
+function wexoe_pa_field($data, $field, $default = '') {
     return isset($data[$field]) && $data[$field] !== '' && $data[$field] !== null ? $data[$field] : $default;
 }
 }
@@ -84,14 +84,14 @@ function wexoe_pa_test_field($data, $field, $default = '') {
 /**
  * Sanitize hex color
  */
-function wexoe_pa_test_hex($value, $default) {
+function wexoe_pa_hex($value, $default) {
     return \Wexoe\Core\Helpers\Color::normalize_hex($value) ?? $default;
 }
 
 /**
  * Extract YouTube video ID from various URL formats
  */
-function wexoe_pa_test_youtube_id($url) {
+function wexoe_pa_youtube_id($url) {
     return \Wexoe\Core\Helpers\YouTube::extract_id((string) $url);
 }
 
@@ -99,10 +99,10 @@ function wexoe_pa_test_youtube_id($url) {
  * Render media element — YouTube embed or image
  * Returns HTML string for either an iframe or img tag
  */
-if (!function_exists('wexoe_pa_test_render_media')) {
-function wexoe_pa_test_render_media($url, $alt = '', $class_prefix = '') {
+if (!function_exists('wexoe_pa_render_media')) {
+function wexoe_pa_render_media($url, $alt = '', $class_prefix = '') {
     if (empty($url)) return '';
-    $yt_id = wexoe_pa_test_youtube_id($url);
+    $yt_id = wexoe_pa_youtube_id($url);
     if ($yt_id) {
         return '<div class="'.$class_prefix.'video-wrap"><iframe src="https://www.youtube-nocookie.com/embed/'.$yt_id.'?rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>';
     }
@@ -125,8 +125,8 @@ function wexoe_pa_test_render_media($url, $alt = '', $class_prefix = '') {
  *   'map' => [ 'Gul/1m' => 'AX2639-Y1', ... ]
  * ]
  */
-if (!function_exists('wexoe_pa_test_parse_variants')) {
-function wexoe_pa_test_parse_variants($text) {
+if (!function_exists('wexoe_pa_parse_variants')) {
+function wexoe_pa_parse_variants($text) {
     if (empty($text)) return null;
 
     $lines = preg_split('/\r\n|\r|\n/', $text);
@@ -173,19 +173,19 @@ function wexoe_pa_test_parse_variants($text) {
    CORE INTEGRATION
    ============================================================ */
 
-if (!function_exists('wexoe_pa_test_core_ready')) {
-function wexoe_pa_test_core_ready() {
+if (!function_exists('wexoe_pa_core_ready')) {
+function wexoe_pa_core_ready() {
     return class_exists('\Wexoe\\Core\\Core')
         && method_exists('\Wexoe\\Core\\Core', 'entity');
 }
 }
 
-function wexoe_pa_test_get_repo($entity) {
-    if (!wexoe_pa_test_core_ready()) return null;
+function wexoe_pa_get_repo($entity) {
+    if (!wexoe_pa_core_ready()) return null;
     return \Wexoe\Core\Core::entity($entity);
 }
 
-function wexoe_pa_test_map_product_area_to_legacy($row) {
+function wexoe_pa_map_product_area_to_legacy($row) {
     if (empty($row) || !is_array($row)) return null;
 
     $mapped = [
@@ -243,7 +243,7 @@ function wexoe_pa_test_map_product_area_to_legacy($row) {
     return $mapped;
 }
 
-function wexoe_pa_test_map_product_to_legacy($row) {
+function wexoe_pa_map_product_to_legacy($row) {
     return [
         '_record_id' => $row['_record_id'] ?? '',
         'Name' => $row['name'] ?? '',
@@ -264,7 +264,7 @@ function wexoe_pa_test_map_product_to_legacy($row) {
     ];
 }
 
-function wexoe_pa_test_map_solution_to_legacy($row) {
+function wexoe_pa_map_solution_to_legacy($row) {
     return [
         '_record_id' => $row['_record_id'] ?? '',
         'Name' => $row['name'] ?? '',
@@ -278,7 +278,7 @@ function wexoe_pa_test_map_solution_to_legacy($row) {
     ];
 }
 
-function wexoe_pa_test_map_article_to_legacy($row) {
+function wexoe_pa_map_article_to_legacy($row) {
     return [
         '_record_id' => $row['_record_id'] ?? '',
         'Name' => $row['name'] ?? '',
@@ -291,13 +291,13 @@ function wexoe_pa_test_map_article_to_legacy($row) {
     ];
 }
 
-function wexoe_pa_test_fetch_product_area($slug) {
-    $repo = wexoe_pa_test_get_repo('product_areas');
+function wexoe_pa_fetch_product_area($slug) {
+    $repo = wexoe_pa_get_repo('product_areas');
     if (!$repo) return null;
-    return wexoe_pa_test_map_product_area_to_legacy($repo->find($slug));
+    return wexoe_pa_map_product_area_to_legacy($repo->find($slug));
 }
 
-function wexoe_pa_test_fetch_linked_records($table, $record_ids, $cache_prefix) {
+function wexoe_pa_fetch_linked_records($table, $record_ids, $cache_prefix) {
     if (empty($record_ids)) return [];
 
     $entity_by_prefix = [
@@ -309,17 +309,17 @@ function wexoe_pa_test_fetch_linked_records($table, $record_ids, $cache_prefix) 
     $entity = $entity_by_prefix[$cache_prefix] ?? '';
     if (empty($entity)) return [];
 
-    $repo = wexoe_pa_test_get_repo($entity);
+    $repo = wexoe_pa_get_repo($entity);
     if (!$repo) return [];
 
     $records = $repo->find_by_ids($record_ids);
 
     if ($cache_prefix === 'products') {
-        $records = array_map('wexoe_pa_test_map_product_to_legacy', $records);
+        $records = array_map('wexoe_pa_map_product_to_legacy', $records);
     } elseif ($cache_prefix === 'solutions') {
-        $records = array_map('wexoe_pa_test_map_solution_to_legacy', $records);
+        $records = array_map('wexoe_pa_map_solution_to_legacy', $records);
     } elseif ($cache_prefix === 'articles') {
-        $records = array_map('wexoe_pa_test_map_article_to_legacy', $records);
+        $records = array_map('wexoe_pa_map_article_to_legacy', $records);
     }
 
     usort($records, function($a, $b) {
@@ -335,12 +335,12 @@ function wexoe_pa_test_fetch_linked_records($table, $record_ids, $cache_prefix) 
     return array_values($records);
 }
 
-function wexoe_pa_test_get_linked_ids($data, $field) {
+function wexoe_pa_get_linked_ids($data, $field) {
     if (!isset($data[$field]) || !is_array($data[$field])) return [];
     return $data[$field];
 }
 
-function wexoe_pa_test_fetch_articles_for_products($products) {
+function wexoe_pa_fetch_articles_for_products($products) {
     if (empty($products)) return [];
 
     $all_article_ids = [];
@@ -362,10 +362,10 @@ function wexoe_pa_test_fetch_articles_for_products($products) {
         return $grouped;
     }
 
-    $article_repo = wexoe_pa_test_get_repo('articles');
+    $article_repo = wexoe_pa_get_repo('articles');
     if (!$article_repo) return [];
 
-    $articles_list = array_map('wexoe_pa_test_map_article_to_legacy', $article_repo->find_by_ids($all_article_ids));
+    $articles_list = array_map('wexoe_pa_map_article_to_legacy', $article_repo->find_by_ids($all_article_ids));
 
     $articles_by_id = [];
     foreach ($articles_list as $article) {
@@ -393,12 +393,12 @@ function wexoe_pa_test_fetch_articles_for_products($products) {
 /**
  * Section 1: TOP BANNER
  */
-function wexoe_pa_test_render_top($data, $id) {
-    $h1 = wexoe_pa_test_field($data, 'H1', '');
+function wexoe_pa_render_top($data, $id) {
+    $h1 = wexoe_pa_field($data, 'H1', '');
     if (empty($h1)) return '';
 
-    $bg = wexoe_pa_test_hex(wexoe_pa_test_field($data, 'Top BG', ''), '#11325D');
-    $text = wexoe_pa_test_text_color($bg);
+    $bg = wexoe_pa_hex(wexoe_pa_field($data, 'Top BG', ''), '#11325D');
+    $text = wexoe_pa_text_color($bg);
 
     return '
     <section class="wexoe-pa-top" style="--top-bg:'.$bg.';--top-text:'.$text.';">
@@ -411,28 +411,28 @@ function wexoe_pa_test_render_top($data, $id) {
 /**
  * Section 2: HERO
  */
-function wexoe_pa_test_render_hero($data, $id) {
-    $h2 = wexoe_pa_test_field($data, 'Hero H2', '');
-    $text = wexoe_pa_test_field($data, 'Hero Text', '');
+function wexoe_pa_render_hero($data, $id) {
+    $h2 = wexoe_pa_field($data, 'Hero H2', '');
+    $text = wexoe_pa_field($data, 'Hero Text', '');
     if (empty($h2) && empty($text)) return '';
 
-    $bg = wexoe_pa_test_hex(wexoe_pa_test_field($data, 'Hero BG', ''), '#FFFFFF');
-    $accent = wexoe_pa_test_hex(wexoe_pa_test_field($data, 'Hero Accent', ''), '#F28C28');
-    $text_color = wexoe_pa_test_text_color($bg);
-    $text_secondary = wexoe_pa_test_text_secondary($bg);
-    $cta_text = wexoe_pa_test_field($data, 'Hero CTA Text', '');
-    $cta_url = wexoe_pa_test_field($data, 'Hero CTA URL', '');
-    $benefits = wexoe_pa_test_lines_to_array(wexoe_pa_test_field($data, 'Hero Benefits', ''));
+    $bg = wexoe_pa_hex(wexoe_pa_field($data, 'Hero BG', ''), '#FFFFFF');
+    $accent = wexoe_pa_hex(wexoe_pa_field($data, 'Hero Accent', ''), '#F28C28');
+    $text_color = wexoe_pa_text_color($bg);
+    $text_secondary = wexoe_pa_text_secondary($bg);
+    $cta_text = wexoe_pa_field($data, 'Hero CTA Text', '');
+    $cta_url = wexoe_pa_field($data, 'Hero CTA URL', '');
+    $benefits = wexoe_pa_lines_to_array(wexoe_pa_field($data, 'Hero Benefits', ''));
 
     // NPI fields
-    $npi_title = wexoe_pa_test_field($data, 'NPI Title', '');
-    $npi_desc = wexoe_pa_test_field($data, 'NPI Description', '');
-    $npi_image = wexoe_pa_test_field($data, 'NPI Image', '');
-    $npi_link = wexoe_pa_test_field($data, 'NPI Link', '');
+    $npi_title = wexoe_pa_field($data, 'NPI Title', '');
+    $npi_desc = wexoe_pa_field($data, 'NPI Description', '');
+    $npi_image = wexoe_pa_field($data, 'NPI Image', '');
+    $npi_link = wexoe_pa_field($data, 'NPI Link', '');
     $has_npi = !empty($npi_title);
 
     // Hero Image
-    $hero_image = wexoe_pa_test_field($data, 'Hero Image', '');
+    $hero_image = wexoe_pa_field($data, 'Hero Image', '');
 
     $html = '<section class="wexoe-pa-hero" style="--hero-bg:'.$bg.';--hero-accent:'.$accent.';--hero-text:'.$text_color.';--hero-text-secondary:'.$text_secondary.';">';
     $html .= '<div class="wexoe-pa-hero-inner">';
@@ -442,7 +442,7 @@ function wexoe_pa_test_render_hero($data, $id) {
         $html .= '<h2 class="wexoe-pa-hero-h2">'.esc_html($h2).'</h2>';
     }
     if ($text) {
-        $html .= '<p class="wexoe-pa-hero-text">'.wexoe_pa_test_md($text).'</p>';
+        $html .= '<p class="wexoe-pa-hero-text">'.wexoe_pa_md($text).'</p>';
     }
     if ($cta_text && $cta_url) {
         $html .= '<a href="'.esc_url($cta_url).'" class="wexoe-pa-hero-cta">'.esc_html($cta_text).' <span class="wexoe-pa-cta-arrow">&rarr;</span></a>';
@@ -457,7 +457,7 @@ function wexoe_pa_test_render_hero($data, $id) {
         $tag_close = $npi_link ? '</a>' : '</div>';
         $html .= $tag_open;
         if ($npi_image) {
-            $html .= wexoe_pa_test_render_media($npi_image, $npi_title, 'wexoe-pa-npi-');
+            $html .= wexoe_pa_render_media($npi_image, $npi_title, 'wexoe-pa-npi-');
         }
         $html .= '<div class="wexoe-pa-npi-body">';
         $html .= '<span class="wexoe-pa-npi-badge">NYHET</span>';
@@ -472,13 +472,13 @@ function wexoe_pa_test_render_hero($data, $id) {
         $html .= $tag_close;
     } elseif (!empty($hero_image)) {
         // Hero Image or Video
-        $html .= '<div class="wexoe-pa-hero-image">' . wexoe_pa_test_render_media($hero_image) . '</div>';
+        $html .= '<div class="wexoe-pa-hero-image">' . wexoe_pa_render_media($hero_image) . '</div>';
     } elseif (!empty($benefits)) {
         // Benefits list
         $html .= '<div class="wexoe-pa-hero-benefits">';
         $html .= '<ul class="wexoe-pa-benefits-list">';
         foreach ($benefits as $benefit) {
-            $html .= '<li><span class="wexoe-pa-check">&#10003;</span> '.wexoe_pa_test_md($benefit).'</li>';
+            $html .= '<li><span class="wexoe-pa-check">&#10003;</span> '.wexoe_pa_md($benefit).'</li>';
         }
         $html .= '</ul></div>';
     }
@@ -490,27 +490,27 @@ function wexoe_pa_test_render_hero($data, $id) {
 /**
  * Section 3: PRODUCT TOGGLE
  */
-function wexoe_pa_test_render_products($products, $data, $id) {
+function wexoe_pa_render_products($products, $data, $id) {
     if (empty($products)) return '';
 
-    $bg = wexoe_pa_test_hex(wexoe_pa_test_field($data, 'Toggle BG', ''), '#11325D');
-    $header_bg = wexoe_pa_test_hex(wexoe_pa_test_field($data, 'Toggle Header BG', ''), '#FFFFFF');
-    $accent = wexoe_pa_test_hex(wexoe_pa_test_field($data, 'Toggle Accent', ''), '#F28C28');
-    $text_color = wexoe_pa_test_text_color($bg);
+    $bg = wexoe_pa_hex(wexoe_pa_field($data, 'Toggle BG', ''), '#11325D');
+    $header_bg = wexoe_pa_hex(wexoe_pa_field($data, 'Toggle Header BG', ''), '#FFFFFF');
+    $accent = wexoe_pa_hex(wexoe_pa_field($data, 'Toggle Accent', ''), '#F28C28');
+    $text_color = wexoe_pa_text_color($bg);
 
     $html = '<section class="wexoe-pa-toggle" style="--toggle-bg:'.$bg.';--toggle-header-bg:'.$header_bg.';--toggle-accent:'.$accent.';--toggle-text:'.$text_color.';">';
     $html .= '<div class="wexoe-pa-toggle-inner">';
 
     foreach ($products as $i => $product) {
-        $name = wexoe_pa_test_field($product, 'Name', 'Produkt');
-        $eco = wexoe_pa_test_field($product, 'Ecosystem Description', '');
-        $desc = wexoe_pa_test_field($product, 'Description', '');
-        $bullets = wexoe_pa_test_lines_to_array(wexoe_pa_test_field($product, 'Bullets', ''));
-        $image = wexoe_pa_test_field($product, 'Image', '');
-        $btn1_text = wexoe_pa_test_field($product, 'Button 1 Text', '');
-        $btn1_url = wexoe_pa_test_field($product, 'Button 1 URL', '');
-        $btn2_text = wexoe_pa_test_field($product, 'Button 2 Text', '');
-        $btn2_url = wexoe_pa_test_field($product, 'Button 2 URL', '');
+        $name = wexoe_pa_field($product, 'Name', 'Produkt');
+        $eco = wexoe_pa_field($product, 'Ecosystem Description', '');
+        $desc = wexoe_pa_field($product, 'Description', '');
+        $bullets = wexoe_pa_lines_to_array(wexoe_pa_field($product, 'Bullets', ''));
+        $image = wexoe_pa_field($product, 'Image', '');
+        $btn1_text = wexoe_pa_field($product, 'Button 1 Text', '');
+        $btn1_url = wexoe_pa_field($product, 'Button 1 URL', '');
+        $btn2_text = wexoe_pa_field($product, 'Button 2 Text', '');
+        $btn2_url = wexoe_pa_field($product, 'Button 2 URL', '');
         $is_open = ($i === 0) ? ' wexoe-pa-toggle-open' : '';
         $has_one_btn = (!empty($btn1_text) && empty($btn2_text)) || (empty($btn1_text) && !empty($btn2_text));
 
@@ -534,12 +534,12 @@ function wexoe_pa_test_render_products($products, $data, $id) {
         // Left column — text + buttons
         $html .= '<div class="wexoe-pa-toggle-left">';
         if ($desc) {
-            $html .= '<p class="wexoe-pa-toggle-desc">'.wexoe_pa_test_md($desc).'</p>';
+            $html .= '<p class="wexoe-pa-toggle-desc">'.wexoe_pa_md($desc).'</p>';
         }
         if (!empty($bullets)) {
             $html .= '<ul class="wexoe-pa-toggle-checks">';
             foreach ($bullets as $b) {
-                $html .= '<li><span class="wexoe-pa-check">&#10003;</span> '.wexoe_pa_test_md($b).'</li>';
+                $html .= '<li><span class="wexoe-pa-check">&#10003;</span> '.wexoe_pa_md($b).'</li>';
             }
             $html .= '</ul>';
         }
@@ -574,12 +574,12 @@ function wexoe_pa_test_render_products($products, $data, $id) {
 /**
  * Section 3b: SIDE MENU (alternative to toggle when "Side menu" checkbox is set)
  */
-function wexoe_pa_test_render_side_menu($products, $articles_grouped, $data, $id, $request_mode = false) {
+function wexoe_pa_render_side_menu($products, $articles_grouped, $data, $id, $request_mode = false) {
     if (empty($products)) return '';
 
-    $bg = wexoe_pa_test_hex(wexoe_pa_test_field($data, 'Toggle BG', ''), '#11325D');
-    $accent = wexoe_pa_test_hex(wexoe_pa_test_field($data, 'Toggle Accent', ''), '#F28C28');
-    $text_color = wexoe_pa_test_text_color($bg);
+    $bg = wexoe_pa_hex(wexoe_pa_field($data, 'Toggle BG', ''), '#11325D');
+    $accent = wexoe_pa_hex(wexoe_pa_field($data, 'Toggle Accent', ''), '#F28C28');
+    $text_color = wexoe_pa_text_color($bg);
 
     $html = '<section class="wexoe-pa-sidemenu" style="--sm-bg:'.$bg.';--sm-accent:'.$accent.';--sm-text:'.$text_color.';">';
     $html .= '<div class="wexoe-pa-sidemenu-inner">';
@@ -588,7 +588,7 @@ function wexoe_pa_test_render_side_menu($products, $articles_grouped, $data, $id
     $html .= '<div class="wexoe-pa-sm-mobile-select-wrap">';
     $html .= '<select class="wexoe-pa-sm-mobile-select">';
     foreach ($products as $i => $product) {
-        $name = wexoe_pa_test_field($product, 'Name', 'Produkt');
+        $name = wexoe_pa_field($product, 'Name', 'Produkt');
         $html .= '<option value="'.$i.'"'.($i === 0 ? ' selected' : '').'>'.esc_html($name).'</option>';
     }
     $html .= '</select>';
@@ -597,7 +597,7 @@ function wexoe_pa_test_render_side_menu($products, $articles_grouped, $data, $id
     // Desktop: sidebar
     $html .= '<nav class="wexoe-pa-sm-sidebar">';
     foreach ($products as $i => $product) {
-        $name = wexoe_pa_test_field($product, 'Name', 'Produkt');
+        $name = wexoe_pa_field($product, 'Name', 'Produkt');
         $active_class = ($i === 0) ? ' wexoe-pa-sm-nav-active' : '';
         $html .= '<button class="wexoe-pa-sm-nav-item'.$active_class.'" data-sm-index="'.$i.'">'.esc_html($name).'</button>';
     }
@@ -606,16 +606,16 @@ function wexoe_pa_test_render_side_menu($products, $articles_grouped, $data, $id
     // Content panels
     $html .= '<div class="wexoe-pa-sm-content">';
     foreach ($products as $i => $product) {
-        $name = wexoe_pa_test_field($product, 'Name', 'Produkt');
-        $desc = wexoe_pa_test_field($product, 'Description', '');
-        $eco = wexoe_pa_test_field($product, 'Ecosystem Description', '');
-        $bullets = wexoe_pa_test_lines_to_array(wexoe_pa_test_field($product, 'Bullets', ''));
-        $image = wexoe_pa_test_field($product, 'Image', '');
-        $btn1_text = wexoe_pa_test_field($product, 'Button 1 Text', '');
-        $btn1_url = wexoe_pa_test_field($product, 'Button 1 URL', '');
-        $btn2_text = wexoe_pa_test_field($product, 'Button 2 Text', '');
-        $btn2_url = wexoe_pa_test_field($product, 'Button 2 URL', '');
-        $record_id = wexoe_pa_test_field($product, '_record_id', '');
+        $name = wexoe_pa_field($product, 'Name', 'Produkt');
+        $desc = wexoe_pa_field($product, 'Description', '');
+        $eco = wexoe_pa_field($product, 'Ecosystem Description', '');
+        $bullets = wexoe_pa_lines_to_array(wexoe_pa_field($product, 'Bullets', ''));
+        $image = wexoe_pa_field($product, 'Image', '');
+        $btn1_text = wexoe_pa_field($product, 'Button 1 Text', '');
+        $btn1_url = wexoe_pa_field($product, 'Button 1 URL', '');
+        $btn2_text = wexoe_pa_field($product, 'Button 2 Text', '');
+        $btn2_url = wexoe_pa_field($product, 'Button 2 URL', '');
+        $record_id = wexoe_pa_field($product, '_record_id', '');
         $product_articles = isset($articles_grouped[$record_id]) ? $articles_grouped[$record_id] : [];
         $has_one_btn = (!empty($btn1_text) && empty($btn2_text)) || (empty($btn1_text) && !empty($btn2_text));
         $horizontal = !empty($product['Horizontal']);
@@ -624,7 +624,7 @@ function wexoe_pa_test_render_side_menu($products, $articles_grouped, $data, $id
         $html .= '<div class="wexoe-pa-sm-panel" data-sm-panel="'.$i.'"'.$visible.'>';
 
         // Header — use "Header side menu" if set, else Name
-        $heading = wexoe_pa_test_field($product, 'Header side menu', $name);
+        $heading = wexoe_pa_field($product, 'Header side menu', $name);
         $html .= '<h2 class="wexoe-pa-sm-h2">'.esc_html($heading).'</h2>';
 
         // Content row: text left, image right
@@ -640,14 +640,14 @@ function wexoe_pa_test_render_side_menu($products, $articles_grouped, $data, $id
 
         // Description
         if ($desc) {
-            $html .= '<p class="wexoe-pa-sm-desc">'.wexoe_pa_test_md($desc).'</p>';
+            $html .= '<p class="wexoe-pa-sm-desc">'.wexoe_pa_md($desc).'</p>';
         }
 
         // Bullets
         if (!empty($bullets)) {
             $html .= '<ul class="wexoe-pa-sm-checks">';
             foreach ($bullets as $b) {
-                $html .= '<li><span class="wexoe-pa-check">&#10003;</span> '.wexoe_pa_test_md($b).'</li>';
+                $html .= '<li><span class="wexoe-pa-check">&#10003;</span> '.wexoe_pa_md($b).'</li>';
             }
             $html .= '</ul>';
         }
@@ -672,7 +672,7 @@ function wexoe_pa_test_render_side_menu($products, $articles_grouped, $data, $id
         // Image column
         if ($image) {
             $html .= '<div class="wexoe-pa-sm-img-wrap">';
-            $html .= wexoe_pa_test_render_media($image, $name, 'wexoe-pa-sm-');
+            $html .= wexoe_pa_render_media($image, $name, 'wexoe-pa-sm-');
             $html .= '</div>';
         }
 
@@ -686,12 +686,12 @@ function wexoe_pa_test_render_side_menu($products, $articles_grouped, $data, $id
             $html .= '<div class="wexoe-pa-sm-articles">';
             $html .= '<div class="'.$grid_class.'">';
             foreach ($product_articles as $art_idx => $article) {
-                $art_name = wexoe_pa_test_field($article, 'Name', '');
-                $art_nr = wexoe_pa_test_field($article, 'Artikelnummer', '');
-                $art_datasheet = wexoe_pa_test_field($article, 'Datablad', '');
-                $art_webshop = wexoe_pa_test_field($article, 'Länk till webshop', '');
-                $art_image = wexoe_pa_test_field($article, 'Bild', '');
-                $variants = wexoe_pa_test_parse_variants(wexoe_pa_test_field($article, 'Varianter', ''));
+                $art_name = wexoe_pa_field($article, 'Name', '');
+                $art_nr = wexoe_pa_field($article, 'Artikelnummer', '');
+                $art_datasheet = wexoe_pa_field($article, 'Datablad', '');
+                $art_webshop = wexoe_pa_field($article, 'Länk till webshop', '');
+                $art_image = wexoe_pa_field($article, 'Bild', '');
+                $variants = wexoe_pa_parse_variants(wexoe_pa_field($article, 'Varianter', ''));
                 $has_variants = ($variants !== null && !empty($variants['dimensions']));
 
                 $card_id = 'art-' . $i . '-' . $art_idx;
@@ -734,7 +734,7 @@ function wexoe_pa_test_render_side_menu($products, $articles_grouped, $data, $id
                     $initial_nr = isset($variants['map'][$initial_key]) ? $variants['map'][$initial_key] : $art_nr;
                     $html .= '<div class="wexoe-pa-sm-article-nr wexoe-pa-sm-variant-artnr"><span class="wexoe-pa-sm-article-nr-label">Art.</span><span class="wexoe-pa-sm-article-nr-value">'.esc_html($initial_nr).'</span></div>';
                 } else {
-                    $art_desc = wexoe_pa_test_field($article, 'Description', '');
+                    $art_desc = wexoe_pa_field($article, 'Description', '');
                     if ($art_desc) {
                         $html .= '<p class="wexoe-pa-sm-article-desc">'.esc_html($art_desc).'</p>';
                     }
@@ -780,13 +780,13 @@ function wexoe_pa_test_render_side_menu($products, $articles_grouped, $data, $id
 /**
  * Section 4: SOLUTIONS AND CONCEPTS
  */
-function wexoe_pa_test_render_solutions($solutions, $data, $id) {
+function wexoe_pa_render_solutions($solutions, $data, $id) {
     if (empty($solutions)) return '';
 
-    $bg = wexoe_pa_test_hex(wexoe_pa_test_field($data, 'Solutions BG', ''), '#FFFFFF');
-    $card_bg = wexoe_pa_test_hex(wexoe_pa_test_field($data, 'Solutions Card BG', ''), '#FFFFFF');
-    $title = wexoe_pa_test_field($data, 'Solutions Title', 'Lösningar & Koncept');
-    $text_color = wexoe_pa_test_text_color($bg);
+    $bg = wexoe_pa_hex(wexoe_pa_field($data, 'Solutions BG', ''), '#FFFFFF');
+    $card_bg = wexoe_pa_hex(wexoe_pa_field($data, 'Solutions Card BG', ''), '#FFFFFF');
+    $title = wexoe_pa_field($data, 'Solutions Title', 'Lösningar & Koncept');
+    $text_color = wexoe_pa_text_color($bg);
 
     $html = '<section class="wexoe-pa-solutions" style="--solutions-bg:'.$bg.';--solutions-card-bg:'.$card_bg.';--solutions-text:'.$text_color.';">';
     $html .= '<div class="wexoe-pa-solutions-inner">';
@@ -794,12 +794,12 @@ function wexoe_pa_test_render_solutions($solutions, $data, $id) {
     $html .= '<div class="wexoe-pa-solutions-grid">';
 
     foreach ($solutions as $sol) {
-        $name = wexoe_pa_test_field($sol, 'Name', '');
-        $image = wexoe_pa_test_field($sol, 'Image', '');
-        $url = wexoe_pa_test_field($sol, 'URL', '#');
-        $desc = wexoe_pa_test_field($sol, 'Description', '');
-        $cta = wexoe_pa_test_field($sol, 'CTA Text', 'Läs mer');
-        $category = wexoe_pa_test_field($sol, 'Category', '');
+        $name = wexoe_pa_field($sol, 'Name', '');
+        $image = wexoe_pa_field($sol, 'Image', '');
+        $url = wexoe_pa_field($sol, 'URL', '#');
+        $desc = wexoe_pa_field($sol, 'Description', '');
+        $cta = wexoe_pa_field($sol, 'CTA Text', 'Läs mer');
+        $category = wexoe_pa_field($sol, 'Category', '');
 
         $html .= '<a href="'.esc_url($url).'" class="wexoe-pa-solution-card">';
         if ($image) {
@@ -827,18 +827,18 @@ function wexoe_pa_test_render_solutions($solutions, $data, $id) {
 /**
  * Section 5: NORMAL (×4)
  */
-function wexoe_pa_test_render_normal($data, $n, $id) {
+function wexoe_pa_render_normal($data, $n, $id) {
     $prefix = 'Normal ' . $n;
-    $h2 = wexoe_pa_test_field($data, $prefix . ' H2', '');
-    $text = wexoe_pa_test_field($data, $prefix . ' Text', '');
+    $h2 = wexoe_pa_field($data, $prefix . ' H2', '');
+    $text = wexoe_pa_field($data, $prefix . ' Text', '');
     if (empty($h2) && empty($text)) return '';
 
     $default_bg = ($n % 2 === 0) ? '#F8F9FA' : '#FFFFFF';
-    $bg = wexoe_pa_test_hex(wexoe_pa_test_field($data, $prefix . ' BG', ''), $default_bg);
-    $text_color = wexoe_pa_test_text_color($bg);
-    $text_secondary = wexoe_pa_test_text_secondary($bg);
-    $bullets = wexoe_pa_test_lines_to_array(wexoe_pa_test_field($data, $prefix . ' Bullets', ''));
-    $image = wexoe_pa_test_field($data, $prefix . ' Image', '');
+    $bg = wexoe_pa_hex(wexoe_pa_field($data, $prefix . ' BG', ''), $default_bg);
+    $text_color = wexoe_pa_text_color($bg);
+    $text_secondary = wexoe_pa_text_secondary($bg);
+    $bullets = wexoe_pa_lines_to_array(wexoe_pa_field($data, $prefix . ' Bullets', ''));
+    $image = wexoe_pa_field($data, $prefix . ' Image', '');
     $reversed = !empty($data[$prefix . ' Reversed']);
 
     $rev_class = $reversed ? ' wexoe-pa-normal-reversed' : '';
@@ -852,12 +852,12 @@ function wexoe_pa_test_render_normal($data, $n, $id) {
         $html .= '<h2 class="wexoe-pa-normal-h2">'.esc_html($h2).'</h2>';
     }
     if ($text) {
-        $html .= '<p class="wexoe-pa-normal-body">'.wexoe_pa_test_md($text).'</p>';
+        $html .= '<p class="wexoe-pa-normal-body">'.wexoe_pa_md($text).'</p>';
     }
     if (!empty($bullets)) {
         $html .= '<ul class="wexoe-pa-normal-checks">';
         foreach ($bullets as $b) {
-            $html .= '<li><span class="wexoe-pa-check">&#10003;</span> '.wexoe_pa_test_md($b).'</li>';
+            $html .= '<li><span class="wexoe-pa-check">&#10003;</span> '.wexoe_pa_md($b).'</li>';
         }
         $html .= '</ul>';
     }
@@ -875,16 +875,16 @@ function wexoe_pa_test_render_normal($data, $n, $id) {
 /**
  * Section 6: OUR GUY
  */
-function wexoe_pa_test_render_our_guy($data, $id) {
-    $name = wexoe_pa_test_field($data, 'Contact Name', '');
+function wexoe_pa_render_our_guy($data, $id) {
+    $name = wexoe_pa_field($data, 'Contact Name', '');
     if (empty($name)) return '';
 
-    $bg = wexoe_pa_test_hex(wexoe_pa_test_field($data, 'Contact BG', ''), '#11325D');
-    $title = wexoe_pa_test_field($data, 'Contact Title', '');
-    $email = wexoe_pa_test_field($data, 'Contact Email', '');
-    $phone = wexoe_pa_test_field($data, 'Contact Phone', '');
-    $image = wexoe_pa_test_field($data, 'Contact Image', '');
-    $bio = wexoe_pa_test_field($data, 'Contact Text', '');
+    $bg = wexoe_pa_hex(wexoe_pa_field($data, 'Contact BG', ''), '#11325D');
+    $title = wexoe_pa_field($data, 'Contact Title', '');
+    $email = wexoe_pa_field($data, 'Contact Email', '');
+    $phone = wexoe_pa_field($data, 'Contact Phone', '');
+    $image = wexoe_pa_field($data, 'Contact Image', '');
+    $bio = wexoe_pa_field($data, 'Contact Text', '');
 
     $html = '<section class="wexoe-pa-contact" style="--contact-bg:'.$bg.';">';
     $html .= '<div class="wexoe-pa-contact-inner">';
@@ -911,7 +911,7 @@ function wexoe_pa_test_render_our_guy($data, $id) {
     if ($bio) {
         $html .= '<div class="wexoe-pa-contact-quote">';
         $html .= '<svg class="wexoe-pa-quote-open" width="32" height="24" viewBox="0 0 32 24" fill="none"><path d="M0 24V14.4C0 10.4 0.8 7.2 2.4 4.8C4.1 2.4 6.7 0.7 10.2 0L11.4 3C9.3 3.5 7.7 4.5 6.6 6C5.5 7.5 5 9.2 5 11.2H10V24H0ZM18 24V14.4C18 10.4 18.8 7.2 20.4 4.8C22.1 2.4 24.7 0.7 28.2 0L29.4 3C27.3 3.5 25.7 4.5 24.6 6C23.5 7.5 23 9.2 23 11.2H28V24H18Z" fill="rgba(255,255,255,0.15)"/></svg>';
-        $html .= '<p>'.wexoe_pa_test_md($bio).'</p>';
+        $html .= '<p>'.wexoe_pa_md($bio).'</p>';
         $html .= '<svg class="wexoe-pa-quote-close" width="32" height="24" viewBox="0 0 32 24" fill="none"><path d="M32 0V9.6C32 13.6 31.2 16.8 29.6 19.2C27.9 21.6 25.3 23.3 21.8 24L20.6 21C22.7 20.5 24.3 19.5 25.4 18C26.5 16.5 27 14.8 27 12.8H22V0H32ZM14 0V9.6C14 13.6 13.2 16.8 11.6 19.2C9.9 21.6 7.3 23.3 3.8 24L2.6 21C4.7 20.5 6.3 19.5 7.4 18C8.5 16.5 9 14.8 9 12.8H4V0H14Z" fill="rgba(255,255,255,0.15)"/></svg>';
         $html .= '</div>';
     }
@@ -923,13 +923,13 @@ function wexoe_pa_test_render_our_guy($data, $id) {
 /**
  * Section 7: DOCUMENTATION
  */
-function wexoe_pa_test_render_docs($data, $id) {
-    $iframe_src = wexoe_pa_test_field($data, 'Docs Iframe', '');
+function wexoe_pa_render_docs($data, $id) {
+    $iframe_src = wexoe_pa_field($data, 'Docs Iframe', '');
     if (empty($iframe_src)) return '';
 
-    $bg = wexoe_pa_test_hex(wexoe_pa_test_field($data, 'Docs BG', ''), '#FFFFFF');
-    $text_color = wexoe_pa_test_text_color($bg);
-    $title = wexoe_pa_test_field($data, 'Docs Title', 'Dokumentation');
+    $bg = wexoe_pa_hex(wexoe_pa_field($data, 'Docs BG', ''), '#FFFFFF');
+    $text_color = wexoe_pa_text_color($bg);
+    $title = wexoe_pa_field($data, 'Docs Title', 'Dokumentation');
 
     $html = '<section class="wexoe-pa-docs" style="--docs-bg:'.$bg.';--docs-text:'.$text_color.';">';
     $html .= '<div class="wexoe-pa-docs-inner">';
@@ -944,18 +944,18 @@ function wexoe_pa_test_render_docs($data, $id) {
 /**
  * Section: REQUEST FORM (shown when "Request" checkbox is set in Product Areas)
  */
-function wexoe_pa_test_render_request_form($data, $id, $articles_grouped = []) {
-    $nonce = wp_create_nonce('wexoe_pa_test_request_nonce');
+function wexoe_pa_render_request_form($data, $id, $articles_grouped = []) {
+    $nonce = wp_create_nonce('wexoe_pa_request_nonce');
     $ajax_url = admin_url('admin-ajax.php');
 
     // Build flat list of all articles for search
     $all_articles = [];
     foreach ($articles_grouped as $pid => $arts) {
         foreach ($arts as $art) {
-            $variants = wexoe_pa_test_parse_variants(wexoe_pa_test_field($art, 'Varianter', ''));
+            $variants = wexoe_pa_parse_variants(wexoe_pa_field($art, 'Varianter', ''));
             $all_articles[] = [
-                'name' => wexoe_pa_test_field($art, 'Name', ''),
-                'nr' => wexoe_pa_test_field($art, 'Artikelnummer', ''),
+                'name' => wexoe_pa_field($art, 'Name', ''),
+                'nr' => wexoe_pa_field($art, 'Artikelnummer', ''),
                 'variants' => $variants,
             ];
         }
@@ -1053,7 +1053,7 @@ function wexoe_pa_test_render_request_form($data, $id, $articles_grouped = []) {
    CSS
    ============================================================ */
 
-function wexoe_pa_test_render_css($id) {
+function wexoe_pa_render_css($id) {
     return '
     <style>
     @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap");
@@ -3410,7 +3410,7 @@ function wexoe_pa_test_render_css($id) {
    JAVASCRIPT
    ============================================================ */
 
-function wexoe_pa_test_render_js($id, $request_mode = false) {
+function wexoe_pa_render_js($id, $request_mode = false) {
     $request_js = $request_mode ? 'true' : 'false';
     return '
     <script>
@@ -3929,7 +3929,7 @@ function wexoe_pa_test_render_js($id, $request_mode = false) {
                     custBtn.disabled = true;
 
                     var fd = new FormData();
-                    fd.append("action", "wexoe_pa_test_customer_lookup");
+                    fd.append("action", "wexoe_pa_customer_lookup");
                     fd.append("customer_id", cid);
 
                     fetch(wrap.querySelector(".wexoe-pa-request-form").getAttribute("data-ajax"), { method: "POST", body: fd })
@@ -4069,7 +4069,7 @@ function wexoe_pa_test_render_js($id, $request_mode = false) {
                     if (reqBtnText) reqBtnText.textContent = "Skickar...";
 
                     var formData = new FormData(reqForm);
-                    formData.append("action", "wexoe_pa_test_request_submit");
+                    formData.append("action", "wexoe_pa_request_submit");
                     formData.append("nonce", reqForm.getAttribute("data-nonce"));
                     formData.append("page_url", window.location.href);
                     formData.append("artiklar", JSON.stringify(artiklar));
@@ -4106,7 +4106,7 @@ function wexoe_pa_test_render_js($id, $request_mode = false) {
    MAIN SHORTCODE
    ============================================================ */
 
-function wexoe_product_area_test_shortcode($atts) {
+function wexoe_product_area_shortcode($atts) {
     $atts = shortcode_atts([
         'slug' => '',
         'debug' => 'false',
@@ -4121,14 +4121,14 @@ function wexoe_product_area_test_shortcode($atts) {
     if (empty($slug)) {
         return '<p style="color:red;font-weight:bold;">[wexoe_product_area] Error: slug parameter is required.</p>';
     }
-    if (!wexoe_pa_test_core_ready()) {
+    if (!wexoe_pa_core_ready()) {
         return '<p style="color:red;font-weight:bold;">[wexoe_product_area] Error: Wexoe Core-pluginet är inte aktivt.</p>';
     }
 
     // Clear entity caches if nocache is set.
     if ($atts['nocache'] === 'true') {
         foreach (['product_areas', 'products', 'solutions', 'articles', 'customers'] as $entity) {
-            $repo = wexoe_pa_test_get_repo($entity);
+            $repo = wexoe_pa_get_repo($entity);
             if ($repo) {
                 $repo->clear_cache();
             }
@@ -4136,7 +4136,7 @@ function wexoe_product_area_test_shortcode($atts) {
     }
 
     // Fetch main record
-    $data = wexoe_pa_test_fetch_product_area($slug);
+    $data = wexoe_pa_fetch_product_area($slug);
 
     if (!$data) {
         if ($debug) {
@@ -4146,12 +4146,12 @@ function wexoe_product_area_test_shortcode($atts) {
     }
 
     // Fetch linked products
-    $product_ids = wexoe_pa_test_get_linked_ids($data, 'Products');
-    $products = wexoe_pa_test_fetch_linked_records(WEXOE_PA_TABLE_PRODUCTS, $product_ids, 'products');
+    $product_ids = wexoe_pa_get_linked_ids($data, 'Products');
+    $products = wexoe_pa_fetch_linked_records(WEXOE_PA_TABLE_PRODUCTS, $product_ids, 'products');
 
     // Fetch linked solutions
-    $solution_ids = wexoe_pa_test_get_linked_ids($data, 'Solutions');
-    $solutions = wexoe_pa_test_fetch_linked_records(WEXOE_PA_TABLE_SOLUTIONS, $solution_ids, 'solutions');
+    $solution_ids = wexoe_pa_get_linked_ids($data, 'Solutions');
+    $solutions = wexoe_pa_fetch_linked_records(WEXOE_PA_TABLE_SOLUTIONS, $solution_ids, 'solutions');
 
     // Check if side menu mode is enabled
     $side_menu = !empty($data['Side menu']);
@@ -4162,7 +4162,7 @@ function wexoe_product_area_test_shortcode($atts) {
     // Fetch articles if side menu is active
     $articles_grouped = [];
     if ($side_menu && !empty($products)) {
-        $articles_grouped = wexoe_pa_test_fetch_articles_for_products($products);
+        $articles_grouped = wexoe_pa_fetch_articles_for_products($products);
     }
 
     // Build output
@@ -4184,7 +4184,7 @@ function wexoe_product_area_test_shortcode($atts) {
     }
 
     // CSS
-    $html .= wexoe_pa_test_render_css($id);
+    $html .= wexoe_pa_render_css($id);
 
     // Remove Enfold content padding if enabled
     if ($remove_padding) {
@@ -4215,57 +4215,57 @@ function wexoe_product_area_test_shortcode($atts) {
     $html .= '<div id="' . $id . '" class="wexoe-pa-wrapper">';
 
     // Sections in fixed order
-    $html .= wexoe_pa_test_render_top($data, $id);
-    $html .= wexoe_pa_test_render_hero($data, $id);
+    $html .= wexoe_pa_render_top($data, $id);
+    $html .= wexoe_pa_render_hero($data, $id);
 
     // Normal sections with "upp" checkbox go before toggle
     for ($n = 1; $n <= 4; $n++) {
         if (!empty($data['Normal ' . $n . ' upp'])) {
-            $html .= wexoe_pa_test_render_normal($data, $n, $id);
+            $html .= wexoe_pa_render_normal($data, $n, $id);
         }
     }
 
     // Render toggle (default) or side menu (when "Side menu" checkbox is set)
     if (!$side_menu) {
-        $html .= wexoe_pa_test_render_products($products, $data, $id);
+        $html .= wexoe_pa_render_products($products, $data, $id);
     } else {
-        $html .= wexoe_pa_test_render_side_menu($products, $articles_grouped, $data, $id, $request_mode);
+        $html .= wexoe_pa_render_side_menu($products, $articles_grouped, $data, $id, $request_mode);
     }
 
     // Render request form (when "Request" checkbox is set)
     if ($request_mode) {
-        $html .= wexoe_pa_test_render_request_form($data, $id, $articles_grouped);
+        $html .= wexoe_pa_render_request_form($data, $id, $articles_grouped);
     }
 
-    $html .= wexoe_pa_test_render_solutions($solutions, $data, $id);
+    $html .= wexoe_pa_render_solutions($solutions, $data, $id);
 
     // Remaining normal sections go after solutions
     for ($n = 1; $n <= 4; $n++) {
         if (empty($data['Normal ' . $n . ' upp'])) {
-            $html .= wexoe_pa_test_render_normal($data, $n, $id);
+            $html .= wexoe_pa_render_normal($data, $n, $id);
         }
     }
 
-    $html .= wexoe_pa_test_render_our_guy($data, $id);
-    $html .= wexoe_pa_test_render_docs($data, $id);
+    $html .= wexoe_pa_render_our_guy($data, $id);
+    $html .= wexoe_pa_render_docs($data, $id);
 
     $html .= '</div>'; // wrapper
 
     // JavaScript
-    $html .= wexoe_pa_test_render_js($id, $request_mode);
+    $html .= wexoe_pa_render_js($id, $request_mode);
 
     return $html;
 }
 
-add_shortcode('wexoe_product_area', 'wexoe_product_area_test_shortcode');
+add_shortcode('wexoe_product_area', 'wexoe_product_area_shortcode');
 
 /* ============================================================
    REQUEST FORM — AJAX HANDLER
    ============================================================ */
 
-if (!function_exists('wexoe_pa_test_handle_request_submit')) {
-function wexoe_pa_test_handle_request_submit() {
-    if (!wp_verify_nonce($_POST['nonce'], 'wexoe_pa_test_request_nonce')) {
+if (!function_exists('wexoe_pa_handle_request_submit')) {
+function wexoe_pa_handle_request_submit() {
+    if (!wp_verify_nonce($_POST['nonce'], 'wexoe_pa_request_nonce')) {
         wp_send_json_error('Säkerhetsfel. Ladda om sidan och försök igen.');
         return;
     }
@@ -4320,16 +4320,16 @@ function wexoe_pa_test_handle_request_submit() {
         'message' => 'Tack ' . $data['namn'] . '! Vi har mottagit din prisförfrågan och återkommer inom kort.',
     ]);
 }
-add_action('wp_ajax_wexoe_pa_test_request_submit', 'wexoe_pa_test_handle_request_submit');
-add_action('wp_ajax_nopriv_wexoe_pa_test_request_submit', 'wexoe_pa_test_handle_request_submit');
+add_action('wp_ajax_wexoe_pa_request_submit', 'wexoe_pa_handle_request_submit');
+add_action('wp_ajax_nopriv_wexoe_pa_request_submit', 'wexoe_pa_handle_request_submit');
 }
 
 /* ============================================================
    CUSTOMER PRICE LOOKUP — AJAX HANDLER
    ============================================================ */
 
-if (!function_exists('wexoe_pa_test_parse_prices')) {
-function wexoe_pa_test_parse_prices($text) {
+if (!function_exists('wexoe_pa_parse_prices')) {
+function wexoe_pa_parse_prices($text) {
     if (empty($text)) return [];
     $lines = preg_split('/\r\n|\r|\n/', $text);
     $prices = [];
@@ -4347,15 +4347,15 @@ function wexoe_pa_test_parse_prices($text) {
 }
 }
 
-if (!function_exists('wexoe_pa_test_customer_lookup')) {
-function wexoe_pa_test_customer_lookup() {
+if (!function_exists('wexoe_pa_customer_lookup')) {
+function wexoe_pa_customer_lookup() {
     $customer_id = sanitize_text_field($_POST['customer_id'] ?? '');
     if (empty($customer_id)) {
         wp_send_json_error('Ange ett kund-ID.');
         return;
     }
 
-    $repo = wexoe_pa_test_get_repo('customers');
+    $repo = wexoe_pa_get_repo('customers');
     if (!$repo) {
         wp_send_json_error('Kunddata kunde inte läsas (customers-schema saknas i Wexoe Core).');
         return;
@@ -4369,13 +4369,13 @@ function wexoe_pa_test_customer_lookup() {
 
     $name = isset($record['name']) ? $record['name'] : '';
     $prices_text = isset($record['prices']) ? $record['prices'] : '';
-    $prices = wexoe_pa_test_parse_prices($prices_text);
+    $prices = wexoe_pa_parse_prices($prices_text);
 
     wp_send_json_success([
         'name' => $name,
         'prices' => $prices,
     ]);
 }
-add_action('wp_ajax_wexoe_pa_test_customer_lookup', 'wexoe_pa_test_customer_lookup');
-add_action('wp_ajax_nopriv_wexoe_pa_test_customer_lookup', 'wexoe_pa_test_customer_lookup');
+add_action('wp_ajax_wexoe_pa_customer_lookup', 'wexoe_pa_customer_lookup');
+add_action('wp_ajax_nopriv_wexoe_pa_customer_lookup', 'wexoe_pa_customer_lookup');
 }
