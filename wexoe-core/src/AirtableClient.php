@@ -30,6 +30,9 @@ class AirtableClient {
     const API_BASE = 'https://api.airtable.com/v0';
     const TIMEOUT_SECONDS = 15;
     const MAX_PAGES = 100; // safety — stops runaway pagination at ~10k records
+    const MAX_RETRIES = 2; // total attempts = 1 + MAX_RETRIES
+    const RETRY_BASE_MS = 500;
+    const RETRY_MAX_MS = 3000;
 
     /**
      * Fetch all records from a table, paginating automatically.
@@ -167,64 +170,110 @@ class AirtableClient {
             $url .= '?' . http_build_query($query);
         }
 
-        $response = wp_remote_get($url, [
-            'headers' => [
-                'Authorization' => 'Bearer ' . $api_key,
-            ],
-            'timeout' => self::TIMEOUT_SECONDS,
-        ]);
-
-        // Network-level failure (DNS, timeout, connection refused)
-        if (is_wp_error($response)) {
-            $msg = $response->get_error_message();
-            Logger::error('Airtable network error', [
-                'url_path' => $path,
-                'message' => $msg,
+        $attempt = 0;
+        do {
+            $response = wp_remote_get($url, [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $api_key,
+                ],
+                'timeout' => self::TIMEOUT_SECONDS,
             ]);
-            return self::error($msg, 'network');
-        }
 
-        $http_code = (int) wp_remote_retrieve_response_code($response);
-        $body_raw = wp_remote_retrieve_body($response);
-        $body = json_decode($body_raw, true);
+            // Network-level failure (DNS, timeout, connection refused)
+            if (is_wp_error($response)) {
+                $msg = $response->get_error_message();
+                if ($attempt < self::MAX_RETRIES) {
+                    self::sleep_before_retry($attempt, null, $path, 'network');
+                    $attempt++;
+                    continue;
+                }
 
-        // Non-2xx HTTP status
-        if ($http_code < 200 || $http_code >= 300) {
-            $error_type = self::classify_http_code($http_code);
-            $airtable_msg = isset($body['error']['message'])
-                ? $body['error']['message']
-                : (isset($body['error']['type']) ? $body['error']['type'] : 'HTTP ' . $http_code);
+                Logger::error('Airtable network error', [
+                    'url_path' => $path,
+                    'message' => $msg,
+                    'attempts' => $attempt + 1,
+                ]);
+                return self::error($msg, 'network');
+            }
 
-            Logger::error('Airtable HTTP error', [
-                'url_path' => $path,
-                'http_code' => $http_code,
-                'error_type' => $error_type,
-                'airtable_message' => $airtable_msg,
-            ]);
+            $http_code = (int) wp_remote_retrieve_response_code($response);
+            $body_raw = wp_remote_retrieve_body($response);
+            $body = json_decode($body_raw, true);
+
+            // Non-2xx HTTP status
+            if ($http_code < 200 || $http_code >= 300) {
+                $error_type = self::classify_http_code($http_code);
+                $airtable_msg = isset($body['error']['message'])
+                    ? $body['error']['message']
+                    : (isset($body['error']['type']) ? $body['error']['type'] : 'HTTP ' . $http_code);
+
+                $should_retry = ($http_code === 429 || $http_code >= 500) && $attempt < self::MAX_RETRIES;
+                if ($should_retry) {
+                    self::sleep_before_retry($attempt, $response, $path, $error_type);
+                    $attempt++;
+                    continue;
+                }
+
+                Logger::error('Airtable HTTP error', [
+                    'url_path' => $path,
+                    'http_code' => $http_code,
+                    'error_type' => $error_type,
+                    'airtable_message' => $airtable_msg,
+                    'attempts' => $attempt + 1,
+                ]);
+
+                return [
+                    'success' => false,
+                    'error' => $airtable_msg,
+                    'error_type' => $error_type,
+                    'http_code' => $http_code,
+                ];
+            }
+
+            // 2xx but body didn't parse as JSON
+            if (!is_array($body)) {
+                Logger::error('Airtable response parse error', [
+                    'url_path' => $path,
+                    'http_code' => $http_code,
+                    'body_preview' => substr($body_raw, 0, 200),
+                ]);
+                return self::error('Kunde inte tolka svar från Airtable (ogiltig JSON).', 'parse', $http_code);
+            }
 
             return [
-                'success' => false,
-                'error' => $airtable_msg,
-                'error_type' => $error_type,
+                'success' => true,
+                'body' => $body,
                 'http_code' => $http_code,
             ];
+        } while ($attempt <= self::MAX_RETRIES);
+
+        return self::error('Okänt Airtable-fel.', 'unknown');
+    }
+
+    private static function sleep_before_retry($attempt, $response, $path, $reason) {
+        $retry_after_seconds = null;
+        if (is_array($response)) {
+            $retry_after = wp_remote_retrieve_header($response, 'retry-after');
+            if (is_string($retry_after) && is_numeric($retry_after)) {
+                $retry_after_seconds = (int) $retry_after;
+            }
         }
 
-        // 2xx but body didn't parse as JSON
-        if (!is_array($body)) {
-            Logger::error('Airtable response parse error', [
-                'url_path' => $path,
-                'http_code' => $http_code,
-                'body_preview' => substr($body_raw, 0, 200),
-            ]);
-            return self::error('Kunde inte tolka svar från Airtable (ogiltig JSON).', 'parse', $http_code);
+        $base = self::RETRY_BASE_MS * (2 ** $attempt);
+        $jitter = random_int(0, 250);
+        $delay_ms = min(self::RETRY_MAX_MS, $base + $jitter);
+        if ($retry_after_seconds !== null && $retry_after_seconds > 0) {
+            $delay_ms = min(self::RETRY_MAX_MS, $retry_after_seconds * 1000);
         }
 
-        return [
-            'success' => true,
-            'body' => $body,
-            'http_code' => $http_code,
-        ];
+        Logger::warning('Airtable request retrying', [
+            'url_path' => $path,
+            'reason' => $reason,
+            'attempt' => $attempt + 1,
+            'delay_ms' => $delay_ms,
+        ]);
+
+        usleep($delay_ms * 1000);
     }
 
     /**

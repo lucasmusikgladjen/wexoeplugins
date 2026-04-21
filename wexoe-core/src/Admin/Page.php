@@ -29,6 +29,8 @@ class Page {
 
     const TEST_RESULT_TRANSIENT_PREFIX = 'wexoe_core_test_result_';
     const TEST_RESULT_TTL = 300;
+    const SCHEMA_HEALTH_TRANSIENT_PREFIX = 'wexoe_core_schema_health_';
+    const SCHEMA_HEALTH_TTL = 300;
 
     const HELPER_RESULT_TRANSIENT_PREFIX = 'wexoe_core_helper_result_';
     const HELPER_RESULT_TTL = 300;
@@ -108,6 +110,22 @@ class Page {
         delete_transient(self::TEST_RESULT_TRANSIENT_PREFIX . $user_id);
     }
 
+    private static function set_schema_health_result($result) {
+        $user_id = get_current_user_id();
+        if ($user_id <= 0) return false;
+        return set_transient(
+            self::SCHEMA_HEALTH_TRANSIENT_PREFIX . $user_id,
+            $result,
+            self::SCHEMA_HEALTH_TTL
+        );
+    }
+
+    private static function get_schema_health_result() {
+        $user_id = get_current_user_id();
+        if ($user_id <= 0) return null;
+        return get_transient(self::SCHEMA_HEALTH_TRANSIENT_PREFIX . $user_id);
+    }
+
     private static function set_helper_result($result) {
         $user_id = get_current_user_id();
         if ($user_id <= 0) return false;
@@ -151,6 +169,7 @@ class Page {
             $this->render_diagnostics();
             $this->render_settings();
             $this->render_connection_test();
+            $this->render_schema_health();
             $this->render_entities();
             $this->render_helpers();
             $this->render_cache();
@@ -381,6 +400,64 @@ class Page {
                     Tid: <?php echo esc_html(date('Y-m-d H:i:s', (int) $test_result['timestamp'])); ?>
                 </div>
             </div>
+        <?php endif; ?>
+        <?php
+    }
+
+    private function render_schema_health() {
+        $has_key = !empty(Plugin::get_api_key());
+        $has_base_id = !empty(Plugin::get_base_id());
+        $result = self::get_schema_health_result();
+        ?>
+        <h2 style="margin-top: 40px;">Schema health check</h2>
+        <p style="max-width: 720px; color: #555;">
+            Jämför Core-scheman mot Airtable metadata (tabeller + fältnamn) för att hitta mismatch tidigt.
+        </p>
+
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <?php wp_nonce_field(self::NONCE_ACTION); ?>
+            <input type="hidden" name="action" value="<?php echo esc_attr(self::POST_ACTION); ?>">
+            <input type="hidden" name="op" value="schema_health_check">
+            <button type="submit" class="button" <?php echo (!$has_key || !$has_base_id) ? 'disabled' : ''; ?>>
+                Kör schema health check
+            </button>
+        </form>
+
+        <?php if ($result): ?>
+            <?php $ok = (int) $result['errors'] === 0; ?>
+            <div style="max-width: 900px; margin-top: 16px; padding: 16px 20px; background: <?php echo $ok ? '#f0fdf4' : '#fef2f2'; ?>; border-left: 4px solid <?php echo $ok ? '#10B981' : '#EF4444'; ?>; border-radius: 4px;">
+                <strong><?php echo $ok ? '✓ Inga schemafel hittades' : '✗ Schemafel hittades'; ?></strong>
+                <div style="margin-top: 6px; color:#555;">
+                    Entiteter: <strong><?php echo (int) $result['entities_checked']; ?></strong> ·
+                    Fel: <strong><?php echo (int) $result['errors']; ?></strong> ·
+                    Varningar: <strong><?php echo (int) $result['warnings']; ?></strong>
+                </div>
+            </div>
+
+            <?php if (!empty($result['items'])): ?>
+                <table class="widefat striped" style="max-width: 900px; margin-top: 12px;">
+                    <thead>
+                        <tr>
+                            <th style="width:140px;">Entitet</th>
+                            <th style="width:90px;">Status</th>
+                            <th>Meddelande</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($result['items'] as $item): ?>
+                            <tr>
+                                <td><code><?php echo esc_html($item['entity']); ?></code></td>
+                                <td>
+                                    <span style="font-weight:600; color: <?php echo $item['status'] === 'error' ? '#EF4444' : ($item['status'] === 'warning' ? '#EF9F27' : '#10B981'); ?>;">
+                                        <?php echo esc_html(strtoupper($item['status'])); ?>
+                                    </span>
+                                </td>
+                                <td><?php echo esc_html($item['message']); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
         <?php endif; ?>
         <?php
     }
@@ -803,6 +880,7 @@ class Page {
         switch ($op) {
             case 'save_settings':       $this->op_save_settings(); break;
             case 'test_connection':     $this->op_test_connection(); break;
+            case 'schema_health_check': $this->op_schema_health_check(); break;
             case 'test_cache':          $this->op_test_cache(); break;
             case 'clear_cache':         $this->op_clear_cache(); break;
             case 'clear_logs':          $this->op_clear_logs(); break;
@@ -884,6 +962,110 @@ class Page {
                 'timestamp' => time(),
             ]);
             self::set_notice('error', __('Anslutningstest misslyckades. Se detaljer nedan.', 'wexoe-core'));
+        }
+    }
+
+    private function op_schema_health_check() {
+        $meta = AirtableClient::fetch_tables();
+        if (!$meta['success']) {
+            self::set_notice('error', __('Schema health check misslyckades: kunde inte läsa Airtable metadata.', 'wexoe-core'));
+            self::set_schema_health_result([
+                'entities_checked' => 0,
+                'errors' => 1,
+                'warnings' => 0,
+                'items' => [[
+                    'entity' => '-',
+                    'status' => 'error',
+                    'message' => (string) ($meta['error'] ?? 'unknown'),
+                ]],
+                'timestamp' => time(),
+            ]);
+            return;
+        }
+
+        $tables = is_array($meta['tables']) ? $meta['tables'] : [];
+        $table_map = [];
+        foreach ($tables as $table) {
+            if (!is_array($table)) continue;
+            $id = isset($table['id']) ? (string) $table['id'] : '';
+            $name = isset($table['name']) ? (string) $table['name'] : '';
+            if ($id !== '') $table_map[$id] = $table;
+            if ($name !== '') $table_map[$name] = $table;
+        }
+
+        $items = [];
+        $errors = 0;
+        $warnings = 0;
+        $entities = SchemaRegistry::list_registered();
+
+        foreach ($entities as $entity_name) {
+            $repo = Core::entity($entity_name);
+            if ($repo === null) {
+                $items[] = ['entity' => $entity_name, 'status' => 'error', 'message' => 'Schema kunde inte laddas.'];
+                $errors++;
+                continue;
+            }
+
+            $schema = $repo->get_schema();
+            $table_id = $repo->get_table_id();
+            if (!isset($table_map[$table_id])) {
+                $items[] = ['entity' => $entity_name, 'status' => 'error', 'message' => 'Tabell saknas i Airtable metadata: ' . $table_id];
+                $errors++;
+                continue;
+            }
+
+            $table = $table_map[$table_id];
+            $meta_fields = isset($table['fields']) && is_array($table['fields']) ? $table['fields'] : [];
+            $field_names = [];
+            foreach ($meta_fields as $f) {
+                if (is_array($f) && isset($f['name']) && is_string($f['name'])) {
+                    $field_names[$f['name']] = true;
+                }
+            }
+
+            $missing = [];
+            foreach (($schema['fields'] ?? []) as $domain_key => $spec) {
+                if (is_string($spec)) {
+                    if (!isset($field_names[$spec])) $missing[] = $spec;
+                    continue;
+                }
+                if (!is_array($spec)) continue;
+                $type = isset($spec['type']) ? (string) $spec['type'] : 'text';
+                if ($type === 'pseudo_array') {
+                    continue;
+                }
+                $source = isset($spec['source']) ? (string) $spec['source'] : '';
+                if ($source !== '' && !isset($field_names[$source])) {
+                    $missing[] = $source;
+                }
+            }
+
+            if (!empty($missing)) {
+                $items[] = [
+                    'entity' => $entity_name,
+                    'status' => 'warning',
+                    'message' => 'Saknade fält i metadata: ' . implode(', ', array_slice(array_unique($missing), 0, 8)),
+                ];
+                $warnings++;
+            } else {
+                $items[] = ['entity' => $entity_name, 'status' => 'ok', 'message' => 'Schema matchar tabellmetadata.'];
+            }
+        }
+
+        self::set_schema_health_result([
+            'entities_checked' => count($entities),
+            'errors' => $errors,
+            'warnings' => $warnings,
+            'items' => $items,
+            'timestamp' => time(),
+        ]);
+
+        if ($errors > 0) {
+            self::set_notice('error', __('Schema health check klar med fel.', 'wexoe-core'));
+        } elseif ($warnings > 0) {
+            self::set_notice('warning', __('Schema health check klar med varningar.', 'wexoe-core'));
+        } else {
+            self::set_notice('success', __('Schema health check: alla entiteter ser bra ut.', 'wexoe-core'));
         }
     }
 
