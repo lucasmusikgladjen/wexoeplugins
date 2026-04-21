@@ -396,6 +396,24 @@ class EntityRepository {
     }
 
     /**
+     * Clear all stale option payloads for every entity.
+     *
+     * @return int Number of option rows deleted
+     */
+    public static function clear_all_stale_options() {
+        global $wpdb;
+        $like = $wpdb->esc_like(self::STALE_OPTION_PREFIX) . '%';
+        $deleted = $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM {$wpdb->options}
+                 WHERE option_name LIKE %s",
+                $like
+            )
+        );
+        return is_numeric($deleted) ? (int) $deleted : 0;
+    }
+
+    /**
      * TTL with ±5% random jitter to prevent thundering-herd at expiry.
      */
     private function jittered_ttl() {

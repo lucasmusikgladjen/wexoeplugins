@@ -1102,8 +1102,16 @@ class Page {
 
     private function op_clear_cache() {
         $deleted = Cache::clear_all();
-        Logger::info('Cache cleared via admin', ['deleted_count' => $deleted]);
-        self::set_notice('success', sprintf(__('Cache rensad. %d poster borttagna.', 'wexoe-core'), $deleted));
+        $stale_deleted = \Wexoe\Core\EntityRepository::clear_all_stale_options();
+        Logger::info('Cache cleared via admin', [
+            'deleted_count' => $deleted,
+            'stale_deleted_count' => $stale_deleted,
+        ]);
+        self::set_notice('success', sprintf(
+            __('Cache rensad. %d transients och %d stale-poster borttagna.', 'wexoe-core'),
+            $deleted,
+            $stale_deleted
+        ));
     }
 
     private function op_clear_logs() {
