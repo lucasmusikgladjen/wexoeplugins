@@ -30,6 +30,8 @@ class EntityRepository {
 
     /** Default TTL jitter percentage. */
     const JITTER_PERCENT = 5;
+    const STALE_GRACE_SECONDS = 21600; // 6h
+    const STALE_OPTION_PREFIX = 'wexoe_core_stale_entity_';
 
     /** @var string */
     private $name;
@@ -125,7 +127,10 @@ class EntityRepository {
      * Clear this entity's cache. Returns number of cache entries removed.
      */
     public function clear_cache() {
-        return Cache::delete_by_prefix($this->cache_key_prefix());
+        $deleted = Cache::delete_by_prefix($this->cache_key_prefix());
+        delete_option($this->stale_option_key());
+        wp_clear_scheduled_hook('wexoe_core_refresh_entity_cache', [$this->name]);
+        return $deleted;
     }
 
     /**
@@ -135,7 +140,8 @@ class EntityRepository {
      */
     public function force_refresh() {
         $this->clear_cache();
-        return $this->fetch_with_cache();
+        $result = $this->fetch_from_airtable_and_cache();
+        return $result['success'] ? $result['records'] : [];
     }
 
     /* --------------------------------------------------------
@@ -199,6 +205,7 @@ class EntityRepository {
      */
     private function fetch_with_cache() {
         $cache_key = $this->cache_key_all();
+        $now = time();
 
         // 1. Try cache first
         $cached = Cache::get($cache_key);
@@ -206,39 +213,82 @@ class EntityRepository {
             return $cached;
         }
 
-        // 2. Cache miss — fetch from Airtable
+        // 2. No fresh transient — see if we have stale payload in soft/hard TTL window.
+        $stale = $this->get_stale_entry();
+        if ($stale !== null && $now < (int) $stale['soft_expires']) {
+            $remaining = max(1, (int) $stale['soft_expires'] - $now);
+            Cache::set($cache_key, $stale['records'], $remaining);
+            return $stale['records'];
+        }
+
+        // 3. Stale-while-revalidate window: return stale immediately and refresh async.
+        if ($stale !== null && $now < (int) $stale['hard_expires']) {
+            $this->schedule_async_refresh();
+            Logger::warning('Serving stale entity data while async refresh is scheduled', [
+                'entity' => $this->name,
+                'soft_expires' => $stale['soft_expires'],
+                'hard_expires' => $stale['hard_expires'],
+            ]);
+            return $stale['records'];
+        }
+
+        // 4. No usable stale data — do synchronous fetch.
+        $result = $this->fetch_from_airtable_and_cache();
+        if ($result['success']) {
+            return $result['records'];
+        }
+
+        // 5. Airtable failed. Last-chance fallback to stale (if still within hard TTL).
+        $stale = $this->get_stale_entry();
+        if ($stale !== null && $now < (int) $stale['hard_expires']) {
+            Logger::warning('Airtable failed, returning stale fallback', [
+                'entity' => $this->name,
+                'error' => $result['error'],
+                'error_type' => $result['error_type'],
+            ]);
+            return $stale['records'];
+        }
+
+        Logger::error('Airtable fetch failed for entity with no cache fallback', [
+            'entity' => $this->name,
+            'error' => $result['error'],
+            'error_type' => $result['error_type'],
+        ]);
+        return [];
+    }
+
+    /**
+     * Fetch entity records from Airtable, normalize, and persist fresh + stale payload.
+     */
+    private function fetch_from_airtable_and_cache() {
         $table_id = $this->get_table_id();
         if (empty($table_id)) {
             Logger::error('Entity has no table_id', ['entity' => $this->name]);
-            return [];
+            return ['success' => false, 'error' => 'missing_table_id', 'error_type' => 'config'];
         }
 
         $airtable_result = AirtableClient::fetch_records($table_id);
-
         if (!$airtable_result['success']) {
-            // Airtable failed. Nothing in cache (otherwise we'd have returned above).
-            Logger::error('Airtable fetch failed for entity with no cache fallback', [
-                'entity' => $this->name,
+            return [
+                'success' => false,
                 'error' => isset($airtable_result['error']) ? $airtable_result['error'] : 'unknown',
                 'error_type' => isset($airtable_result['error_type']) ? $airtable_result['error_type'] : 'unknown',
-            ]);
-            return [];
+            ];
         }
 
-        // 3. Normalize
         $normalized = $this->normalize_records($airtable_result['records']);
-
-        // 4. Cache with jittered TTL
         $ttl = $this->jittered_ttl();
-        Cache::set($cache_key, $normalized, $ttl);
+        Cache::set($this->cache_key_all(), $normalized, $ttl);
+        $this->store_stale_entry($normalized, $ttl);
 
         Logger::info('Entity fetched and cached', [
             'entity' => $this->name,
             'record_count' => count($normalized),
             'ttl_seconds' => $ttl,
+            'stale_grace_seconds' => self::STALE_GRACE_SECONDS,
         ]);
 
-        return $normalized;
+        return ['success' => true, 'records' => $normalized];
     }
 
     /**
@@ -297,6 +347,52 @@ class EntityRepository {
 
     private function cache_key_all() {
         return $this->cache_key_prefix() . 'all';
+    }
+
+    private function stale_option_key() {
+        return self::STALE_OPTION_PREFIX . $this->name;
+    }
+
+    private function store_stale_entry($records, $ttl) {
+        $now = time();
+        $payload = [
+            'records' => is_array($records) ? $records : [],
+            'cached_at' => $now,
+            'soft_expires' => $now + max(1, (int) $ttl),
+            'hard_expires' => $now + max(1, (int) $ttl) + self::STALE_GRACE_SECONDS,
+        ];
+        update_option($this->stale_option_key(), $payload, false);
+    }
+
+    private function get_stale_entry() {
+        $payload = get_option($this->stale_option_key(), null);
+        if (!is_array($payload) || !isset($payload['records']) || !is_array($payload['records'])) {
+            return null;
+        }
+        if (!isset($payload['soft_expires']) || !isset($payload['hard_expires'])) {
+            return null;
+        }
+        return $payload;
+    }
+
+    private function schedule_async_refresh() {
+        if (!wp_next_scheduled('wexoe_core_refresh_entity_cache', [$this->name])) {
+            wp_schedule_single_event(time() + 5, 'wexoe_core_refresh_entity_cache', [$this->name]);
+        }
+    }
+
+    /**
+     * Cron callback: refresh one entity cache in background.
+     */
+    public static function cron_refresh_entity_cache($entity_name) {
+        if (!is_string($entity_name) || $entity_name === '') {
+            return;
+        }
+        $repo = Core::entity($entity_name);
+        if ($repo === null) {
+            return;
+        }
+        $repo->fetch_from_airtable_and_cache();
     }
 
     /**

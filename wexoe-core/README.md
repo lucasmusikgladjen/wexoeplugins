@@ -4,7 +4,7 @@ Unified Airtable data layer for Wexoe's WordPress plugins.
 
 ## Status
 
-**Fas 1 (v0.2.0)** — grundinfrastruktur: Airtable-klient, cache, logger, admin-diagnostik.
+**Fas 5 (v0.6.0)** — retries/backoff för Airtable, schema health check i admin samt stale-while-revalidate + stale-on-error i repository-lagret.
 
 ## Installation
 
@@ -30,5 +30,4 @@ wexoe-core/
 
 ## Version
 
-**0.2.0** — Fas 1 komplett
-
+**0.6.0** — Fas 5 komplett
