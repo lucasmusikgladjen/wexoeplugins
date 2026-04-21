@@ -28,6 +28,7 @@ class Plugin {
     private function __construct() {}
 
     public function boot() {
+        add_action('wexoe_core_refresh_entity_cache', [EntityRepository::class, 'cron_refresh_entity_cache'], 10, 1);
         if (is_admin()) {
             Admin\Page::instance()->register();
         }
