@@ -263,7 +263,8 @@ class AirtableClient {
         $jitter = random_int(0, 250);
         $delay_ms = min(self::RETRY_MAX_MS, $base + $jitter);
         if ($retry_after_seconds !== null && $retry_after_seconds > 0) {
-            $delay_ms = min(self::RETRY_MAX_MS, $retry_after_seconds * 1000);
+            // Honor Airtable's server-directed cooldown fully when provided.
+            $delay_ms = $retry_after_seconds * 1000;
         }
 
         Logger::warning('Airtable request retrying', [

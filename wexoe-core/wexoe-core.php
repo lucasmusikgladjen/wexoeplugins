@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Wexoe Core
  * Plugin URI:  https://wexoe.se
- * Description: Unified Airtable data layer for Wexoe's WordPress plugins. Phase 4: landing page migration + find_by_ids.
- * Version:     0.5.0
+ * Description: Unified Airtable data layer for Wexoe's WordPress plugins. Phase 5: retries, schema health check, stale cache strategy.
+ * Version:     0.6.0
  * Author:      Wexoe Industry AB
  * Text Domain: wexoe-core
  * Requires PHP: 7.4
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
    CONSTANTS
    ============================================================ */
 
-define('WEXOE_CORE_VERSION', '0.5.0');
+define('WEXOE_CORE_VERSION', '0.6.0');
 define('WEXOE_CORE_FILE', __FILE__);
 define('WEXOE_CORE_PATH', plugin_dir_path(__FILE__));
 define('WEXOE_CORE_URL', plugin_dir_url(__FILE__));
