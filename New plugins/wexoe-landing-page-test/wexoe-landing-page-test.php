@@ -1,7 +1,7 @@
 <?php
 /**
- * Plugin Name: Wexoe Landing Page TEST
- * Description: Modular, high-converting landing pages driven by Wexoe Core data. Use [wexoe_landing_test slug="fjarraccess"] to render.
+ * Plugin Name: Wexoe Landing Page
+ * Description: Modular, high-converting landing pages driven by Wexoe Core data. Use [wexoe_landing slug="fjarraccess"] to render.
  * Version: 2.0.0-test
  * Author: Wexoe
  * Text Domain: wexoe-landing-page
@@ -862,7 +862,7 @@ function wexoe_landing_page_test_shortcode($atts) {
         'debug' => 'false',
         'nocache' => 'false',
         'remove_padding' => 'true',
-    ], $atts, 'wexoe_landing_test');
+    ], $atts, 'wexoe_landing');
 
     $slug = sanitize_text_field($atts['slug']);
     $debug = ($atts['debug'] === 'true');
@@ -886,7 +886,7 @@ function wexoe_landing_page_test_shortcode($atts) {
     }
 
     if (empty($slug)) {
-        return '<p style="color:red;font-weight:bold;">[wexoe_landing_test] Error: slug parameter is required.</p>';
+        return '<p style="color:red;font-weight:bold;">[wexoe_landing] Error: slug parameter is required.</p>';
     }
 
     $data = $pages_repo->find($slug);
@@ -967,4 +967,4 @@ function wexoe_landing_page_test_shortcode($atts) {
     return $html;
 }
 
-add_shortcode('wexoe_landing_test', 'wexoe_landing_page_test_shortcode');
+add_shortcode('wexoe_landing', 'wexoe_landing_page_test_shortcode');

@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: Wexoe Hero Automation TEST
+ * Plugin Name: Wexoe Hero Automation
  * Plugin URI: https://wexoeindustry.se
- * Description: En hero-sektion för industriell automation (testversion). Använd shortcode [wexoe_hero_automation_test].
+ * Description: En hero-sektion för industriell automation (testversion). Använd shortcode [wexoe_hero_automation].
  * Version: 1.1.0-test
  * Author: Wexoe
  * Author URI: https://wexoeindustry.se
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 class Wexoe_Hero_Automation_Test {
 
     public function __construct() {
-        add_shortcode('wexoe_hero_automation_test', array($this, 'render_shortcode'));
+        add_shortcode('wexoe_hero_automation', array($this, 'render_shortcode'));
     }
 
     /**

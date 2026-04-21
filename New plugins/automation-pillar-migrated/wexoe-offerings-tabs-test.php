@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Wexoe Offerings Tabs TEST
+ * Plugin Name: Wexoe Offerings Tabs
  * Description: Tabbad sektion för kundtyper (OEM, Integratörer, Slutkunder) migrerad till Wexoe Core (testversion).
  * Version: 2.0.0-test
  * Author: Wexoe
@@ -20,7 +20,7 @@ class Wexoe_Offerings_Tabs_Test {
     
     
     public function __construct() {
-        add_shortcode('wexoe_offerings_test', array($this, 'render_shortcode'));
+        add_shortcode('wexoe_offerings', array($this, 'render_shortcode'));
     }
     
     /**
@@ -86,9 +86,9 @@ class Wexoe_Offerings_Tabs_Test {
      * Render shortcode
      * 
      * Användning:
-     * [wexoe_offerings_test] - Visa alla
-     * [wexoe_offerings_test division="Industry"] - Filtrera på division
-     * [wexoe_offerings_test debug="true"] - Visa debug-info
+     * [wexoe_offerings] - Visa alla
+     * [wexoe_offerings division="Industry"] - Filtrera på division
+     * [wexoe_offerings debug="true"] - Visa debug-info
      */
     public function render_shortcode($atts) {
         $atts = shortcode_atts(array(

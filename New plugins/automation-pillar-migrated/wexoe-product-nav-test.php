@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name:       Wexoe Product Navigation TEST
+ * Plugin Name:       Wexoe Product Navigation
  * Plugin URI:        https://wexoe.se
  * Description:       Modulär produktnavigation migrerad till Wexoe Core. Testversion för parallellkörning.
  * Version:           2.1.0-test
@@ -124,7 +124,7 @@ class Wexoe_Product_Nav_Test {
      * @since 1.0.0
      */
     public function __construct() {
-        add_shortcode('wexoe_product_nav_test', array($this, 'render_shortcode'));
+        add_shortcode('wexoe_product_nav', array($this, 'render_shortcode'));
     }
 
     /**

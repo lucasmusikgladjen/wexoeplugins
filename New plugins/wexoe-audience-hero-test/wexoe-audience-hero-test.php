@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Wexoe Audience Hero TEST
+ * Plugin Name: Wexoe Audience Hero
  * Description: Dynamic hero + value section for audience landing pages. Data via Wexoe Core. Parallel test version of the original Wexoe Audience Hero plugin.
  * Version: 2.0.0-test
  * Author: Wexoe
@@ -18,7 +18,7 @@ function wexoe_ah_test_core_ready() {
 class Wexoe_Audience_Hero_Test {
 
     public function __construct() {
-        add_shortcode('wexoe_audience_test', array($this, 'render_shortcode'));
+        add_shortcode('wexoe_audience', array($this, 'render_shortcode'));
     }
 
 

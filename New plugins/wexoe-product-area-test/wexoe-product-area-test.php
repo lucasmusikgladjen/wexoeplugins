@@ -1,7 +1,7 @@
 <?php
 /**
- * Plugin Name: Wexoe Product Area TEST
- * Description: Modular product area pages driven by Airtable data. Use [wexoe_product_area_test slug="plc"] to render.
+ * Plugin Name: Wexoe Product Area
+ * Description: Modular product area pages driven by Airtable data. Use [wexoe_product_area slug="plc"] to render.
  * Version: 2.3.0-test
  * Author: Wexoe
  * Text Domain: wexoe-product-area
@@ -4112,17 +4112,17 @@ function wexoe_product_area_test_shortcode($atts) {
         'debug' => 'false',
         'remove_padding' => 'true',
         'nocache' => 'false',
-    ], $atts, 'wexoe_product_area_test');
+    ], $atts, 'wexoe_product_area');
 
     $slug = sanitize_text_field($atts['slug']);
     $debug = ($atts['debug'] === 'true');
     $remove_padding = ($atts['remove_padding'] === 'true');
 
     if (empty($slug)) {
-        return '<p style="color:red;font-weight:bold;">[wexoe_product_area_test] Error: slug parameter is required.</p>';
+        return '<p style="color:red;font-weight:bold;">[wexoe_product_area] Error: slug parameter is required.</p>';
     }
     if (!wexoe_pa_test_core_ready()) {
-        return '<p style="color:red;font-weight:bold;">[wexoe_product_area_test] Error: Wexoe Core-pluginet är inte aktivt.</p>';
+        return '<p style="color:red;font-weight:bold;">[wexoe_product_area] Error: Wexoe Core-pluginet är inte aktivt.</p>';
     }
 
     // Clear entity caches if nocache is set.
@@ -4257,7 +4257,7 @@ function wexoe_product_area_test_shortcode($atts) {
     return $html;
 }
 
-add_shortcode('wexoe_product_area_test', 'wexoe_product_area_test_shortcode');
+add_shortcode('wexoe_product_area', 'wexoe_product_area_test_shortcode');
 
 /* ============================================================
    REQUEST FORM — AJAX HANDLER
