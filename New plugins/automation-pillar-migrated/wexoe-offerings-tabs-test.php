@@ -64,7 +64,18 @@ class Wexoe_Offerings_Tabs_Test {
         $records = $repo->all();
         if (!empty($division)) {
             $records = array_values(array_filter($records, function($item) use ($division) {
-                return isset($item['division']) && strcasecmp((string) $item['division'], (string) $division) === 0;
+                if (!isset($item['division']) || empty($item['division'])) {
+                    return false;
+                }
+                if (is_array($item['division'])) {
+                    foreach ($item['division'] as $candidate) {
+                        if (strcasecmp((string) $candidate, (string) $division) === 0) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                return strcasecmp((string) $item['division'], (string) $division) === 0;
             }));
         }
 

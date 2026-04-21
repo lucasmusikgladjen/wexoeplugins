@@ -169,8 +169,22 @@ class Wexoe_Product_Nav_Test {
             if (!$is_nav && !$is_active) {
                 return false;
             }
-            if ($division && !empty($row['division']) && strcasecmp((string) $row['division'], (string) $division) !== 0) {
-                return false;
+            if ($division && !empty($row['division'])) {
+                $division_value = $row['division'];
+                if (is_array($division_value)) {
+                    $matches = false;
+                    foreach ($division_value as $candidate) {
+                        if (strcasecmp((string) $candidate, (string) $division) === 0) {
+                            $matches = true;
+                            break;
+                        }
+                    }
+                    if (!$matches) {
+                        return false;
+                    }
+                } elseif (strcasecmp((string) $division_value, (string) $division) !== 0) {
+                    return false;
+                }
             }
             return true;
         }));
