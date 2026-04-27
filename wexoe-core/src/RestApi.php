@@ -99,15 +99,18 @@ class RestApi {
         if (!is_array($entities) || empty($entities)) {
             $transient_deleted = Cache::clear_all();
             $stale_deleted = EntityRepository::clear_all_stale_options();
+            $page_caches_cleared = PageCacheBuster::flush_all();
             Logger::info('Cache cleared via webhook (all entities)', [
                 'transient_deleted' => $transient_deleted,
                 'stale_deleted' => $stale_deleted,
+                'page_caches_cleared' => $page_caches_cleared,
             ]);
             return new \WP_REST_Response([
                 'success' => true,
                 'mode' => 'all',
                 'transient_deleted' => $transient_deleted,
                 'stale_deleted' => $stale_deleted,
+                'page_caches_cleared' => $page_caches_cleared,
             ], 200);
         }
 
@@ -137,11 +140,18 @@ class RestApi {
             'transient_deleted' => $cleared_total,
         ]);
 
+        // Page-cache plugins store rendered HTML on top of our data layer —
+        // clearing entity transients alone won't refresh the live page until
+        // they drop too. Run after the per-entity clears so the data is
+        // re-fetched on the next request.
+        $page_caches_cleared = PageCacheBuster::flush_all();
+
         return new \WP_REST_Response([
             'success' => true,
             'mode' => 'per_entity',
             'results' => $results,
             'unknown' => $unknown,
+            'page_caches_cleared' => $page_caches_cleared,
         ], 200);
     }
 }
