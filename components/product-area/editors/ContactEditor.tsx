@@ -1,7 +1,7 @@
 'use client';
 
 import { ProductAreaState } from '@/lib/product-area-types';
-import { FieldInput, FieldTextarea, FieldColor, FieldCheckbox } from '@/components/editors/FieldInput';
+import { FieldInput, FieldColor, FieldCheckbox, RichTextarea } from '@/components/editors/FieldInput';
 
 interface Props {
   state: ProductAreaState;
@@ -53,7 +53,7 @@ export default function ContactEditor({ state, setField, visible, onToggleVisibl
         onChange={(v) => setField('contactImage', v)}
         placeholder="https://wexoe.se/wp-content/uploads/..."
       />
-      <FieldTextarea
+      <RichTextarea
         label="Citat"
         value={state.contactText}
         onChange={(v) => setField('contactText', v)}

@@ -1,7 +1,7 @@
 'use client';
 
 import { ProductAreaState, LinkedProduct, emptyLinkedProduct } from '@/lib/product-area-types';
-import { FieldInput, FieldTextarea, FieldCheckbox, FieldColor } from '@/components/editors/FieldInput';
+import { FieldInput, FieldCheckbox, FieldColor, RichTextarea } from '@/components/editors/FieldInput';
 import CollapsibleCard from './CollapsibleCard';
 import ButtonFieldset from '@/components/editors/ButtonFieldset';
 
@@ -80,7 +80,7 @@ export default function ProductsEditor({ state, setField, visible, onToggleVisib
             placeholder="T.ex. Integrerad arkitektur"
           />
 
-          <FieldTextarea
+          <RichTextarea
             label="Beskrivning"
             value={product.description}
             onChange={(v) => patchProduct(i, { description: v })}
@@ -88,7 +88,7 @@ export default function ProductsEditor({ state, setField, visible, onToggleVisib
             placeholder="Kort beskrivning av produkten…"
           />
 
-          <FieldTextarea
+          <RichTextarea
             label="Punkter"
             value={product.bullets}
             onChange={(v) => patchProduct(i, { bullets: v })}

@@ -1,7 +1,7 @@
 'use client';
 
 import { ProductAreaState, LinkedSolution, emptyLinkedSolution } from '@/lib/product-area-types';
-import { FieldInput, FieldTextarea, FieldCheckbox, FieldColor } from '@/components/editors/FieldInput';
+import { FieldInput, FieldCheckbox, FieldColor, RichTextarea } from '@/components/editors/FieldInput';
 import CollapsibleCard from './CollapsibleCard';
 
 interface Props {
@@ -86,7 +86,7 @@ export default function SolutionsEditor({ state, setField, visible, onToggleVisi
             placeholder="T.ex. Koncept"
           />
 
-          <FieldTextarea
+          <RichTextarea
             label="Beskrivning"
             value={sol.description}
             onChange={(v) => patchSolution(i, { description: v })}

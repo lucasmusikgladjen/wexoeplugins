@@ -1,6 +1,7 @@
 'use client';
 
 import { PageState } from '@/lib/types';
+import { renderInlineMarkdown } from '@/lib/markdown';
 
 interface Props {
   state: PageState;
@@ -48,7 +49,7 @@ export default function ContactPreview({ state }: Props) {
               className="mt-3 pl-3 border-l-3 text-sm italic text-lp-text-light"
               style={{ borderColor: state.colorSecondary }}
             >
-              &ldquo;{state.contactQuote}&rdquo;
+              &ldquo;{renderInlineMarkdown(state.contactQuote)}&rdquo;
             </blockquote>
           )}
         </div>

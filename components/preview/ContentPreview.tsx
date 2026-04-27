@@ -1,6 +1,7 @@
 'use client';
 
 import { PageState } from '@/lib/types';
+import { renderInlineMarkdown, renderMarkdown } from '@/lib/markdown';
 import SidebarPreview from './SidebarPreview';
 
 interface Props {
@@ -33,8 +34,8 @@ export default function ContentPreview({ state, onClickSidebar, sidebarActive }:
               </h2>
             )}
             {state.contentText && (
-              <div className="text-sm leading-relaxed text-lp-text mb-5 whitespace-pre-wrap">
-                {state.contentText}
+              <div className="text-sm leading-relaxed text-lp-text mb-5">
+                {renderMarkdown(state.contentText)}
               </div>
             )}
             {benefits.length > 0 && (
@@ -47,7 +48,7 @@ export default function ContentPreview({ state, onClickSidebar, sidebarActive }:
                     >
                       ✓
                     </span>
-                    <span>{b}</span>
+                    <span>{renderInlineMarkdown(b)}</span>
                   </li>
                 ))}
               </ul>

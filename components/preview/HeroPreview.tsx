@@ -1,6 +1,7 @@
 'use client';
 
 import { PageState } from '@/lib/types';
+import { renderInlineMarkdown } from '@/lib/markdown';
 
 interface Props {
   state: PageState;
@@ -43,7 +44,9 @@ export default function HeroPreview({ state }: Props) {
         </h1>
         {(state.heroDescription || !state.h1) && (
           <p className="text-base leading-relaxed mb-6" style={{ color: 'rgba(255,255,255,0.85)' }}>
-            {state.heroDescription || <span className="opacity-40">Beskrivning...</span>}
+            {state.heroDescription
+              ? renderInlineMarkdown(state.heroDescription)
+              : <span className="opacity-40">Beskrivning...</span>}
           </p>
         )}
         <div className="flex gap-3 flex-wrap">
