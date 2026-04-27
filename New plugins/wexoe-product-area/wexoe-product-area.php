@@ -53,6 +53,16 @@ function wexoe_pa_test_text_secondary($bg_hex) {
 }
 
 /**
+ * Get markdown link color based on background.
+ * Light blue on dark backgrounds (visible against navy), brand blue on light.
+ * Used via the --wexoe-md-link CSS variable that every section emits in its
+ * inline style so a single global rule can colour all markdown <a> tags.
+ */
+function wexoe_pa_test_link_color($bg_hex) {
+    return wexoe_pa_test_is_dark_bg($bg_hex) ? '#7DD3FC' : '#0EA5E9';
+}
+
+/**
  * Split long text field into array of non-empty lines
  */
 if (!function_exists('wexoe_pa_test_lines_to_array')) {
@@ -434,7 +444,7 @@ function wexoe_pa_test_render_hero($data, $id) {
     // Hero Image
     $hero_image = wexoe_pa_test_field($data, 'Hero Image', '');
 
-    $html = '<section class="wexoe-pa-hero" style="--hero-bg:'.$bg.';--hero-accent:'.$accent.';--hero-text:'.$text_color.';--hero-text-secondary:'.$text_secondary.';">';
+    $html = '<section class="wexoe-pa-hero" style="--hero-bg:'.$bg.';--hero-accent:'.$accent.';--hero-text:'.$text_color.';--hero-text-secondary:'.$text_secondary.';--wexoe-md-link:'.wexoe_pa_test_link_color($bg).';">';
     $html .= '<div class="wexoe-pa-hero-inner">';
     $html .= '<div class="wexoe-pa-hero-content">';
 
@@ -498,7 +508,7 @@ function wexoe_pa_test_render_products($products, $data, $id) {
     $accent = wexoe_pa_test_hex(wexoe_pa_test_field($data, 'Toggle Accent', ''), '#F28C28');
     $text_color = wexoe_pa_test_text_color($bg);
 
-    $html = '<section class="wexoe-pa-toggle" style="--toggle-bg:'.$bg.';--toggle-header-bg:'.$header_bg.';--toggle-accent:'.$accent.';--toggle-text:'.$text_color.';">';
+    $html = '<section class="wexoe-pa-toggle" style="--toggle-bg:'.$bg.';--toggle-header-bg:'.$header_bg.';--toggle-accent:'.$accent.';--toggle-text:'.$text_color.';--wexoe-md-link:'.wexoe_pa_test_link_color($bg).';">';
     $html .= '<div class="wexoe-pa-toggle-inner">';
 
     foreach ($products as $i => $product) {
@@ -581,7 +591,7 @@ function wexoe_pa_test_render_side_menu($products, $articles_grouped, $data, $id
     $accent = wexoe_pa_test_hex(wexoe_pa_test_field($data, 'Toggle Accent', ''), '#F28C28');
     $text_color = wexoe_pa_test_text_color($bg);
 
-    $html = '<section class="wexoe-pa-sidemenu" style="--sm-bg:'.$bg.';--sm-accent:'.$accent.';--sm-text:'.$text_color.';">';
+    $html = '<section class="wexoe-pa-sidemenu" style="--sm-bg:'.$bg.';--sm-accent:'.$accent.';--sm-text:'.$text_color.';--wexoe-md-link:'.wexoe_pa_test_link_color($bg).';">';
     $html .= '<div class="wexoe-pa-sidemenu-inner">';
 
     // Mobile: select dropdown
@@ -788,7 +798,7 @@ function wexoe_pa_test_render_solutions($solutions, $data, $id) {
     $title = wexoe_pa_test_field($data, 'Solutions Title', 'Lösningar & Koncept');
     $text_color = wexoe_pa_test_text_color($bg);
 
-    $html = '<section class="wexoe-pa-solutions" style="--solutions-bg:'.$bg.';--solutions-card-bg:'.$card_bg.';--solutions-text:'.$text_color.';">';
+    $html = '<section class="wexoe-pa-solutions" style="--solutions-bg:'.$bg.';--solutions-card-bg:'.$card_bg.';--solutions-text:'.$text_color.';--wexoe-md-link:'.wexoe_pa_test_link_color($bg).';">';
     $html .= '<div class="wexoe-pa-solutions-inner">';
     $html .= '<h2 class="wexoe-pa-solutions-h2">'.esc_html($title).'</h2>';
     $html .= '<div class="wexoe-pa-solutions-grid">';
@@ -843,7 +853,7 @@ function wexoe_pa_test_render_normal($data, $n, $id) {
 
     $rev_class = $reversed ? ' wexoe-pa-normal-reversed' : '';
 
-    $html = '<section class="wexoe-pa-normal'.$rev_class.'" style="--normal-bg:'.$bg.';--normal-text:'.$text_color.';--normal-text-secondary:'.$text_secondary.';">';
+    $html = '<section class="wexoe-pa-normal'.$rev_class.'" style="--normal-bg:'.$bg.';--normal-text:'.$text_color.';--normal-text-secondary:'.$text_secondary.';--wexoe-md-link:'.wexoe_pa_test_link_color($bg).';">';
     $html .= '<div class="wexoe-pa-normal-inner">';
 
     // Text column
@@ -1081,16 +1091,34 @@ function wexoe_pa_test_render_css($id) {
     #'.$id.' a {
         text-decoration: none !important;
     }
-    /* Markdown inline styles */
+    /* Markdown inline styles
+       Bold/italic/etc. inherit the surrounding text colour so a dark theme
+       rule (e.g. "strong { color:#000 }") cannot override the section colour.
+       Links use --wexoe-md-link (set per-section based on bg darkness) so they
+       stay visible on both light and dark backgrounds. */
+    #'.$id.' p strong,
+    #'.$id.' p em,
+    #'.$id.' p del,
+    #'.$id.' p span,
+    #'.$id.' li strong,
+    #'.$id.' li em,
+    #'.$id.' li del,
+    #'.$id.' li span {
+        color: inherit !important;
+    }
     #'.$id.' p a,
     #'.$id.' li a,
     #'.$id.' .wexoe-pa-contact-quote a {
+        color: var(--wexoe-md-link, #0EA5E9) !important;
         text-decoration: underline !important;
-        text-underline-offset: 2px !important;
+        text-decoration-thickness: 1px !important;
+        text-underline-offset: 3px !important;
     }
     #'.$id.' p a:hover,
-    #'.$id.' li a:hover {
-        opacity: 0.8 !important;
+    #'.$id.' li a:hover,
+    #'.$id.' .wexoe-pa-contact-quote a:hover {
+        opacity: 0.85 !important;
+        text-decoration-thickness: 2px !important;
     }
     #'.$id.' code {
         background: rgba(0,0,0,0.06) !important;
@@ -1741,21 +1769,10 @@ function wexoe_pa_test_render_css($id) {
         margin: 0 0 18px 0 !important;
         padding: 0 !important;
     }
-    #'.$id.' .wexoe-pa-normal-body strong,
-    #'.$id.' .wexoe-pa-normal-body em,
-    #'.$id.' .wexoe-pa-normal-body del,
-    #'.$id.' .wexoe-pa-normal-body code,
-    #'.$id.' .wexoe-pa-normal-body a,
-    #'.$id.' .wexoe-pa-normal-body span {
-        color: var(--normal-text-secondary) !important;
-    }
+    /* Inline element colour is handled by the global "Markdown inline styles"
+       block above (inherits parent colour); links are handled by the global
+       link rule that uses --wexoe-md-link. */
     #'.$id.' .wexoe-pa-normal p {
-        color: var(--normal-text-secondary) !important;
-    }
-    #'.$id.' .wexoe-pa-normal-checks li,
-    #'.$id.' .wexoe-pa-normal-checks strong,
-    #'.$id.' .wexoe-pa-normal-checks em,
-    #'.$id.' .wexoe-pa-normal-checks a {
         color: var(--normal-text-secondary) !important;
     }
     #'.$id.' .wexoe-pa-normal-checks {
@@ -1875,7 +1892,6 @@ function wexoe_pa_test_render_css($id) {
     #'.$id.' .wexoe-pa-contact-quote p em,
     #'.$id.' .wexoe-pa-contact-quote p del,
     #'.$id.' .wexoe-pa-contact-quote p code,
-    #'.$id.' .wexoe-pa-contact-quote p a,
     #'.$id.' .wexoe-pa-contact-quote p span {
         color: inherit !important;
     }
