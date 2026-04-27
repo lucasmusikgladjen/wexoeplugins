@@ -149,7 +149,7 @@ function wexoe_lp_test_render_hero($data, $id) {
     $html .= '<div class="wexoe-lp-hero-shapes"><div class="wexoe-lp-hero-shape1"></div><div class="wexoe-lp-hero-shape2"></div></div>';
     $html .= '<div class="wexoe-lp-hero-text">';
     $html .= '<h1 class="wexoe-lp-hero-h1">'.esc_html($h1).'</h1>';
-    if ($desc) $html .= '<p class="wexoe-lp-hero-desc">'.wexoe_lp_test_md($desc).'</p>';
+    if ($desc) $html .= '<div class="wexoe-lp-hero-desc">'.wexoe_lp_test_md($desc).'</div>';
     $html .= '<div class="wexoe-lp-hero-buttons">';
     $html .= '<a href="'.esc_url($cta1_url).'" class="wexoe-lp-btn-primary">'.esc_html($cta1_text).' <span>&rarr;</span></a>';
     if ($cta2_text && $cta2_url) {
@@ -225,9 +225,9 @@ function wexoe_lp_test_render_sidebar_case($data, $id) {
     $html = '<div class="wexoe-lp-sb-badge wexoe-lp-sb-badge-text">KUNDCASE</div>';
     if ($title) $html .= '<h3 class="wexoe-lp-sb-title">'.esc_html($title).'</h3>';
     if ($image) $html .= '<img class="wexoe-lp-sb-case-img" src="'.esc_url($image).'" alt="'.esc_attr($title).'" loading="lazy"/>';
-    if ($desc) $html .= '<p class="wexoe-lp-sb-desc">'.wexoe_lp_test_md($desc).'</p>';
+    if ($desc) $html .= '<div class="wexoe-lp-sb-desc">'.wexoe_lp_test_md($desc).'</div>';
     foreach ($outcomes as $o) {
-        $html .= '<div class="wexoe-lp-sb-outcome"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#10B981" opacity="0.15"/><path d="M6 10.5L8.5 13L14 7.5" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>'.wexoe_lp_test_md($o).'</span></div>';
+        $html .= '<div class="wexoe-lp-sb-outcome"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#10B981" opacity="0.15"/><path d="M6 10.5L8.5 13L14 7.5" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="wexoe-lp-sb-outcome-text">'.wexoe_lp_test_md($o).'</div></div>';
     }
     if ($cta_text && $cta_url) {
         $html .= '<a href="'.esc_url($cta_url).'" class="wexoe-lp-sb-cta-link">'.esc_html($cta_text).' &rarr;</a>';
@@ -256,7 +256,7 @@ function wexoe_lp_test_render_sidebar_event($data, $id) {
     $html = '';
     if ($type) $html .= '<div class="wexoe-lp-sb-event-type">'.esc_html($type).'</div>';
     if ($title) $html .= '<h3 class="wexoe-lp-sb-title">'.esc_html($title).'</h3>';
-    if ($desc) $html .= '<p class="wexoe-lp-sb-desc">'.wexoe_lp_test_md($desc).'</p>';
+    if ($desc) $html .= '<div class="wexoe-lp-sb-desc">'.wexoe_lp_test_md($desc).'</div>';
 
     $html .= '<div class="wexoe-lp-sb-event-meta">';
     if ($date) $html .= '<div class="wexoe-lp-sb-meta-item"><svg width="16" height="16" fill="none" viewBox="0 0 16 16"><rect x="1" y="2" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M1 6h14" stroke="currentColor" stroke-width="1.5"/><path d="M5 1v2M11 1v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>'.esc_html($date).'</span></div>';
@@ -286,7 +286,7 @@ function wexoe_lp_test_render_sidebar_leadmagnet($data, $id) {
     if ($title) $html .= '<h4>'.esc_html($title).'</h4>';
     if ($format) $html .= '<p>'.esc_html($format).'</p>';
     $html .= '</div></div>';
-    if ($desc) $html .= '<p class="wexoe-lp-sb-desc">'.wexoe_lp_test_md($desc).'</p>';
+    if ($desc) $html .= '<div class="wexoe-lp-sb-desc">'.wexoe_lp_test_md($desc).'</div>';
 
     $html .= '<div class="wexoe-lp-sb-form" data-type="leadmagnet" data-webhook="'.esc_attr($webhook).'" data-file="'.esc_attr($file_url).'">';
     $html .= '<input type="email" class="wexoe-lp-sb-input" placeholder="Din e-postadress" required/>';
@@ -541,6 +541,8 @@ function wexoe_lp_test_render_css($id, $main_color, $secondary_color) {
     #'.$id.' .wexoe-lp-hero-text { position: relative !important; z-index: 10 !important; max-width: 480px !important; padding: 72px 0 !important; margin-left: max(32px, calc((100% - 1100px) / 2 + 32px)) !important; }
     #'.$id.' .wexoe-lp-hero-h1 { font-size: 2.2rem !important; font-weight: 700 !important; line-height: 1.2 !important; margin-bottom: 16px !important; color: #fff !important; }
     #'.$id.' .wexoe-lp-hero-desc { font-size: 1rem !important; line-height: 1.7 !important; opacity: 0.9 !important; margin-bottom: 28px !important; color: #fff !important; }
+    #'.$id.' .wexoe-lp-hero-desc p { color: inherit !important; margin: 0 0 12px 0 !important; }
+    #'.$id.' .wexoe-lp-hero-desc p:last-child { margin-bottom: 0 !important; }
     #'.$id.' .wexoe-lp-hero-desc br { display: inline !important; }
     #'.$id.' .wexoe-lp-hero-buttons { display: flex !important; gap: 12px !important; flex-wrap: wrap !important; }
     #'.$id.' .wexoe-lp-btn-primary { display: inline-flex !important; align-items: center !important; gap: 8px !important; background: var(--lp-secondary) !important; color: #fff !important; padding: 13px 28px !important; border-radius: 4px !important; font-weight: 600 !important; font-size: 0.95rem !important; transition: background 0.2s !important; }
@@ -575,9 +577,14 @@ function wexoe_lp_test_render_css($id, $main_color, $secondary_color) {
     #'.$id.' .wexoe-lp-sb-badge-filled { display: none !important; }
     #'.$id.' .wexoe-lp-sb-title { font-size: 1.2rem !important; font-weight: 700 !important; color: var(--lp-main) !important; line-height: 1.3 !important; margin-bottom: 12px !important; }
     #'.$id.' .wexoe-lp-sb-desc { font-size: 0.9rem !important; color: #555 !important; line-height: 1.65 !important; margin-bottom: 18px !important; }
+    #'.$id.' .wexoe-lp-sb-desc p { color: inherit !important; margin: 0 0 10px 0 !important; }
+    #'.$id.' .wexoe-lp-sb-desc p:last-child { margin-bottom: 0 !important; }
     #'.$id.' .wexoe-lp-sb-case-img { width: 100% !important; border-radius: 6px !important; margin-bottom: 18px !important; object-fit: cover !important; max-height: 160px !important; }
     #'.$id.' .wexoe-lp-sb-outcome { display: flex !important; align-items: flex-start !important; gap: 8px !important; margin-bottom: 10px !important; font-size: 0.88rem !important; color: var(--lp-main) !important; }
     #'.$id.' .wexoe-lp-sb-outcome svg { flex-shrink: 0 !important; margin-top: 2px !important; }
+    #'.$id.' .wexoe-lp-sb-outcome-text { color: inherit !important; }
+    #'.$id.' .wexoe-lp-sb-outcome-text p { color: inherit !important; margin: 0 0 8px 0 !important; }
+    #'.$id.' .wexoe-lp-sb-outcome-text p:last-child { margin-bottom: 0 !important; }
     #'.$id.' .wexoe-lp-sb-cta-link { display: inline-flex !important; align-items: center !important; gap: 6px !important; font-size: 0.9rem !important; font-weight: 600 !important; color: var(--lp-main) !important; margin-top: 16px !important; padding-bottom: 1px !important; border-bottom: 2px solid transparent !important; transition: border-color 0.2s !important; }
     #'.$id.' .wexoe-lp-sb-cta-link:hover { border-color: var(--lp-main) !important; }
     #'.$id.' .wexoe-lp-sb-event-type { font-size: 0.78rem !important; font-weight: 600 !important; color: #888 !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; margin-bottom: 4px !important; }
