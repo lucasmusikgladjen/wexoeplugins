@@ -143,17 +143,21 @@ export default function PublishDialog({ state, onClose }: Props) {
                 <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-3">
                   <span className="text-green-600 text-xl">✓</span>
                 </div>
-                <p className="text-sm font-medium text-lp-text mb-1">
-                  {isEdit ? 'Ändringarna har sparats!' : 'Sidan har publicerats!'}
+                <p className="text-sm font-medium text-lp-text">
+                  {isEdit ? 'Ändringarna har sparats' : 'Sidan har publicerats!'}
                 </p>
-                <p className="text-xs text-lp-text-light">
-                  Slug: <strong>{result.slug}</strong> — {result.tabCount} tabs
-                </p>
-                <p className="text-xs text-lp-text-light mt-2">
-                  Sidan uppdateras på wexoe.se inom 5 minuter (Airtable-cache).
-                </p>
-                {result.recordId && (
-                  <p className="text-xs text-gray-400 mt-1">Record ID: {result.recordId}</p>
+                {!isEdit && (
+                  <>
+                    <p className="text-xs text-lp-text-light mt-1">
+                      Slug: <strong>{result.slug}</strong> — {result.tabCount} tabs
+                    </p>
+                    <p className="text-xs text-lp-text-light mt-2">
+                      Sidan uppdateras på wexoe.se inom 5 minuter (Airtable-cache).
+                    </p>
+                    {result.recordId && (
+                      <p className="text-xs text-gray-400 mt-1">Record ID: {result.recordId}</p>
+                    )}
+                  </>
                 )}
               </div>
             </div>
