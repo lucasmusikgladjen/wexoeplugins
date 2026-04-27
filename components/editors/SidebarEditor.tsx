@@ -92,7 +92,7 @@ function EventFields({ state, set }: { state: PageState; set: (f: keyof PageStat
       <FieldInput label="Titel" value={state.eventTitle} onChange={(v) => set('eventTitle', v)} placeholder="Webinar: Introduktion till FTTO" />
       <FieldTextarea label="Beskrivning" value={state.eventDescription} onChange={(v) => set('eventDescription', v)} rows={3} />
       <div className="grid grid-cols-2 gap-2">
-        <FieldInput label="Datum" value={state.eventDate} onChange={(v) => set('eventDate', v)} type="date" />
+        <FieldInput label="Datum & tid" value={state.eventDate} onChange={(v) => set('eventDate', v)} type="datetime-local" />
         <FieldInput label="Plats" value={state.eventLocation} onChange={(v) => set('eventLocation', v)} placeholder="Online / Stockholm" />
       </div>
       <FieldInput label="Webhook" value={state.eventWebhook} onChange={(v) => set('eventWebhook', v)} placeholder="https://hook.eu2.make.com/..." />
