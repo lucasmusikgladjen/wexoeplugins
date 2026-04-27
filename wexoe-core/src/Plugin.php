@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 /**
  * Main plugin bootstrap class. Singleton pattern — there is only one Plugin
  * instance per request. Also holds static accessors for plugin-wide config
- * (API key, base ID) that other Core classes read from.
+ * (API key, base ID, webhook secret) that other Core classes read from.
  */
 class Plugin {
 
@@ -17,6 +17,7 @@ class Plugin {
 
     const OPTION_API_KEY = 'wexoe_core_airtable_api_key';
     const OPTION_BASE_ID = 'wexoe_core_airtable_base_id';
+    const OPTION_WEBHOOK_SECRET = 'wexoe_core_webhook_secret';
 
     public static function instance() {
         if (self::$instance === null) {
@@ -29,8 +30,15 @@ class Plugin {
 
     public function boot() {
         add_action('wexoe_core_refresh_entity_cache', [EntityRepository::class, 'cron_refresh_entity_cache'], 10, 1);
+        add_action('rest_api_init', [RestApi::class, 'register_routes']);
         if (is_admin()) {
             Admin\Page::instance()->register();
+            Admin\CacheTools::instance()->register();
+            // Inject a tiny JS patch on the legacy Wexoe Core page so its
+            // "Rensa all cache" button becomes clickable when stale-fallback
+            // rows still exist in wp_options (the case the original button
+            // misses). Footer hook so the markup is already in the DOM.
+            add_action('admin_print_footer_scripts', [Admin\CacheTools::class, 'patch_legacy_page_button']);
         }
     }
 
@@ -85,5 +93,23 @@ class Plugin {
      */
     public static function is_valid_base_id_format($id) {
         return is_string($id) && preg_match('/^app[A-Za-z0-9]{14}$/', $id) === 1;
+    }
+
+    /* --------------------------------------------------------
+       WEBHOOK SECRET (used by RestApi to auth /cache/clear calls
+       from the Wexoe Builder publish flow)
+       -------------------------------------------------------- */
+
+    public static function get_webhook_secret() {
+        $s = get_option(self::OPTION_WEBHOOK_SECRET, '');
+        return is_string($s) ? $s : '';
+    }
+
+    public static function set_webhook_secret($secret) {
+        return update_option(self::OPTION_WEBHOOK_SECRET, sanitize_text_field($secret));
+    }
+
+    public static function delete_webhook_secret() {
+        return delete_option(self::OPTION_WEBHOOK_SECRET);
     }
 }
