@@ -33,6 +33,12 @@ class Plugin {
         add_action('rest_api_init', [RestApi::class, 'register_routes']);
         if (is_admin()) {
             Admin\Page::instance()->register();
+            Admin\CacheTools::instance()->register();
+            // Inject a tiny JS patch on the legacy Wexoe Core page so its
+            // "Rensa all cache" button becomes clickable when stale-fallback
+            // rows still exist in wp_options (the case the original button
+            // misses). Footer hook so the markup is already in the DOM.
+            add_action('admin_print_footer_scripts', [Admin\CacheTools::class, 'patch_legacy_page_button']);
         }
     }
 
