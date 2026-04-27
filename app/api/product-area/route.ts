@@ -10,6 +10,7 @@ import { PA_TABLE_IDS } from '@/lib/product-area-mapper';
 import { loadProductAreaState, loadDivisions } from '@/lib/product-area-loader';
 import { ProductAreaState } from '@/lib/product-area-types';
 import { transformProductArea } from '@/lib/claude-transform';
+import { invalidateWexoeCoreCache, PA_ENTITIES } from '@/lib/wexoe-cache';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
@@ -178,6 +179,10 @@ async function createProductArea(
     paFields,
   );
 
+  // Drop the matching Wexoe Core entity caches in WordPress so the live
+  // site reflects this new product area on the next request.
+  await invalidateWexoeCoreCache(PA_ENTITIES, 'product-area:create');
+
   return NextResponse.json({
     success: true,
     mode: 'create' as const,
@@ -300,6 +305,10 @@ async function updateProductArea(
     Solutions: solutionIdOrder,
     Division: state.division,
   });
+
+  // Cache-bust Wexoe Core after a successful update so live edits aren't
+  // hidden behind the 24h transient TTL on the WordPress side.
+  await invalidateWexoeCoreCache(PA_ENTITIES, 'product-area:update');
 
   return NextResponse.json({
     success: true,

@@ -16,6 +16,7 @@ import {
   clearsForSidebarType,
   LpTransformDownload,
 } from '@/lib/claude-transform';
+import { invalidateWexoeCoreCache, LP_ENTITIES } from '@/lib/wexoe-cache';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
@@ -178,6 +179,12 @@ async function createNewPage(
       downloadCount = createdDownloads.length;
     }
   }
+
+  // Tell Wexoe Core (WordPress) to drop its caches for landing-page-related
+  // entities so editors see the new page on the live site immediately.
+  // Awaited intentionally — Vercel can spin the lambda down before a
+  // dangling promise resolves, so we'd rather pay the ~hundreds-of-ms.
+  await invalidateWexoeCoreCache(LP_ENTITIES, 'publish:create');
 
   return NextResponse.json({
     success: true,
@@ -405,6 +412,10 @@ async function updateExistingPage(
       downloadsCreated += dlToCreate.length;
     }
   }
+
+  // Cache-bust Wexoe Core after a successful update so changes show up
+  // straight away on the live site instead of waiting for the 24h TTL.
+  await invalidateWexoeCoreCache(LP_ENTITIES, 'publish:update');
 
   return NextResponse.json({
     success: true,
