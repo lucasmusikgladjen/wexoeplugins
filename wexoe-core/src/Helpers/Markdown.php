@@ -86,7 +86,7 @@ class Markdown {
         }
         $html = self::to_html($text);
         // Strip outer <p> if the entire output is a single paragraph
-        if (preg_match('/^<p>(.*)<\/p>\s*$/s', trim($html), $m)) {
+        if (preg_match('/^\s*<p>(.*?)<\/p>\s*$/s', trim($html), $m)) {
             return $m[1];
         }
         return $html;

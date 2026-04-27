@@ -921,7 +921,7 @@ function wexoe_pa_test_render_our_guy($data, $id) {
     if ($bio) {
         $html .= '<div class="wexoe-pa-contact-quote">';
         $html .= '<svg class="wexoe-pa-quote-open" width="32" height="24" viewBox="0 0 32 24" fill="none"><path d="M0 24V14.4C0 10.4 0.8 7.2 2.4 4.8C4.1 2.4 6.7 0.7 10.2 0L11.4 3C9.3 3.5 7.7 4.5 6.6 6C5.5 7.5 5 9.2 5 11.2H10V24H0ZM18 24V14.4C18 10.4 18.8 7.2 20.4 4.8C22.1 2.4 24.7 0.7 28.2 0L29.4 3C27.3 3.5 25.7 4.5 24.6 6C23.5 7.5 23 9.2 23 11.2H28V24H18Z" fill="rgba(255,255,255,0.15)"/></svg>';
-        $html .= '<p>'.wexoe_pa_test_md($bio).'</p>';
+        $html .= '<div class="wexoe-pa-contact-quote-body">'.wexoe_pa_test_md($bio).'</div>';
         $html .= '<svg class="wexoe-pa-quote-close" width="32" height="24" viewBox="0 0 32 24" fill="none"><path d="M32 0V9.6C32 13.6 31.2 16.8 29.6 19.2C27.9 21.6 25.3 23.3 21.8 24L20.6 21C22.7 20.5 24.3 19.5 25.4 18C26.5 16.5 27 14.8 27 12.8H22V0H32ZM14 0V9.6C14 13.6 13.2 16.8 11.6 19.2C9.9 21.6 7.3 23.3 3.8 24L2.6 21C4.7 20.5 6.3 19.5 7.4 18C8.5 16.5 9 14.8 9 12.8H4V0H14Z" fill="rgba(255,255,255,0.15)"/></svg>';
         $html .= '</div>';
     }
@@ -1899,7 +1899,7 @@ function wexoe_pa_test_render_css($id) {
         margin-bottom: 0 !important;
         opacity: 0.35 !important;
     }
-    #'.$id.' .wexoe-pa-contact-quote p {
+    #'.$id.' .wexoe-pa-contact-quote-body {
         font-size: 16px !important;
         line-height: 1.7 !important;
         color: #FFFFFF !important;
@@ -1908,6 +1908,14 @@ function wexoe_pa_test_render_css($id) {
         font-style: italic !important;
         position: relative !important;
         z-index: 1 !important;
+    }
+    #'.$id.' .wexoe-pa-contact-quote-body p {
+        color: inherit !important;
+        margin: 0 0 10px 0 !important;
+        font-style: inherit !important;
+    }
+    #'.$id.' .wexoe-pa-contact-quote-body p:last-child {
+        margin-bottom: 0 !important;
     }
     #'.$id.' .wexoe-pa-contact-quote p strong,
     #'.$id.' .wexoe-pa-contact-quote p em,

@@ -227,7 +227,7 @@ function wexoe_lp_test_render_sidebar_case($data, $id) {
     if ($image) $html .= '<img class="wexoe-lp-sb-case-img" src="'.esc_url($image).'" alt="'.esc_attr($title).'" loading="lazy"/>';
     if ($desc) $html .= '<div class="wexoe-lp-sb-desc">'.wexoe_lp_test_md($desc).'</div>';
     foreach ($outcomes as $o) {
-        $html .= '<div class="wexoe-lp-sb-outcome"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#10B981" opacity="0.15"/><path d="M6 10.5L8.5 13L14 7.5" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>'.wexoe_lp_test_md($o).'</span></div>';
+        $html .= '<div class="wexoe-lp-sb-outcome"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#10B981" opacity="0.15"/><path d="M6 10.5L8.5 13L14 7.5" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="wexoe-lp-sb-outcome-text">'.wexoe_lp_test_md($o).'</div></div>';
     }
     if ($cta_text && $cta_url) {
         $html .= '<a href="'.esc_url($cta_url).'" class="wexoe-lp-sb-cta-link">'.esc_html($cta_text).' &rarr;</a>';
@@ -582,6 +582,9 @@ function wexoe_lp_test_render_css($id, $main_color, $secondary_color) {
     #'.$id.' .wexoe-lp-sb-case-img { width: 100% !important; border-radius: 6px !important; margin-bottom: 18px !important; object-fit: cover !important; max-height: 160px !important; }
     #'.$id.' .wexoe-lp-sb-outcome { display: flex !important; align-items: flex-start !important; gap: 8px !important; margin-bottom: 10px !important; font-size: 0.88rem !important; color: var(--lp-main) !important; }
     #'.$id.' .wexoe-lp-sb-outcome svg { flex-shrink: 0 !important; margin-top: 2px !important; }
+    #'.$id.' .wexoe-lp-sb-outcome-text { color: inherit !important; }
+    #'.$id.' .wexoe-lp-sb-outcome-text p { color: inherit !important; margin: 0 0 8px 0 !important; }
+    #'.$id.' .wexoe-lp-sb-outcome-text p:last-child { margin-bottom: 0 !important; }
     #'.$id.' .wexoe-lp-sb-cta-link { display: inline-flex !important; align-items: center !important; gap: 6px !important; font-size: 0.9rem !important; font-weight: 600 !important; color: var(--lp-main) !important; margin-top: 16px !important; padding-bottom: 1px !important; border-bottom: 2px solid transparent !important; transition: border-color 0.2s !important; }
     #'.$id.' .wexoe-lp-sb-cta-link:hover { border-color: var(--lp-main) !important; }
     #'.$id.' .wexoe-lp-sb-event-type { font-size: 0.78rem !important; font-weight: 600 !important; color: #888 !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; margin-bottom: 4px !important; }
