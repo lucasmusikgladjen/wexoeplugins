@@ -75,7 +75,7 @@ export default function HeroEditor({ state, setField }: Props) {
         label="Brödtext"
         value={state.heroText}
         onChange={(v) => setField('heroText', v)}
-        rows={4}
+        rows={8}
         placeholder="Kort beskrivning av vad sidan handlar om…"
       />
 
@@ -116,7 +116,7 @@ export default function HeroEditor({ state, setField }: Props) {
               label="Beskrivning"
               value={state.npiDescription}
               onChange={(v) => setField('npiDescription', v)}
-              rows={2}
+              rows={4}
               placeholder="Ny generation med dubbla scantiden…"
             />
             <FieldInput
@@ -140,7 +140,7 @@ export default function HeroEditor({ state, setField }: Props) {
               label="Benefits"
               value={state.heroBenefits}
               onChange={(v) => setField('heroBenefits', v)}
-              rows={4}
+              rows={8}
               hint="en per rad"
               placeholder={'Från fristående styrning till fabriksövergripande\nFör både process- och diskret tillverkning\nIntegrerad arkitektur'}
             />

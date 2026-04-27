@@ -85,9 +85,19 @@ function renderTokenChildren(text: string, keyPrefix: string): Node[] {
   return out;
 }
 
-/** Render a single line of inline markdown to React nodes. */
+/** Render inline markdown to React nodes. Single newlines become <br/> to
+ *  match the PHP plugin's `wexoe_pa_md` (which ends with `nl2br`). Callers
+ *  that pre-split on newlines (bullet lists) pass single lines and get the
+ *  same result as before. */
 export function renderInlineMarkdown(text: string): Node[] {
-  return renderTokenChildren(text, 'm');
+  if (text.indexOf('\n') === -1) return renderTokenChildren(text, 'm');
+  const out: Node[] = [];
+  const lines = text.split('\n');
+  lines.forEach((line, i) => {
+    if (i > 0) out.push(<br key={`br-${i}`} />);
+    out.push(...renderTokenChildren(line, `m-${i}`));
+  });
+  return out;
 }
 
 /** Render a multi-line markdown string: blank lines split paragraphs, single

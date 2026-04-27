@@ -90,7 +90,7 @@ export default function SolutionsEditor({ state, setField, visible, onToggleVisi
             label="Beskrivning"
             value={sol.description}
             onChange={(v) => patchSolution(i, { description: v })}
-            rows={3}
+            rows={6}
             placeholder="Kort beskrivning av lösningen…"
           />
 

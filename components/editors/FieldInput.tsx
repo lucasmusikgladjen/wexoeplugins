@@ -1,7 +1,28 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { HexColorPicker, HexColorInput } from 'react-colorful';
+
+/** Resize the textarea's height to fit its content so callers never need to
+ *  scroll — the `rows` prop becomes a minimum, content extends past it. Runs
+ *  in a layout effect so the new height is committed before paint. */
+function useAutoGrow(
+  ref: React.RefObject<HTMLTextAreaElement | null>,
+  value: string,
+) {
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [ref, value]);
+}
+
+/** Shared classes for our textareas: same colours/typography as inputs, but
+ *  resize is disabled (auto-grow handles it) and overflow is hidden so the
+ *  scrollbar never appears. */
+const TEXTAREA_CLASS =
+  'mt-0.5 block w-full rounded bg-gray-100/80 px-3 py-2 text-sm text-gray-700 placeholder:text-gray-300 focus:bg-white focus:ring-1 focus:ring-gray-200 focus:outline-none resize-none overflow-hidden';
 
 interface InputProps {
   label: string;
@@ -35,17 +56,20 @@ interface TextareaProps {
   hint?: string;
 }
 
-export function FieldTextarea({ label, value, onChange, placeholder, rows = 4, hint }: TextareaProps) {
+export function FieldTextarea({ label, value, onChange, placeholder, rows = 8, hint }: TextareaProps) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useAutoGrow(ref, value);
   return (
     <label className="block">
       <span className="text-[11px] text-gray-400">{label}</span>
       {hint && <span className="text-[10px] text-gray-300 ml-1">({hint})</span>}
       <textarea
+        ref={ref}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="mt-0.5 block w-full rounded bg-gray-100/80 px-3 py-2 text-sm text-gray-700 placeholder:text-gray-300 focus:bg-white focus:ring-1 focus:ring-gray-200 focus:outline-none resize-y"
+        className={TEXTAREA_CLASS}
       />
     </label>
   );
@@ -69,10 +93,11 @@ export function RichTextarea({
   value,
   onChange,
   placeholder,
-  rows = 4,
+  rows = 8,
   hint,
 }: RichTextareaProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  useAutoGrow(textareaRef, value);
 
   const apply = useCallback(
     (kind: 'bold' | 'italic' | 'link') => {
@@ -172,7 +197,7 @@ export function RichTextarea({
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         rows={rows}
-        className="mt-0.5 block w-full rounded bg-gray-100/80 px-3 py-2 text-sm text-gray-700 placeholder:text-gray-300 focus:bg-white focus:ring-1 focus:ring-gray-200 focus:outline-none resize-y"
+        className={TEXTAREA_CLASS}
       />
     </label>
   );

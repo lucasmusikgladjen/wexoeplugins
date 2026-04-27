@@ -17,7 +17,7 @@ export default function HeroEditor({ state, dispatch }: Props) {
     <div className="space-y-3">
       <h3 className="text-xl font-bold text-gray-900">Hero</h3>
       <FieldInput label="Rubrik" value={state.h1} onChange={(v) => set('h1', v)} placeholder="T.ex. Framtidens nätverkslösning" />
-      <RichTextarea label="Beskrivning" value={state.heroDescription} onChange={(v) => set('heroDescription', v)} rows={3} placeholder="Kort beskrivning under rubriken..." />
+      <RichTextarea label="Beskrivning" value={state.heroDescription} onChange={(v) => set('heroDescription', v)} rows={6} placeholder="Kort beskrivning under rubriken..." />
       <FieldInput label="Bakgrundsbild" value={state.heroImage} onChange={(v) => set('heroImage', v)} placeholder="https://wexoe.se/wp-content/uploads/..." />
 
       <ButtonFieldset

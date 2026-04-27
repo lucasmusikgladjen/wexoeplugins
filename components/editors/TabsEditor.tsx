@@ -131,8 +131,8 @@ function TextImageFields({ tab, setField }: { tab: Tab; setField: (f: keyof Tab,
   return (
     <>
       <FieldInput label="Rubrik" value={tab.tiH2} onChange={(v) => setField('tiH2', v)} placeholder="Rubrik för tabben" />
-      <RichTextarea label="Text" value={tab.tiText} onChange={(v) => setField('tiText', v)} rows={3} />
-      <RichTextarea label="Benefits" value={tab.tiBenefits} onChange={(v) => setField('tiBenefits', v)} rows={3} hint="en per rad" placeholder={"Fördel 1\nFördel 2\nFördel 3"} />
+      <RichTextarea label="Text" value={tab.tiText} onChange={(v) => setField('tiText', v)} rows={6} />
+      <RichTextarea label="Benefits" value={tab.tiBenefits} onChange={(v) => setField('tiBenefits', v)} rows={6} hint="en per rad" placeholder={"Fördel 1\nFördel 2\nFördel 3"} />
       <FieldInput label="Bild" value={tab.tiImage} onChange={(v) => setField('tiImage', v)} placeholder="https://..." />
       <FieldCheckbox label="Inverterad layout (bild till vänster)" checked={tab.tiInverted} onChange={(v) => setField('tiInverted', v)} />
     </>
@@ -160,7 +160,7 @@ function FaqFields({ tab, dispatch }: { tab: Tab; dispatch: React.Dispatch<PageA
             label="Svar"
             value={item.answer}
             onChange={(v) => dispatch({ type: 'SET_FAQ_ITEM_FIELD', tabId: tab.id, itemId: item.id, field: 'answer', value: v })}
-            rows={2}
+            rows={4}
             placeholder="Svaret på frågan..."
           />
         </ItemCard>
@@ -302,7 +302,7 @@ function StepsFields({ tab, setField, dispatch }: { tab: Tab; setField: (f: keyo
               label="Beskrivning"
               value={item.description}
               onChange={(v) => dispatch({ type: 'SET_STEP_ITEM_FIELD', tabId: tab.id, itemId: item.id, field: 'description', value: v })}
-              rows={2}
+              rows={4}
               placeholder="Vad händer i detta steg..."
             />
           </ItemCard>

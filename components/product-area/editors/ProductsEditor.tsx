@@ -84,7 +84,7 @@ export default function ProductsEditor({ state, setField, visible, onToggleVisib
             label="Beskrivning"
             value={product.description}
             onChange={(v) => patchProduct(i, { description: v })}
-            rows={4}
+            rows={8}
             placeholder="Kort beskrivning av produkten…"
           />
 
@@ -92,7 +92,7 @@ export default function ProductsEditor({ state, setField, visible, onToggleVisib
             label="Punkter"
             value={product.bullets}
             onChange={(v) => patchProduct(i, { bullets: v })}
-            rows={3}
+            rows={6}
             hint="en per rad"
             placeholder={'Hög tillgänglighet\nKonsoliderad plattform'}
           />

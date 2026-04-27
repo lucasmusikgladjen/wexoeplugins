@@ -27,7 +27,7 @@ export default function ContactEditor({ state, dispatch }: Props) {
             <FieldInput label="Telefon" value={state.contactPhone} onChange={(v) => set('contactPhone', v)} placeholder="+46 70 123 45 67" />
           </div>
           <FieldInput label="Bild" value={state.contactImage} onChange={(v) => set('contactImage', v)} placeholder="https://wexoe.se/wp-content/uploads/..." />
-          <RichTextarea label="Citat" value={state.contactQuote} onChange={(v) => set('contactQuote', v)} rows={2} placeholder="Jag hjälper dig gärna att hitta rätt lösning." />
+          <RichTextarea label="Citat" value={state.contactQuote} onChange={(v) => set('contactQuote', v)} rows={4} placeholder="Jag hjälper dig gärna att hitta rätt lösning." />
         </>
       )}
     </div>

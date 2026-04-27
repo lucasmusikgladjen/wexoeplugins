@@ -57,7 +57,7 @@ export default function ContactEditor({ state, setField, visible, onToggleVisibl
         label="Citat"
         value={state.contactText}
         onChange={(v) => setField('contactText', v)}
-        rows={3}
+        rows={6}
         placeholder="Jag hjälper dig gärna att hitta rätt lösning."
       />
 

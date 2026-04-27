@@ -77,7 +77,7 @@ export default function ContentBlocksEditor({ state, setNormal, visible, onToggl
               label="Brödtext"
               value={section.text}
               onChange={(v) => setNormal(n, { text: v })}
-              rows={3}
+              rows={6}
               placeholder="Beskrivande text för sektionen…"
             />
 
@@ -85,7 +85,7 @@ export default function ContentBlocksEditor({ state, setNormal, visible, onToggl
               label="Punkter"
               value={section.bullets}
               onChange={(v) => setNormal(n, { bullets: v })}
-              rows={3}
+              rows={6}
               hint="en per rad"
               placeholder={'Första punkten\nAndra punkten'}
             />
