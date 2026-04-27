@@ -452,7 +452,7 @@ function wexoe_pa_test_render_hero($data, $id) {
         $html .= '<h2 class="wexoe-pa-hero-h2">'.esc_html($h2).'</h2>';
     }
     if ($text) {
-        $html .= '<p class="wexoe-pa-hero-text">'.wexoe_pa_test_md($text).'</p>';
+        $html .= '<div class="wexoe-pa-hero-text">'.wexoe_pa_test_md($text).'</div>';
     }
     if ($cta_text && $cta_url) {
         $html .= '<a href="'.esc_url($cta_url).'" class="wexoe-pa-hero-cta">'.esc_html($cta_text).' <span class="wexoe-pa-cta-arrow">&rarr;</span></a>';
@@ -544,7 +544,7 @@ function wexoe_pa_test_render_products($products, $data, $id) {
         // Left column — text + buttons
         $html .= '<div class="wexoe-pa-toggle-left">';
         if ($desc) {
-            $html .= '<p class="wexoe-pa-toggle-desc">'.wexoe_pa_test_md($desc).'</p>';
+            $html .= '<div class="wexoe-pa-toggle-desc">'.wexoe_pa_test_md($desc).'</div>';
         }
         if (!empty($bullets)) {
             $html .= '<ul class="wexoe-pa-toggle-checks">';
@@ -650,7 +650,7 @@ function wexoe_pa_test_render_side_menu($products, $articles_grouped, $data, $id
 
         // Description
         if ($desc) {
-            $html .= '<p class="wexoe-pa-sm-desc">'.wexoe_pa_test_md($desc).'</p>';
+            $html .= '<div class="wexoe-pa-sm-desc">'.wexoe_pa_test_md($desc).'</div>';
         }
 
         // Bullets
@@ -862,7 +862,7 @@ function wexoe_pa_test_render_normal($data, $n, $id) {
         $html .= '<h2 class="wexoe-pa-normal-h2">'.esc_html($h2).'</h2>';
     }
     if ($text) {
-        $html .= '<p class="wexoe-pa-normal-body">'.wexoe_pa_test_md($text).'</p>';
+        $html .= '<div class="wexoe-pa-normal-body">'.wexoe_pa_test_md($text).'</div>';
     }
     if (!empty($bullets)) {
         $html .= '<ul class="wexoe-pa-normal-checks">';
@@ -1202,6 +1202,13 @@ function wexoe_pa_test_render_css($id) {
         margin: 0 0 28px 0 !important;
         padding: 0 !important;
     }
+    #'.$id.' .wexoe-pa-hero-text p {
+        color: inherit !important;
+        margin: 0 0 14px 0 !important;
+    }
+    #'.$id.' .wexoe-pa-hero-text p:last-child {
+        margin-bottom: 0 !important;
+    }
     #'.$id.' .wexoe-pa-hero-text strong,
     #'.$id.' .wexoe-pa-hero-text em,
     #'.$id.' .wexoe-pa-hero-text del,
@@ -1502,6 +1509,13 @@ function wexoe_pa_test_render_css($id) {
         margin: 0 0 16px 0 !important;
         padding: 0 !important;
     }
+    #'.$id.' .wexoe-pa-toggle-desc p {
+        color: inherit !important;
+        margin: 0 0 12px 0 !important;
+    }
+    #'.$id.' .wexoe-pa-toggle-desc p:last-child {
+        margin-bottom: 0 !important;
+    }
     #'.$id.' .wexoe-pa-toggle-desc strong,
     #'.$id.' .wexoe-pa-toggle-desc em,
     #'.$id.' .wexoe-pa-toggle-desc del,
@@ -1769,6 +1783,13 @@ function wexoe_pa_test_render_css($id) {
         margin: 0 0 18px 0 !important;
         padding: 0 !important;
     }
+    #'.$id.' .wexoe-pa-normal-body p {
+        color: inherit !important;
+        margin: 0 0 12px 0 !important;
+    }
+    #'.$id.' .wexoe-pa-normal-body p:last-child {
+        margin-bottom: 0 !important;
+    }
     /* Inline element colour is handled by the global "Markdown inline styles"
        block above (inherits parent colour); links are handled by the global
        link rule that uses --wexoe-md-link. */
@@ -2000,6 +2021,13 @@ function wexoe_pa_test_render_css($id) {
         color: #FFFFFF !important;
         margin: 0 0 16px 0 !important;
         padding: 0 !important;
+    }
+    #'.$id.' .wexoe-pa-sm-desc p {
+        color: inherit !important;
+        margin: 0 0 12px 0 !important;
+    }
+    #'.$id.' .wexoe-pa-sm-desc p:last-child {
+        margin-bottom: 0 !important;
     }
     #'.$id.' .wexoe-pa-sm-desc strong,
     #'.$id.' .wexoe-pa-sm-desc em,
