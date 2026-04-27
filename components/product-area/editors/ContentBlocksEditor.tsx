@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ProductAreaState, NormalSection } from '@/lib/product-area-types';
-import { FieldTextarea, FieldInput, FieldCheckbox, FieldColor } from '@/components/editors/FieldInput';
+import { FieldInput, FieldCheckbox, FieldColor, RichTextarea } from '@/components/editors/FieldInput';
 import CollapsibleCard from './CollapsibleCard';
 
 interface Props {
@@ -73,7 +73,7 @@ export default function ContentBlocksEditor({ state, setNormal, visible, onToggl
             removeTitle="Ta bort sektion"
             defaultOpen={!hasContent(section)}
           >
-            <FieldTextarea
+            <RichTextarea
               label="Brödtext"
               value={section.text}
               onChange={(v) => setNormal(n, { text: v })}
@@ -81,7 +81,7 @@ export default function ContentBlocksEditor({ state, setNormal, visible, onToggl
               placeholder="Beskrivande text för sektionen…"
             />
 
-            <FieldTextarea
+            <RichTextarea
               label="Punkter"
               value={section.bullets}
               onChange={(v) => setNormal(n, { bullets: v })}

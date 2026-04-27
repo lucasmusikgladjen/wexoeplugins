@@ -1,7 +1,7 @@
 'use client';
 
 import { PageState, PageAction, SidebarType } from '@/lib/types';
-import { FieldInput, FieldTextarea, FieldSelect, FieldCheckbox } from './FieldInput';
+import { FieldInput, FieldTextarea, FieldSelect, FieldCheckbox, RichTextarea } from './FieldInput';
 import ButtonFieldset from './ButtonFieldset';
 
 interface Props {
@@ -54,9 +54,9 @@ function CaseFields({ state, set }: { state: PageState; set: (f: keyof PageState
   return (
     <div className="space-y-3">
       <FieldInput label="Titel" value={state.caseTitle} onChange={(v) => set('caseTitle', v)} placeholder="Kundcase: Företaget AB" />
-      <FieldTextarea label="Beskrivning" value={state.caseDescription} onChange={(v) => set('caseDescription', v)} rows={3} placeholder="Kort beskrivning av caset..." />
+      <RichTextarea label="Beskrivning" value={state.caseDescription} onChange={(v) => set('caseDescription', v)} rows={3} placeholder="Kort beskrivning av caset..." />
       <FieldInput label="Bild" value={state.caseImage} onChange={(v) => set('caseImage', v)} placeholder="https://..." />
-      <FieldTextarea label="Resultat" value={state.caseOutcomes} onChange={(v) => set('caseOutcomes', v)} rows={3} hint="en per rad" placeholder={"40% snabbare installation\n60% lägre driftkostnad"} />
+      <RichTextarea label="Resultat" value={state.caseOutcomes} onChange={(v) => set('caseOutcomes', v)} rows={3} hint="en per rad" placeholder={"40% snabbare installation\n60% lägre driftkostnad"} />
       <ButtonFieldset
         label="Knapp"
         segments={[
@@ -90,7 +90,7 @@ function EventFields({ state, set }: { state: PageState; set: (f: keyof PageStat
     <div className="space-y-3">
       <FieldInput label="Typ" value={state.eventType} onChange={(v) => set('eventType', v)} placeholder="Webinar, Seminarium, Workshop..." />
       <FieldInput label="Titel" value={state.eventTitle} onChange={(v) => set('eventTitle', v)} placeholder="Webinar: Introduktion till FTTO" />
-      <FieldTextarea label="Beskrivning" value={state.eventDescription} onChange={(v) => set('eventDescription', v)} rows={3} />
+      <RichTextarea label="Beskrivning" value={state.eventDescription} onChange={(v) => set('eventDescription', v)} rows={3} />
       <div className="grid grid-cols-2 gap-2">
         <FieldInput label="Datum & tid" value={state.eventDate} onChange={(v) => set('eventDate', v)} type="datetime-local" />
         <FieldInput label="Plats" value={state.eventLocation} onChange={(v) => set('eventLocation', v)} placeholder="Online / Stockholm" />
@@ -111,7 +111,7 @@ function LeadMagnetFields({ state, set }: { state: PageState; set: (f: keyof Pag
         { value: 'Guide', label: 'Guide' },
         { value: 'Checklista', label: 'Checklista' },
       ]} />
-      <FieldTextarea label="Beskrivning" value={state.magnetDescription} onChange={(v) => set('magnetDescription', v)} rows={3} />
+      <RichTextarea label="Beskrivning" value={state.magnetDescription} onChange={(v) => set('magnetDescription', v)} rows={3} />
       <FieldInput label="Fillänk" value={state.magnetFileUrl} onChange={(v) => set('magnetFileUrl', v)} placeholder="https://wexoe.se/wp-content/uploads/..." />
       <FieldInput label="Webhook" value={state.magnetWebhook} onChange={(v) => set('magnetWebhook', v)} placeholder="https://hook.eu2.make.com/..." />
     </div>

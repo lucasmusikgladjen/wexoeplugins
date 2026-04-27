@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ProductAreaState } from '@/lib/product-area-types';
-import { FieldInput, FieldTextarea, FieldSelect } from '@/components/editors/FieldInput';
+import { FieldInput, FieldTextarea, FieldSelect, RichTextarea } from '@/components/editors/FieldInput';
 import ButtonFieldset from '@/components/editors/ButtonFieldset';
 
 interface Props {
@@ -71,7 +71,7 @@ export default function HeroEditor({ state, setField }: Props) {
         placeholder="Allen-Bradley PLC för små och stora applikationer"
       />
 
-      <FieldTextarea
+      <RichTextarea
         label="Brödtext"
         value={state.heroText}
         onChange={(v) => setField('heroText', v)}
@@ -136,7 +136,7 @@ export default function HeroEditor({ state, setField }: Props) {
 
         {rightType === 'benefits' && (
           <div className="mt-3">
-            <FieldTextarea
+            <RichTextarea
               label="Benefits"
               value={state.heroBenefits}
               onChange={(v) => setField('heroBenefits', v)}

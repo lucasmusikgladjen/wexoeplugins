@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { HexColorPicker, HexColorInput } from 'react-colorful';
 
 interface InputProps {
@@ -48,6 +48,163 @@ export function FieldTextarea({ label, value, onChange, placeholder, rows = 4, h
         className="mt-0.5 block w-full rounded bg-gray-100/80 px-3 py-2 text-sm text-gray-700 placeholder:text-gray-300 focus:bg-white focus:ring-1 focus:ring-gray-200 focus:outline-none resize-y"
       />
     </label>
+  );
+}
+
+interface RichTextareaProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  rows?: number;
+  hint?: string;
+}
+
+/** Long-text editor for fields that support inline markdown
+ *  (`**bold**`, `*italic*`, `[text](url)`). Wraps the user's selection on
+ *  toolbar click — or inserts a placeholder if there is no selection — and
+ *  restores the caret around the new text. */
+export function RichTextarea({
+  label,
+  value,
+  onChange,
+  placeholder,
+  rows = 4,
+  hint,
+}: RichTextareaProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const apply = useCallback(
+    (kind: 'bold' | 'italic' | 'link') => {
+      const ta = textareaRef.current;
+      if (!ta) return;
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      const before = value.slice(0, start);
+      const selected = value.slice(start, end);
+      const after = value.slice(end);
+
+      let inserted: string;
+      let cursorStart: number;
+      let cursorEnd: number;
+
+      if (kind === 'bold') {
+        const inner = selected || 'fet text';
+        inserted = `**${inner}**`;
+        cursorStart = start + 2;
+        cursorEnd = cursorStart + inner.length;
+      } else if (kind === 'italic') {
+        const inner = selected || 'kursiv text';
+        inserted = `*${inner}*`;
+        cursorStart = start + 1;
+        cursorEnd = cursorStart + inner.length;
+      } else {
+        const url = window.prompt('URL:', 'https://');
+        if (!url) return;
+        const trimmed = url.trim();
+        if (!trimmed) return;
+        const linkText = selected || 'länktext';
+        inserted = `[${linkText}](${trimmed})`;
+        cursorStart = start + 1;
+        cursorEnd = cursorStart + linkText.length;
+      }
+
+      const next = before + inserted + after;
+      onChange(next);
+
+      // Restore selection on the inner text after React commits the new value.
+      requestAnimationFrame(() => {
+        const el = textareaRef.current;
+        if (!el) return;
+        el.focus();
+        el.setSelectionRange(cursorStart, cursorEnd);
+      });
+    },
+    [value, onChange],
+  );
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!(e.metaKey || e.ctrlKey)) return;
+    const k = e.key.toLowerCase();
+    if (k === 'b') {
+      e.preventDefault();
+      apply('bold');
+    } else if (k === 'i') {
+      e.preventDefault();
+      apply('italic');
+    } else if (k === 'k') {
+      e.preventDefault();
+      apply('link');
+    }
+  };
+
+  return (
+    <label className="block">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] text-gray-400">
+          {label}
+          {hint && <span className="text-[10px] text-gray-300 ml-1">({hint})</span>}
+        </span>
+        <div className="flex items-center gap-0.5 -mb-0.5">
+          <ToolbarButton
+            label="B"
+            title="Fet (Cmd/Ctrl+B)"
+            onClick={() => apply('bold')}
+            bold
+          />
+          <ToolbarButton
+            label="I"
+            title="Kursiv (Cmd/Ctrl+I)"
+            onClick={() => apply('italic')}
+            italic
+          />
+          <ToolbarButton
+            label="🔗"
+            title="Länk (Cmd/Ctrl+K)"
+            onClick={() => apply('link')}
+          />
+        </div>
+      </div>
+      <textarea
+        ref={textareaRef}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={onKeyDown}
+        placeholder={placeholder}
+        rows={rows}
+        className="mt-0.5 block w-full rounded bg-gray-100/80 px-3 py-2 text-sm text-gray-700 placeholder:text-gray-300 focus:bg-white focus:ring-1 focus:ring-gray-200 focus:outline-none resize-y"
+      />
+    </label>
+  );
+}
+
+function ToolbarButton({
+  label,
+  title,
+  onClick,
+  bold,
+  italic,
+}: {
+  label: string;
+  title: string;
+  onClick: () => void;
+  bold?: boolean;
+  italic?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className="px-1.5 py-0.5 text-[11px] text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors leading-none"
+      style={{
+        fontWeight: bold ? 700 : undefined,
+        fontStyle: italic ? 'italic' : undefined,
+        minWidth: 18,
+      }}
+    >
+      {label}
+    </button>
   );
 }
 

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { PageState, Tab } from '@/lib/types';
+import { renderInlineMarkdown, renderMarkdown } from '@/lib/markdown';
 
 interface Props {
   state: PageState;
@@ -68,13 +69,17 @@ function TextImageTab({ tab, mainColor, secondaryColor }: { tab: Tab; mainColor:
   const content = (
     <div className="flex-1 min-w-0">
       {tab.tiH2 && <h3 className="text-xl font-bold mb-3" style={{ color: mainColor }}>{tab.tiH2}</h3>}
-      {tab.tiText && <p className="text-sm leading-relaxed text-lp-text mb-4 whitespace-pre-wrap">{tab.tiText}</p>}
+      {tab.tiText && (
+        <div className="text-sm leading-relaxed text-lp-text mb-4">
+          {renderMarkdown(tab.tiText)}
+        </div>
+      )}
       {benefits.length > 0 && (
         <ul className="space-y-1.5">
           {benefits.map((b, i) => (
             <li key={i} className="flex items-start gap-2 text-sm">
               <span className="mt-0.5 flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ background: secondaryColor }}>✓</span>
-              <span>{b}</span>
+              <span>{renderInlineMarkdown(b)}</span>
             </li>
           ))}
         </ul>
@@ -124,7 +129,9 @@ function FaqTab({ tab, mainColor }: { tab: Tab; mainColor: string }) {
       {items.map((item) => (
         <div key={item.id} className="border border-gray-200 rounded-lg p-4">
           <h4 className="font-semibold text-sm mb-1" style={{ color: mainColor }}>{item.question || 'Fråga...'}</h4>
-          <p className="text-sm text-lp-text-light leading-relaxed">{item.answer || 'Svar...'}</p>
+          <p className="text-sm text-lp-text-light leading-relaxed">
+            {item.answer ? renderInlineMarkdown(item.answer) : 'Svar...'}
+          </p>
         </div>
       ))}
     </div>
@@ -229,7 +236,11 @@ function StepsTab({ tab, mainColor, secondaryColor }: { tab: Tab; mainColor: str
               </div>
               <div>
                 <h4 className="font-semibold text-sm" style={{ color: mainColor }}>{s.title}</h4>
-                {s.description && <p className="text-sm text-lp-text-light mt-0.5">{s.description}</p>}
+                {s.description && (
+                  <p className="text-sm text-lp-text-light mt-0.5">
+                    {renderInlineMarkdown(s.description)}
+                  </p>
+                )}
               </div>
             </div>
           ))}

@@ -1,6 +1,7 @@
 import { ProductAreaState, ProductAreaSectionId } from '@/lib/product-area-types';
 import { colorOr, textOn } from '@/lib/color-utils';
 import { PreviewSection, Arrow } from './shared';
+import { renderInlineMarkdown } from '@/lib/markdown';
 
 interface Props {
   state: ProductAreaState;
@@ -144,7 +145,7 @@ export default function SolutionsPreview({ state, active, onSelect }: Props) {
                       overflow: 'hidden',
                     }}
                   >
-                    {sol.description}
+                    {renderInlineMarkdown(sol.description)}
                   </p>
                 )}
                 <span

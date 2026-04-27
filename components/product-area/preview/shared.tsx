@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { ProductAreaSectionId } from '@/lib/product-area-types';
+import { renderInlineMarkdown, renderMarkdown } from '@/lib/markdown';
 
 interface SectionProps {
   id: ProductAreaSectionId;
@@ -56,7 +57,9 @@ export function Arrow({ color }: { color?: string }) {
   );
 }
 
-/** Renders multiline bullet text as a checkmark list. Empty input → null. */
+/** Renders multiline bullet text as a checkmark list. Each line passes
+ *  through inline markdown (bold/italic/links) — mirrors the PHP plugin's
+ *  per-line `wexoe_pa_md` rendering. Empty input → null. */
 export function BulletList({
   text,
   color,
@@ -84,24 +87,38 @@ export function BulletList({
           }}
         >
           <Check color={color} />
-          <span>{item}</span>
+          <span>{renderInlineMarkdown(item)}</span>
         </li>
       ))}
     </ul>
   );
 }
 
-/** Simple markdown-ish renderer: preserves paragraphs and line breaks. */
+/** Renders prose markdown — paragraphs split on blank lines, single newlines
+ *  become <br/>, inline bold/italic/links/code/strike via `wexoe_pa_md`-style
+ *  rules. Style is applied to each paragraph. */
 export function MarkdownText({ text, style }: { text: string; style?: React.CSSProperties }) {
   if (!text.trim()) return null;
   const paragraphs = text.split(/\n\s*\n/);
   return (
     <>
-      {paragraphs.map((p, i) => (
-        <p key={i} style={{ margin: i === 0 ? 0 : '1em 0 0 0', whiteSpace: 'pre-wrap', ...style }}>
-          {p}
-        </p>
-      ))}
+      {paragraphs.map((p, pi) => {
+        const lines = p.split('\n');
+        return (
+          <p key={pi} style={{ margin: pi === 0 ? 0 : '1em 0 0 0', ...style }}>
+            {lines.map((line, li) => (
+              <span key={li}>
+                {li > 0 && <br />}
+                {renderInlineMarkdown(line)}
+              </span>
+            ))}
+          </p>
+        );
+      })}
     </>
   );
 }
+
+// Re-export renderMarkdown so other previews can opt in without importing
+// from `@/lib/markdown` directly.
+export { renderMarkdown, renderInlineMarkdown };

@@ -1,6 +1,7 @@
 'use client';
 
 import { PageState } from '@/lib/types';
+import { renderInlineMarkdown } from '@/lib/markdown';
 
 interface Props {
   state: PageState;
@@ -29,14 +30,16 @@ function CaseSidebar({ state, mainColor, secondaryColor }: { state: PageState; m
       )}
       <div className="p-4 space-y-3">
         {state.caseDescription && (
-          <p className="text-xs text-lp-text-light leading-relaxed">{state.caseDescription}</p>
+          <p className="text-xs text-lp-text-light leading-relaxed">
+            {renderInlineMarkdown(state.caseDescription)}
+          </p>
         )}
         {outcomes.length > 0 && (
           <ul className="space-y-1.5">
             {outcomes.map((o, i) => (
               <li key={i} className="flex items-start gap-2 text-xs">
                 <span className="text-green-600 font-bold mt-px">▸</span>
-                <span>{o}</span>
+                <span>{renderInlineMarkdown(o)}</span>
               </li>
             ))}
           </ul>
@@ -59,7 +62,11 @@ function EventSidebar({ state, mainColor, secondaryColor }: { state: PageState; 
       </div>
       <div className="p-4 space-y-3">
         <h4 className="font-semibold text-sm" style={{ color: mainColor }}>{state.eventTitle || 'Event-titel'}</h4>
-        {state.eventDescription && <p className="text-xs text-lp-text-light leading-relaxed">{state.eventDescription}</p>}
+        {state.eventDescription && (
+          <p className="text-xs text-lp-text-light leading-relaxed">
+            {renderInlineMarkdown(state.eventDescription)}
+          </p>
+        )}
         <div className="flex gap-3 text-xs text-lp-text-light">
           {state.eventDate && <span>📅 {state.eventDate}</span>}
           {state.eventLocation && <span>📍 {state.eventLocation}</span>}
@@ -84,7 +91,11 @@ function LeadMagnetSidebar({ state, mainColor, secondaryColor }: { state: PageSt
             {state.magnetFormat}
           </span>
         )}
-        {state.magnetDescription && <p className="text-xs text-lp-text-light leading-relaxed">{state.magnetDescription}</p>}
+        {state.magnetDescription && (
+          <p className="text-xs text-lp-text-light leading-relaxed">
+            {renderInlineMarkdown(state.magnetDescription)}
+          </p>
+        )}
         <div className="space-y-2">
           <input type="text" placeholder="Ditt namn" className="w-full px-3 py-1.5 border border-gray-200 rounded text-xs" readOnly />
           <input type="email" placeholder="Din e-post" className="w-full px-3 py-1.5 border border-gray-200 rounded text-xs" readOnly />
