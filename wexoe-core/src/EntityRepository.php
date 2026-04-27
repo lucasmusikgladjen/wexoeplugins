@@ -124,7 +124,9 @@ class EntityRepository {
     }
 
     /**
-     * Clear this entity's cache. Returns number of cache entries removed.
+     * Clear this entity's cache. Returns number of cache entries removed
+     * (transient rows only; the stale-option row is also nuked but isn't
+     * counted in the returned number).
      */
     public function clear_cache() {
         $deleted = Cache::delete_by_prefix($this->cache_key_prefix());
@@ -169,15 +171,34 @@ class EntityRepository {
     }
 
     /**
-     * Cache status for admin UI: cached / not cached, age, expiry, record count.
+     * Cache status for admin UI.
+     *
+     * Reports both the transient layer ("cached"/"is_expired") AND the
+     * stale-option fallback ("has_stale"/"stale_record_count"), because the
+     * fallback is what serves data when the transient is gone — clearing it
+     * is the only way to actually flush after an Airtable change.
      */
     public function get_cache_status() {
         $cache_key = $this->cache_key_all();
         $full_transient_key = Cache::KEY_PREFIX . $cache_key;
         $timeout = get_option('_transient_timeout_' . $full_transient_key);
 
+        $stale = $this->get_stale_entry();
+        $has_stale = $stale !== null;
+        $stale_record_count = $has_stale && isset($stale['records']) && is_array($stale['records'])
+            ? count($stale['records'])
+            : 0;
+        $stale_soft_expires = $has_stale ? (int) $stale['soft_expires'] : 0;
+        $stale_hard_expires = $has_stale ? (int) $stale['hard_expires'] : 0;
+
         if ($timeout === false || $timeout === '') {
-            return ['cached' => false];
+            return [
+                'cached' => false,
+                'has_stale' => $has_stale,
+                'stale_record_count' => $stale_record_count,
+                'stale_soft_expires' => $stale_soft_expires,
+                'stale_hard_expires' => $stale_hard_expires,
+            ];
         }
 
         $expires_at = (int) $timeout;
@@ -192,6 +213,10 @@ class EntityRepository {
             'ttl' => $ttl,
             'is_expired' => $expires_at < time(),
             'record_count' => is_array($cached_data) ? count($cached_data) : 0,
+            'has_stale' => $has_stale,
+            'stale_record_count' => $stale_record_count,
+            'stale_soft_expires' => $stale_soft_expires,
+            'stale_hard_expires' => $stale_hard_expires,
         ];
     }
 
@@ -411,6 +436,27 @@ class EntityRepository {
             )
         );
         return is_numeric($deleted) ? (int) $deleted : 0;
+    }
+
+    /**
+     * Count all stale-option rows (independent of transient cache).
+     *
+     * The admin UI uses this to decide whether the "Rensa cache" button
+     * should be enabled — the transient may already be empty while stale
+     * rows are still serving data from wp_options.
+     *
+     * @return int
+     */
+    public static function count_all_stale_options() {
+        global $wpdb;
+        $like = $wpdb->esc_like(self::STALE_OPTION_PREFIX) . '%';
+        $count = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s",
+                $like
+            )
+        );
+        return (int) $count;
     }
 
     /**
