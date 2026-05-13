@@ -18,9 +18,11 @@ if (!defined('ABSPATH')) {
  *   $filtered = Core::entity('coworkers')->all(['visa' => true]);
  *   Core::log('info', 'Something happened', ['context' => 'here']);
  *
- * Future additions (later phases):
- *   $mission = Core::copy('mission');        // key/value SSOT
- *   $phone = Core::company()->phone_main;    // singleton SSOT
+ *   // Write operations (forms, lead magnets, event signups, …):
+ *   $result = Core::writer('tblXXXXXXXXXXXXXX')->create([
+ *       'Email' => sanitize_email($email),
+ *       'Namn'  => sanitize_text_field($name),
+ *   ]);
  */
 class Core {
 
@@ -40,6 +42,22 @@ class Core {
      */
     public static function list_entities() {
         return SchemaRegistry::list_registered();
+    }
+
+    /**
+     * Get a write repository for a table. Use for creating and updating records
+     * (form submissions, lead magnets, event signups, etc.).
+     *
+     * Pass the raw Airtable table ID (tblXXXXXXXXXXXXXX). Field names in all
+     * write calls must also be the actual Airtable field names — no schema
+     * translation is applied. Sanitize all values before passing them here.
+     *
+     * @param string      $table_id  Airtable table ID (tblXXXXXXXXXXXXXX)
+     * @param string|null $base_id   Optional base ID override (uses plugin config if null)
+     * @return WriteRepository
+     */
+    public static function writer($table_id, $base_id = null) {
+        return new WriteRepository($table_id, $base_id);
     }
 
     /**
