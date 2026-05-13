@@ -1,3 +1,5 @@
+import { ContactFormState } from './contact-form-types';
+
 export type SidebarType = '' | 'case' | 'calculator' | 'event' | 'leadmagnet';
 
 export type TabType =
@@ -134,9 +136,13 @@ export interface PageState {
   // Colors
   colorMain: string;
   colorSecondary: string;
+
+  // Contact Form
+  showContactForm: boolean;
+  contactForm: ContactFormState;
 }
 
-export type SectionId = 'hero' | 'content' | 'sidebar' | 'tabs' | 'contact';
+export type SectionId = 'hero' | 'content' | 'sidebar' | 'tabs' | 'contact' | 'contactForm';
 
 export type PageAction =
   | { type: 'SET_FIELD'; field: keyof PageState; value: unknown }

@@ -173,10 +173,43 @@ Claude ska **tolka** och **städa** user-edited data innan den går till Airtabl
 5. **Steps:** Säkerställ pipe-format `Rubrik | Beskrivning` per rad.
 
 6. **Boolean-fält** (`Show Content`, `Show Sidebar`, `Show Tabs`, `Show Contact`,
-   `Visa`, `TI Inverted`) ska ALLTID inkluderas i outputen, även när `false`.
+   `Show Contact Form`, `Contact Form Show *`-checkboxes, `Visa`, `TI Inverted`)
+   ska ALLTID inkluderas i outputen, även när `false`.
 
 7. **Sidebar-typ-fält:** Inkludera endast fält som hör till den aktiva
    `Sidebar Type`. Backend rensar stale fält från andra typer vid UPDATE.
 
 8. **Tab-typ-fält:** Inkludera endast fält som hör till tabens `Tab Type`.
    Backend rensar stale fält vid UPDATE.
+
+9. **Contact Form-fält:** Alla 15 `Contact Form *`-fält ska ALLTID inkluderas
+   i `landingPage.fields` vid UPDATE (även tomma eller false) så att ingen
+   data tappas i en delvis publish. `Contact Form Layout` = `split` eller
+   `centered`. `Contact Form Theme` = `dark` eller `light`. `Contact Form Trust
+   Signals` format: `**Bold** | Resten` per rad, max 3.
+
+---
+
+## Contact Form-fält (Landing Pages-tabellen)
+
+Renderas av `\Wexoe\Core\Renderers\ContactForm` sist på LP-sidan när
+`Show Contact Form` = true. Samma 15 fält finns på Product Areas och
+Audience Heroes.
+
+| Fältnamn | Typ | Kommentar |
+|---|---|---|
+| `Show Contact Form` | checkbox | True = rendera kontaktformulär sist. |
+| `Contact Form Eyebrow` | singleLineText | |
+| `Contact Form Title` | singleLineText | Tom = PHP-default. |
+| `Contact Form Subtitle` | multilineText | |
+| `Contact Form Layout` | singleSelect | `split` eller `centered`. |
+| `Contact Form Theme` | singleSelect | `dark` eller `light`. |
+| `Contact Form Show Company` | checkbox | |
+| `Contact Form Show Phone` | checkbox | |
+| `Contact Form Show Dropdown` | checkbox | |
+| `Contact Form Dropdown Label` | singleLineText | Tom = PHP-default. |
+| `Contact Form Options` | multilineText | En option per rad. |
+| `Contact Form CTA Text` | singleLineText | Tom = "Skicka". |
+| `Contact Form Message Label` | singleLineText | |
+| `Contact Form Trust Signals` | multilineText | `**Bold** \| Text` per rad, max 3. |
+| `Contact Form Show Contact Person` | checkbox | Visa kontaktperson-kort. |

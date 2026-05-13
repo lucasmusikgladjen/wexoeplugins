@@ -10,6 +10,7 @@ import { PA_TABLE_IDS } from '@/lib/product-area-mapper';
 import { loadProductAreaState, loadDivisions } from '@/lib/product-area-loader';
 import { ProductAreaState } from '@/lib/product-area-types';
 import { transformProductArea } from '@/lib/claude-transform';
+import { contactFieldsEmpty, resolveDefaultCoworker } from '@/lib/default-coworker';
 import { invalidateWexoeCoreCache, PA_ENTITIES } from '@/lib/wexoe-cache';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
@@ -113,6 +114,27 @@ async function createProductArea(
       { error: `Slug "${state.slug}" finns redan. Välj ett annat.` },
       { status: 409 },
     );
+  }
+
+  // 1b. Default-coworker injection — om alla contact_*-fält är tomma, slå upp
+  //     första aktiva coworker från SSOT och förfyll. Country=SE som default
+  //     scope; division-filtrering hoppas över tills cross-base division-
+  //     mappning (Wexoe.Divisions ↔ Wexoe NY.core_divisions) är klarlagd.
+  if (contactFieldsEmpty(state)) {
+    const defaults = await resolveDefaultCoworker({
+      apiKey: airtableKey,
+      countryCode: 'SE',
+    });
+    if (defaults) {
+      state = {
+        ...state,
+        contactName: defaults.contactName,
+        contactTitle: defaults.contactTitle,
+        contactEmail: defaults.contactEmail,
+        contactPhone: defaults.contactPhone,
+        contactImage: defaults.contactImage,
+      };
+    }
   }
 
   // 2. Claude transforms state → Airtable-ready fields

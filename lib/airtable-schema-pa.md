@@ -172,7 +172,8 @@ Claude ska **tolka** och **städa** user-edited data innan den går till Airtabl
    eller kommaseparerad lista, splitta till en per rad (`\n`).
 
 3. **Boolean-fält** (`Side menu`, `Request`, `Default open`, `Visa`, `Horizontal`,
-   `Normal N Reversed`, `Normal N upp`) ska ALLTID inkluderas, även `false`.
+   `Normal N Reversed`, `Normal N upp`, `Show Contact Form`, alla
+   `Contact Form Show *`-checkboxes) ska ALLTID inkluderas, även `false`.
 
 4. **Hex-färger** (alla `*BG`, `*Accent`, `Top BG`, etc.): om användaren har
    satt en färg, skicka den som `#RRGGBB`. Om tom, utelämna vid CREATE.
@@ -180,3 +181,33 @@ Claude ska **tolka** och **städa** user-edited data innan den går till Airtabl
 5. **Linkade records** (`Products`, `Solutions`, `Division`, `Product Area`,
    `Articles`, `LP Downloads`): **Inkludera ALDRIG** i Claudes output. Backend
    hanterar all linked-record-logik.
+
+6. **Contact Form-fält:** Alla 15 `Contact Form *`-fält ska ALLTID inkluderas
+   i `productArea.fields` vid UPDATE (även tomma eller false). `Contact Form
+   Layout` = `split` eller `centered`. `Contact Form Theme` = `dark` eller
+   `light`. Trust signals format: `**Bold** | Resten` per rad, max 3.
+
+---
+
+## Contact Form-fält (Product Areas-tabellen)
+
+Samma 15 fält som i Landing Pages, renderas av `\Wexoe\Core\Renderers\ContactForm`
+sist på PA-sidan när `Show Contact Form` = true.
+
+| Fältnamn | Typ |
+|---|---|
+| `Show Contact Form` | checkbox |
+| `Contact Form Eyebrow` | singleLineText |
+| `Contact Form Title` | singleLineText |
+| `Contact Form Subtitle` | multilineText |
+| `Contact Form Layout` | singleSelect (`split` / `centered`) |
+| `Contact Form Theme` | singleSelect (`dark` / `light`) |
+| `Contact Form Show Company` | checkbox |
+| `Contact Form Show Phone` | checkbox |
+| `Contact Form Show Dropdown` | checkbox |
+| `Contact Form Dropdown Label` | singleLineText |
+| `Contact Form Options` | multilineText (en per rad) |
+| `Contact Form CTA Text` | singleLineText |
+| `Contact Form Message Label` | singleLineText |
+| `Contact Form Trust Signals` | multilineText (`**Bold** \| Text`, max 3) |
+| `Contact Form Show Contact Person` | checkbox |

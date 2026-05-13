@@ -290,6 +290,23 @@ function buildLpPayload(state: PageState, mode: TransformMode): string {
 
   data.tabs = tabsData;
 
+  // Contact Form — alla 15 fält flät-inkluderade så Claude ser dem direkt.
+  data.showContactForm = state.showContactForm;
+  data.contactFormEyebrow = state.contactForm.eyebrow;
+  data.contactFormTitle = state.contactForm.title;
+  data.contactFormSubtitle = state.contactForm.subtitle;
+  data.contactFormLayout = state.contactForm.layout;
+  data.contactFormTheme = state.contactForm.theme;
+  data.contactFormShowCompany = state.contactForm.showCompany;
+  data.contactFormShowPhone = state.contactForm.showPhone;
+  data.contactFormShowDropdown = state.contactForm.showDropdown;
+  data.contactFormDropdownLabel = state.contactForm.dropdownLabel;
+  data.contactFormOptions = state.contactForm.options;
+  data.contactFormCtaText = state.contactForm.ctaText;
+  data.contactFormMessageLabel = state.contactForm.messageLabel;
+  data.contactFormTrustSignals = state.contactForm.trustSignals;
+  data.contactFormShowContactPerson = state.contactForm.showContactPerson;
+
   return JSON.stringify(data, null, 2);
 }
 
@@ -334,7 +351,7 @@ KRITISKT:
 
 MODE: CREATE
 - Utelämna fält med tomt värde (tomma strängar, null).
-- Inkludera ALLTID boolean-fält (Show Content, Show Sidebar, Show Tabs, Show Contact, Visa, TI Inverted).
+- Inkludera ALLTID boolean-fält (Show Content, Show Sidebar, Show Tabs, Show Contact, Show Contact Form, Visa, TI Inverted, Contact Form Show Company, Contact Form Show Phone, Contact Form Show Dropdown, Contact Form Show Contact Person).
 - Utelämna downloads, FAQ-items, compare-rows och steps-items som är helt tomma.`;
   }
 
@@ -347,7 +364,8 @@ MODE: UPDATE
 - Du MÅSTE emittera en post i tabs-arrayen för VARJE tab i input — aldrig utelämna. Det är nödvändigt för att backend ska kunna korrelera.
 - Du MÅSTE emittera en post i downloads-arrayen för VARJE download i input — även helt tomma.
 - Inkludera ALLA FAQ-items, compare-rows och steps-items från input.
-- Inkludera ALLTID boolean-fält.`;
+- Inkludera ALLTID boolean-fält (Show Content/Sidebar/Tabs/Contact, Show Contact Form, alla Contact Form Show *-checkboxes, Visa, TI Inverted).
+- Inkludera ALLTID alla 15 Contact Form *-fält i landingPage.fields (även om värdet är tomt/falskt) så att de inte tappas vid PATCH.`;
 }
 
 export async function transformLandingPage(
@@ -472,6 +490,23 @@ function buildPaPayload(state: ProductAreaState, mode: TransformMode): string {
       ctaText: s.ctaText,
       visa: s.visa,
     })),
+
+    // Contact Form (alla 15 fält)
+    showContactForm: state.showContactForm,
+    contactFormEyebrow: state.contactForm.eyebrow,
+    contactFormTitle: state.contactForm.title,
+    contactFormSubtitle: state.contactForm.subtitle,
+    contactFormLayout: state.contactForm.layout,
+    contactFormTheme: state.contactForm.theme,
+    contactFormShowCompany: state.contactForm.showCompany,
+    contactFormShowPhone: state.contactForm.showPhone,
+    contactFormShowDropdown: state.contactForm.showDropdown,
+    contactFormDropdownLabel: state.contactForm.dropdownLabel,
+    contactFormOptions: state.contactForm.options,
+    contactFormCtaText: state.contactForm.ctaText,
+    contactFormMessageLabel: state.contactForm.messageLabel,
+    contactFormTrustSignals: state.contactForm.trustSignals,
+    contactFormShowContactPerson: state.contactForm.showContactPerson,
   };
 
   return JSON.stringify(data, null, 2);
@@ -510,14 +545,15 @@ KRITISKT:
 - Inkludera ALDRIG "Product Area" i products.fields — backend länkar.
 - Inkludera ALDRIG "Product Areas" i solutions.fields — backend länkar.
 - Sätt ALLTID Order = _clientIndex + 1 på varje product och solution.
-- Inkludera ALLTID boolean-fält (Visa, Horizontal, Side menu, Request, Default open, Normal N Reversed, Normal N upp).
+- Inkludera ALLTID boolean-fält (Visa, Horizontal, Side menu, Request, Default open, Normal N Reversed, Normal N upp, Show Contact Form, Contact Form Show Company, Contact Form Show Phone, Contact Form Show Dropdown, Contact Form Show Contact Person).
+- Inkludera ALLTID alla 15 Contact Form *-fält i productArea.fields (även tomma) så de inte tappas vid PATCH.
 - Applicera alla formateringsregler (bullets-splitting, benefits-splitting, osv.).`;
 
   if (mode === 'create') {
     return `${common}
 
 MODE: CREATE
-- Utelämna fält med tomt värde (tomma strängar, null).`;
+- Utelämna fält med tomt värde (tomma strängar, null), MEN inkludera ALLTID Contact Form-checkboxes och Layout/Theme även vid CREATE.`;
   }
 
   return `${common}
@@ -527,7 +563,8 @@ MODE: UPDATE
 - Backend hanterar stale-field-clearing. Du behöver INTE sätta fält till tomma strängar för att rensa.
 - Bevara ordningen via _clientIndex.
 - Du MÅSTE emittera en post i products-arrayen för VARJE product i input — aldrig utelämna. Backend behöver det för diffen.
-- Du MÅSTE emittera en post i solutions-arrayen för VARJE solution i input.`;
+- Du MÅSTE emittera en post i solutions-arrayen för VARJE solution i input.
+- Inkludera ALLTID alla 15 Contact Form *-fält i productArea.fields även om värdena är tomma eller false.`;
 }
 
 export async function transformProductArea(
