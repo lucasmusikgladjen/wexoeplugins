@@ -7,6 +7,7 @@ import {
 } from '@/lib/airtable';
 import { TABLE_IDS as LP_TABLE_IDS } from '@/lib/airtable';
 import { PA_TABLE_IDS } from '@/lib/product-area-mapper';
+import { AUDIENCE_TABLE_IDS } from '@/lib/audience-mapper';
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 
@@ -18,7 +19,7 @@ const TAB_FIELDS_TO_DROP = new Set(['Landing Page', 'LP Downloads']);
 const DOWNLOAD_FIELDS_TO_DROP = new Set(['Tab']);
 
 interface CopyRequest {
-  type: 'landing' | 'product-area';
+  type: 'landing' | 'product-area' | 'audience';
   sourceId: string;
   name?: string;
   slug?: string;
@@ -190,6 +191,45 @@ async function copyProductArea(
   });
 }
 
+// ─── Audience (flat copy — single record, no children) ────────────────────
+
+async function copyAudience(
+  apiKey: string,
+  sourceId: string,
+  name: string | undefined,
+  slug: string | undefined,
+) {
+  const source = await getRecord(apiKey, AUDIENCE_TABLE_IDS.audienceHeroes, sourceId);
+  const sourceSlug = (source.fields.Slug as string) || '';
+
+  // Audience records have no Name field — fall back to slug-based defaults.
+  const newSlug = slug?.trim() || defaultCopySlug(sourceSlug);
+  // `name` is accepted from the dialog for parity with other types but
+  // there's nowhere to write it on the audience record; preserve it for
+  // the response only.
+  const newName = name?.trim() || defaultCopyName(sourceSlug);
+
+  if (await isSlugTaken(apiKey, AUDIENCE_TABLE_IDS.audienceHeroes, newSlug)) {
+    return NextResponse.json(
+      { error: `Slug "${newSlug}" finns redan. Välj ett annat.` },
+      { status: 409 },
+    );
+  }
+
+  const fields: Record<string, unknown> = { ...source.fields };
+  fields.Slug = newSlug;
+
+  const created = await createRecord(apiKey, AUDIENCE_TABLE_IDS.audienceHeroes, fields);
+
+  return NextResponse.json({
+    success: true,
+    id: created.id,
+    name: newName,
+    slug: newSlug,
+    type: 'audience' as const,
+  });
+}
+
 // ─── Handler ───────────────────────────────────────────────────────────────
 
 export async function POST(request: Request) {
@@ -208,6 +248,9 @@ export async function POST(request: Request) {
     }
     if (body.type === 'product-area') {
       return await copyProductArea(AIRTABLE_API_KEY, body.sourceId, body.name, body.slug);
+    }
+    if (body.type === 'audience') {
+      return await copyAudience(AIRTABLE_API_KEY, body.sourceId, body.name, body.slug);
     }
     return NextResponse.json({ error: 'Ogiltig typ.' }, { status: 400 });
   } catch (err) {
