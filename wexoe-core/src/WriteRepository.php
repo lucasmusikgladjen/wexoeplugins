@@ -50,14 +50,32 @@ class WriteRepository {
     private $field_map;
 
     /**
-     * @param string      $table_id   Airtable table ID (tblXXXXXXXXXXXXXX)
-     * @param string|null $base_id    Optional override; uses plugin config if null
-     * @param array       $field_map  domain_key => Airtable field name (optional)
+     * Optional domain_key => type-hint map.
+     *
+     * Styr hur `create_mapped()`/`update_mapped()` serialiserar värden:
+     *   'link'           — array passar genom som-är (linked-record-IDs).
+     *   'attachment_url' — URL-string konverteras till [['url' => $url]].
+     *   'json'           — array JSON-encodas (default-beteendet för arrays).
+     *
+     * Domain-keys utan typ-hint behandlas som strängar/skalärer. Arrayer utan
+     * typ-hint JSON-encodas (bakåtkompatibelt — `extra`-fältet i user_submissions
+     * förlitar sig på det).
+     *
+     * @var array<string, string>
      */
-    public function __construct($table_id, $base_id = null, $field_map = []) {
-        $this->table_id  = $table_id;
-        $this->base_id   = $base_id ?: null;
-        $this->field_map = is_array($field_map) ? $field_map : [];
+    private $field_types;
+
+    /**
+     * @param string      $table_id    Airtable table ID (tblXXXXXXXXXXXXXX)
+     * @param string|null $base_id     Optional override; uses plugin config if null
+     * @param array       $field_map   domain_key => Airtable field name (optional)
+     * @param array       $field_types domain_key => type-hint (optional)
+     */
+    public function __construct($table_id, $base_id = null, $field_map = [], $field_types = []) {
+        $this->table_id    = $table_id;
+        $this->base_id     = $base_id ?: null;
+        $this->field_map   = is_array($field_map) ? $field_map : [];
+        $this->field_types = is_array($field_types) ? $field_types : [];
     }
 
     /**
@@ -134,25 +152,7 @@ class WriteRepository {
             return $this->create($domain_fields);
         }
 
-        $airtable_fields = [];
-        foreach ($domain_fields as $domain_key => $value) {
-            if ($value === null) {
-                continue;
-            }
-            if (!isset($this->field_map[$domain_key])) {
-                Logger::warning('WriteRepository::create_mapped: unknown domain key, skipping', [
-                    'key'   => $domain_key,
-                    'table' => $this->table_id,
-                ]);
-                continue;
-            }
-            $airtable_name = $this->field_map[$domain_key];
-            // Auto-encode arrays as JSON (intended for 'extra' and calculator_data overflow)
-            if (is_array($value)) {
-                $value = wp_json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            }
-            $airtable_fields[$airtable_name] = $value;
-        }
+        $airtable_fields = $this->map_domain_to_airtable($domain_fields);
 
         if (empty($airtable_fields)) {
             return $this->config_error('Inga mappade fält att skriva efter filtrering.');
@@ -173,23 +173,72 @@ class WriteRepository {
             return $this->update($record_id, $domain_fields);
         }
 
-        $airtable_fields = [];
-        foreach ($domain_fields as $domain_key => $value) {
-            if ($value === null || !isset($this->field_map[$domain_key])) {
-                continue;
-            }
-            $airtable_name = $this->field_map[$domain_key];
-            if (is_array($value)) {
-                $value = wp_json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            }
-            $airtable_fields[$airtable_name] = $value;
-        }
+        $airtable_fields = $this->map_domain_to_airtable($domain_fields);
 
         if (empty($airtable_fields)) {
             return $this->config_error('Inga mappade fält att uppdatera efter filtrering.');
         }
 
         return $this->update($record_id, $airtable_fields);
+    }
+
+    /**
+     * Konvertera domain_key => värde till Airtable-fält-map.
+     *
+     * Tillämpar `field_types`-hints:
+     *   - 'link'           → array av record-IDs passar genom som-är.
+     *   - 'attachment_url' → string-URL packas som [['url' => $url]] (tom URL = []).
+     *   - 'json'           → array JSON-encodas explicit.
+     *   - otypad array     → JSON-encodas (default, bakåtkompatibelt med `extra`).
+     *
+     * Okända domain-keys loggas + utelämnas.
+     */
+    private function map_domain_to_airtable(array $domain_fields) {
+        $airtable_fields = [];
+        foreach ($domain_fields as $domain_key => $value) {
+            if ($value === null) {
+                continue;
+            }
+            if (!isset($this->field_map[$domain_key])) {
+                Logger::warning('WriteRepository: okänd domain-nyckel, skippas', [
+                    'key'   => $domain_key,
+                    'table' => $this->table_id,
+                ]);
+                continue;
+            }
+            $airtable_name = $this->field_map[$domain_key];
+            $type          = isset($this->field_types[$domain_key]) ? $this->field_types[$domain_key] : null;
+
+            switch ($type) {
+                case 'link':
+                    if (!is_array($value)) {
+                        $value = [];
+                    }
+                    // Passa genom som native array av record-IDs.
+                    break;
+
+                case 'attachment_url':
+                    if (is_array($value)) {
+                        // Antag redan i Airtable-format ([{url}]).
+                        break;
+                    }
+                    $value = is_string($value) && $value !== '' ? [['url' => $value]] : [];
+                    break;
+
+                case 'json':
+                    $value = wp_json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    break;
+
+                default:
+                    if (is_array($value)) {
+                        $value = wp_json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    }
+                    break;
+            }
+
+            $airtable_fields[$airtable_name] = $value;
+        }
+        return $airtable_fields;
     }
 
     /* --------------------------------------------------------

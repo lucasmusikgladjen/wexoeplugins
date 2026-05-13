@@ -3,6 +3,12 @@ if (!defined('ABSPATH')) exit;
 return [
     'table_id' => 'tbl4c4HjiKVCcJI5v',
     'base_id'  => \Wexoe\Core\Plugin::SSOT_BASE_ID,
+    'field_types' => [
+        'logo_primary'         => 'attachment_url',
+        'logo_dark_background' => 'attachment_url',
+        'favicon'              => 'attachment_url',
+        'division_ids'         => 'link',
+    ],
     'fields' => [
         'slug' => 'Slug',
         'is_default' => 'Is Default',

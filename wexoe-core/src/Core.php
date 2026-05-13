@@ -92,7 +92,10 @@ class Core {
         $base_id = isset($config['base_id']) && is_string($config['base_id']) && $config['base_id'] !== ''
             ? $config['base_id']
             : null;
-        return new WriteRepository($config['table_id'], $base_id, $config['fields']);
+        $field_types = isset($config['field_types']) && is_array($config['field_types'])
+            ? $config['field_types']
+            : [];
+        return new WriteRepository($config['table_id'], $base_id, $config['fields'], $field_types);
     }
 
     /**

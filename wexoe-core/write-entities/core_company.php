@@ -11,6 +11,9 @@ if (!defined('ABSPATH')) exit;
 return [
     'table_id' => 'tblwq9y74ertsNyYG',
     'base_id'  => \Wexoe\Core\Plugin::SSOT_BASE_ID,
+    'field_types' => [
+        'country_ids' => 'link',
+    ],
     'fields' => [
         'slug' => 'Slug',
         'is_default' => 'Is Default',
