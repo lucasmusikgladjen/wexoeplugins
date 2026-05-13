@@ -75,3 +75,4 @@ export async function invalidateWexoeCoreCache(
 // wexoeplugins/wexoe-core/entities/*.php — do NOT translate.
 export const LP_ENTITIES = ['landing_pages', 'lp_tabs', 'lp_downloads'] as const;
 export const PA_ENTITIES = ['product_areas', 'products', 'solutions'] as const;
+export const AUDIENCE_ENTITIES = ['audience_heroes'] as const;

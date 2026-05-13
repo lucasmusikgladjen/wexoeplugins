@@ -12,7 +12,7 @@ interface PageRow {
   type: PageType;
 }
 
-type PageType = 'landing' | 'product' | 'contact';
+type PageType = 'landing' | 'product' | 'audience' | 'contact';
 
 interface TypeDef {
   id: PageType;
@@ -38,6 +38,13 @@ const PAGE_TYPES: TypeDef[] = [
     editPath: (id) => `/editor/product-area/${id}`,
   },
   {
+    id: 'audience',
+    label: 'Audience-sida',
+    available: true,
+    description: 'Audience hero + värdeproposition',
+    editPath: (id) => `/editor/audience/${id}`,
+  },
+  {
     id: 'contact',
     label: 'Kontaktsida',
     available: false,
@@ -49,6 +56,7 @@ const PAGE_TYPES: TypeDef[] = [
 const TYPE_LABEL: Record<PageType, string> = {
   landing: 'Landing',
   product: 'Produkt',
+  audience: 'Audience',
   contact: 'Kontakt',
 };
 
@@ -88,10 +96,20 @@ export default function PageManager() {
           console.error('[page-manager] PA fetch failed:', err);
           return [] as PageRow[];
         }),
+      fetch('/api/audience?action=list')
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.error) throw new Error(data.error);
+          return (data.pages ?? []).map((p: Omit<PageRow, 'type'>) => ({ ...p, type: 'audience' as const }));
+        })
+        .catch((err) => {
+          console.error('[page-manager] Audience fetch failed:', err);
+          return [] as PageRow[];
+        }),
     ])
-      .then(([lps, pas]) => {
+      .then(([lps, pas, auds]) => {
         if (cancelled) return;
-        const merged = [...lps, ...pas].sort((a, b) => a.name.localeCompare(b.name, 'sv'));
+        const merged = [...lps, ...pas, ...auds].sort((a, b) => a.name.localeCompare(b.name, 'sv'));
         setPages(merged);
       })
       .catch((err) => {
@@ -121,6 +139,7 @@ export default function PageManager() {
     all: pages?.length ?? 0,
     landing: pages?.filter((p) => p.type === 'landing').length ?? 0,
     product: pages?.filter((p) => p.type === 'product').length ?? 0,
+    audience: pages?.filter((p) => p.type === 'audience').length ?? 0,
     contact: 0,
   };
 
@@ -266,6 +285,8 @@ export default function PageManager() {
               router.push('/editor');
             } else if (type === 'product') {
               router.push('/editor/product-area');
+            } else if (type === 'audience') {
+              router.push('/editor/audience');
             }
           }}
         />
@@ -295,6 +316,7 @@ function AddPageDialog({
   const creatableTypes: Array<{ id: PageType; label: string; description: string; enabled: boolean }> = [
     { id: 'landing', label: 'Landing page', description: 'Kampanj- och konverteringssida', enabled: true },
     { id: 'product', label: 'Produktsida', description: 'Produktområdesida med produkter och lösningar', enabled: true },
+    { id: 'audience', label: 'Audience-sida', description: 'Audience hero + värdeproposition', enabled: true },
     { id: 'contact', label: 'Kontaktsida', description: 'Kommer snart', enabled: false },
   ];
 
@@ -376,7 +398,12 @@ function CopyPageDialog({
     setBusy(true);
     setError(null);
     try {
-      const apiType = source.type === 'product' ? 'product-area' : 'landing';
+      const apiType =
+        source.type === 'product'
+          ? 'product-area'
+          : source.type === 'audience'
+          ? 'audience'
+          : 'landing';
       const res = await fetch('/api/copy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
