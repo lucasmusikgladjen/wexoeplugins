@@ -288,18 +288,21 @@ export default function PageManager() {
 
                   {/* Kopiera button — sibling of the Link, hidden until the
                       row is hovered (pointer-events-none so touch taps still
-                      fall through to the Link). */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCopyTarget(page);
-                    }}
-                    className="flex-none px-2.5 py-0.5 text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto transition-opacity"
-                    title="Kopiera sidan"
-                  >
-                    Kopiera
-                  </button>
+                      fall through to the Link). Unique-sidor saknar copy-path
+                      i /api/copy och döljs därför helt. */}
+                  {page.type !== 'unique' && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCopyTarget(page);
+                      }}
+                      className="flex-none px-2.5 py-0.5 text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto transition-opacity"
+                      title="Kopiera sidan"
+                    >
+                      Kopiera
+                    </button>
+                  )}
 
                   <span className="flex-none text-[10px] uppercase tracking-wider text-gray-300 whitespace-nowrap">
                     {TYPE_LABEL[page.type]}

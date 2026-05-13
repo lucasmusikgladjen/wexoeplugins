@@ -170,7 +170,21 @@ function attachInput(url: string): unknown {
   return url ? [{ url }] : [];
 }
 
-export function uniquePageStateToFields(state: UniquePageState): Record<string, unknown> {
+/**
+ * Konvertera UniquePageState → Airtable-fält-map.
+ *
+ * `mode`:
+ *   - 'create' (default): tomma värden tas bort innan POST så Airtable använder
+ *     fält-defaults.
+ *   - 'update': tomma textfält skickas som tom sträng så Airtable rensar dem.
+ *     Annars skulle tomma fält utelämnas → Airtable lämnar gamla värdet.
+ *     Bool/checkbox-fält och multi-link-arrayer skickas alltid (de är inte
+ *     "tomma" på samma sätt — false respektive []).
+ */
+export function uniquePageStateToFields(
+  state: UniquePageState,
+  mode: 'create' | 'update' = 'create',
+): Record<string, unknown> {
   const fields: Record<string, unknown> = {
     'Slug': state.slug || null,
     'H1': state.h1 || null,
@@ -253,10 +267,21 @@ export function uniquePageStateToFields(state: UniquePageState): Record<string, 
     'Contact Form Show Contact Person': state.contactForm.showContactPerson,
   };
 
-  // Strip null så Airtable inte sätter explicit null.
+  // Vid CREATE: skala bort tomma värden så Airtable använder fält-defaults
+  //   och payloaden inte spammas med null.
+  // Vid UPDATE: BEHÅLL null så Airtable rensar fältet. Att utelämna fältet
+  //   lämnar det orört (PATCH-semantik), så vi måste skicka explicit null för
+  //   att en redaktör ska kunna tömma t.ex. SEO-titel eller FAQ-items.
+  //   Airtable accepterar null för text/number/url/select-fält.
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(fields)) {
-    if (v === null || v === undefined) continue;
+    if (v === undefined) continue;
+    if (v === null) {
+      if (mode === 'update') {
+        out[k] = null;
+      }
+      continue;
+    }
     out[k] = v;
   }
   return out;

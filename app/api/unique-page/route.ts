@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const fields = uniquePageStateToFields(state);
+    const fields = uniquePageStateToFields(state, 'create');
     const created = await createRecord(apiKey, UNIQUE_PAGES_TABLE_ID, fields, SSOT_BASE_ID);
     await invalidate('unique-page/create');
     return NextResponse.json({ success: true, mode: 'create', recordId: created.id }, { status: 201 });
@@ -98,7 +98,21 @@ export async function PATCH(req: NextRequest) {
   if (slugError) return badRequest(slugError);
 
   try {
-    const fields = uniquePageStateToFields(state);
+    // Spegla POST-duplikatkollen — annars kan en redaktör byta slug till en
+    // som redan ägs av en annan record och två sidor får samma slug.
+    const existing = await listRecords(apiKey, UNIQUE_PAGES_TABLE_ID, {
+      baseId: SSOT_BASE_ID,
+      filterByFormula: `{Slug}="${state.slug.replace(/"/g, '\\"')}"`,
+    });
+    const collision = existing.find((r) => r.id !== recordId);
+    if (collision) {
+      return NextResponse.json(
+        { success: false, code: 'duplicate_slug', error: 'En annan sida har redan den slug:en.' },
+        { status: 409 },
+      );
+    }
+
+    const fields = uniquePageStateToFields(state, 'update');
     await updateRecord(apiKey, UNIQUE_PAGES_TABLE_ID, recordId, fields, SSOT_BASE_ID);
     await invalidate('unique-page/update');
     return NextResponse.json({ success: true, mode: 'update' });

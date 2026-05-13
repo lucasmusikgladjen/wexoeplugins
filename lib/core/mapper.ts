@@ -354,7 +354,19 @@ function writeTestimonial(s: Record<string, unknown>): Record<string, unknown> {
   };
 }
 
-export function writeEntityFields(entity: CoreEntityName, state: Record<string, unknown>): Record<string, unknown> {
+/**
+ * Mappa core-entity-state → Airtable-fält-map.
+ *
+ * `mode`:
+ *   - 'create' (default): tomma värden tas bort så Airtable använder defaults.
+ *   - 'update': null behålls så Airtable rensar fältet (utelämnade fält lämnas
+ *     orörda av PATCH-semantiken).
+ */
+export function writeEntityFields(
+  entity: CoreEntityName,
+  state: Record<string, unknown>,
+  mode: 'create' | 'update' = 'create',
+): Record<string, unknown> {
   const raw = (() => {
     switch (entity) {
       case 'core_company': return writeCompany(state);
@@ -367,10 +379,15 @@ export function writeEntityFields(entity: CoreEntityName, state: Record<string, 
       case 'core_testimonials': return writeTestimonial(state);
     }
   })();
-  // Skala bort null/undefined-värden så att Airtable inte sätter explicit null.
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(raw)) {
-    if (v === null || v === undefined) continue;
+    if (v === undefined) continue;
+    if (v === null) {
+      if (mode === 'update') {
+        out[k] = null;
+      }
+      continue;
+    }
     out[k] = v;
   }
   return out;

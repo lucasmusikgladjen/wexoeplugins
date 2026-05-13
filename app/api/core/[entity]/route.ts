@@ -91,7 +91,7 @@ export async function POST(
   }
 
   try {
-    const fields = writeEntityFields(entity, state);
+    const fields = writeEntityFields(entity, state, 'create');
     const created = await createRecord(apiKey, CORE_ENTITIES[entity].tableId, fields, SSOT_BASE_ID);
     await invalidate(entity, `core/${entity}/create`);
     return NextResponse.json({ success: true, record: readEntityRecord(entity, created) }, { status: 201 });
@@ -140,7 +140,7 @@ export async function PATCH(
   }
 
   try {
-    const fields = writeEntityFields(entity, state);
+    const fields = writeEntityFields(entity, state, 'update');
     const updated = await updateRecord(apiKey, CORE_ENTITIES[entity].tableId, recordId, fields, SSOT_BASE_ID);
     await invalidate(entity, `core/${entity}/update`);
     return NextResponse.json({ success: true, record: readEntityRecord(entity, updated) });
