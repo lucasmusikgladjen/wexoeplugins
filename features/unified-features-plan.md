@@ -1341,4 +1341,4 @@ Punkt 3 är den viktigaste: vi använder inte Tier 2 för "alla sidor utom de tr
 
 ---
 
-**Slut på dokument.** Implementera fas för fas, validera, dokumentera avvikelser i denna fil som separata commits.
+**Slut på dokument.** 
