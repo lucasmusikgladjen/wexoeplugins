@@ -972,6 +972,7 @@ function wexoe_landing_page_test_shortcode($atts) {
     $html .= wexoe_lp_test_render_content_sidebar($data, $id);
     $html .= wexoe_lp_test_render_tabs($tabs, $downloads_map, $data, $id);
     $html .= wexoe_lp_test_render_contact($data, $id);
+    $html .= wexoe_lp_render_contact_form_section($data);
 
     $html .= '</div>';
 
@@ -982,6 +983,58 @@ function wexoe_landing_page_test_shortcode($atts) {
 }
 
 add_shortcode('wexoe_landing', 'wexoe_landing_page_test_shortcode');
+
+/* ============================================================
+   CONTACT FORM SECTION (Wexoe Core ContactForm-renderer)
+   ============================================================ */
+
+/**
+ * Bygg och rendera kontaktformuläret via Wexoe Core om LP:s Show Contact Form
+ * = true. Använder LP:s color_main/color_secondary som accent-färger och
+ * skickar in sidans contact_*-fält som "kontaktperson"-data.
+ */
+function wexoe_lp_render_contact_form_section($data) {
+    if (empty($data['contact_form_show'])) return '';
+    if (!class_exists('\\Wexoe\\Core\\Renderers\\ContactForm')) return '';
+
+    $contact_person = null;
+    if (!empty($data['contact_form_show_contact_person'])) {
+        $contact_person = [
+            'name'  => $data['contact_name'] ?? '',
+            'title' => $data['contact_title'] ?? '',
+            'email' => $data['contact_email'] ?? '',
+            'phone' => $data['contact_phone'] ?? '',
+            'image' => $data['contact_image'] ?? '',
+            'quote' => $data['contact_quote'] ?? '',
+        ];
+    }
+
+    $html = \Wexoe\Core\Renderers\ContactForm::render([
+        'eyebrow'        => $data['contact_form_eyebrow'] ?? '',
+        'title'          => $data['contact_form_title'] ?? '',
+        'subtitle'       => $data['contact_form_subtitle'] ?? '',
+        'layout'         => $data['contact_form_layout'] ?? 'split',
+        'theme'          => $data['contact_form_theme'] ?? 'dark',
+        'show_company'   => $data['contact_form_show_company'] ?? true,
+        'show_phone'     => $data['contact_form_show_phone'] ?? true,
+        'show_dropdown'  => $data['contact_form_show_dropdown'] ?? true,
+        'dropdown_label' => $data['contact_form_dropdown_label'] ?? '',
+        'options'        => $data['contact_form_options'] ?? null,
+        'cta_text'       => $data['contact_form_cta_text'] ?? '',
+        'message_label'  => $data['contact_form_message_label'] ?? '',
+        'trust_signals'  => $data['contact_form_trust_signals'] ?? null,
+        'colors'         => [
+            'main'   => $data['color_main'] ?? '',
+            'accent' => $data['color_secondary'] ?? '',
+        ],
+        'source_plugin'  => 'wexoe-landing-page',
+        'page_slug'      => $data['slug'] ?? '',
+        'contact_person' => $contact_person,
+    ]);
+
+    // Wrappa i <section id="kontakt"> så befintliga href="#kontakt"-länkar fortsätter scrolla rätt.
+    return '<section id="kontakt">' . $html . '</section>';
+}
 
 /* ============================================================
    REST API — FORM SUBMISSION ENDPOINT

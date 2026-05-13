@@ -261,6 +261,73 @@ class AirtableClient {
         return ['success' => true, 'record' => $result['body']];
     }
 
+    /**
+     * Delete a single record.
+     *
+     * @param  string      $table_id
+     * @param  string      $record_id
+     * @param  string|null $base_id
+     * @return array ['success' => true, 'deleted' => true, 'id' => $record_id]
+     *            or ['success' => false, ...]
+     */
+    public static function delete_record($table_id, $record_id, $base_id = null) {
+        $base_id = $base_id ?: Plugin::get_base_id();
+        if (empty($base_id))   return self::error('Ingen Airtable base ID är konfigurerad.', 'config');
+        if (empty($table_id))  return self::error('Tabell-ID saknas.', 'config');
+        if (empty($record_id)) return self::error('Record-ID saknas.', 'config');
+
+        $api_key = Plugin::get_api_key();
+        if (empty($api_key)) return self::error('Ingen API-nyckel konfigurerad.', 'config');
+
+        $url = self::API_BASE . '/' . rawurlencode($base_id) . '/' . rawurlencode($table_id) . '/' . rawurlencode($record_id);
+        $attempt = 0;
+
+        do {
+            $response = wp_remote_request($url, [
+                'method'  => 'DELETE',
+                'headers' => ['Authorization' => 'Bearer ' . $api_key],
+                'timeout' => self::TIMEOUT_SECONDS,
+            ]);
+
+            if (is_wp_error($response)) {
+                if ($attempt < self::MAX_RETRIES) {
+                    self::sleep_before_retry($attempt, null, $url, 'network');
+                    $attempt++;
+                    continue;
+                }
+                return self::error($response->get_error_message(), 'network');
+            }
+
+            $http_code = (int) wp_remote_retrieve_response_code($response);
+            if ($http_code < 200 || $http_code >= 300) {
+                $error_type = self::classify_http_code($http_code);
+                $should_retry = ($http_code === 429 || $http_code >= 500) && $attempt < self::MAX_RETRIES;
+                if ($should_retry) {
+                    self::sleep_before_retry($attempt, $response, $url, $error_type);
+                    $attempt++;
+                    continue;
+                }
+                $body = json_decode(wp_remote_retrieve_body($response), true);
+                $msg = isset($body['error']['message']) ? $body['error']['message'] : 'HTTP ' . $http_code;
+                return [
+                    'success'    => false,
+                    'error'      => $msg,
+                    'error_type' => $error_type,
+                    'http_code'  => $http_code,
+                ];
+            }
+
+            Logger::info('Airtable delete_record succeeded', [
+                'table'     => $table_id,
+                'record_id' => $record_id,
+            ]);
+            return ['success' => true, 'deleted' => true, 'id' => $record_id];
+
+        } while ($attempt <= self::MAX_RETRIES);
+
+        return self::error('Okänt Airtable-fel.', 'unknown');
+    }
+
     /* --------------------------------------------------------
        INTERNAL HELPERS
        -------------------------------------------------------- */

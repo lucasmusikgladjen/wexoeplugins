@@ -779,11 +779,62 @@ class Wexoe_Audience_Hero_Test {
                     <?php endif; ?>
                 </div>
             </section>
-            
+
+            <?php echo $this->render_contact_form_section($data); ?>
+
         </div>
-        
+
         <?php
         return ob_get_clean();
+    }
+
+    /**
+     * Render Wexoe Core ContactForm-renderaren om audience-recordet har
+     * Show Contact Form = true. Eftersom Audience saknar `contact_*`-fält
+     * faller "kontaktperson" tillbaka på första aktiva coworker via SSOT.
+     */
+    private function render_contact_form_section($data) {
+        if (empty($data['contact_form_show'])) return '';
+        if (!class_exists('\\Wexoe\\Core\\Renderers\\ContactForm')) return '';
+
+        $contact_person = null;
+        if (!empty($data['contact_form_show_contact_person']) && class_exists('\\Wexoe\\Core\\Helpers\\Collections')) {
+            $matches = \Wexoe\Core\Helpers\Collections::coworkers_for_scope(['limit' => 1]);
+            if (!empty($matches)) {
+                $c = $matches[0];
+                $img = $c['image'] ?? null;
+                $img_url = is_array($img) ? ($img['url'] ?? '') : '';
+                $contact_person = [
+                    'name'  => $c['full_name'] ?? '',
+                    'title' => $c['title'] ?? '',
+                    'email' => $c['email'] ?? '',
+                    'phone' => $c['phone'] ?? '',
+                    'image' => $img_url,
+                ];
+            }
+        }
+
+        $html = \Wexoe\Core\Renderers\ContactForm::render([
+            'eyebrow'        => $data['contact_form_eyebrow'] ?? '',
+            'title'          => $data['contact_form_title'] ?? '',
+            'subtitle'       => $data['contact_form_subtitle'] ?? '',
+            'layout'         => $data['contact_form_layout'] ?? 'split',
+            'theme'          => $data['contact_form_theme'] ?? 'dark',
+            'show_company'   => $data['contact_form_show_company'] ?? true,
+            'show_phone'     => $data['contact_form_show_phone'] ?? true,
+            'show_dropdown'  => $data['contact_form_show_dropdown'] ?? true,
+            'dropdown_label' => $data['contact_form_dropdown_label'] ?? '',
+            'options'        => $data['contact_form_options'] ?? null,
+            'cta_text'       => $data['contact_form_cta_text'] ?? '',
+            'message_label'  => $data['contact_form_message_label'] ?? '',
+            'trust_signals'  => $data['contact_form_trust_signals'] ?? null,
+            'source_plugin'  => 'wexoe-audience-hero',
+            'page_slug'      => $data['slug'] ?? '',
+            'contact_person' => $contact_person,
+        ]);
+
+        // Wrappa som container (INTE 100vw) så audience-hero-marginal-tricket inte påverkas.
+        return '<section id="kontakt" class="wah-contact-form-wrap" style="width:100%;">' . $html . '</section>';
     }
 }
 

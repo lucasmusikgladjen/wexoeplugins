@@ -45,5 +45,22 @@ return [
         'case_result' => 'Case Result',
         'case_link_text' => 'Case Link Text',
         'case_link_url' => 'Case Link URL',
+
+        // Contact Form (delad med ContactForm-renderer)
+        'contact_form_show' => ['source' => 'Show Contact Form', 'type' => 'bool'],
+        'contact_form_eyebrow' => 'Contact Form Eyebrow',
+        'contact_form_title' => 'Contact Form Title',
+        'contact_form_subtitle' => 'Contact Form Subtitle',
+        'contact_form_layout' => 'Contact Form Layout',
+        'contact_form_theme' => 'Contact Form Theme',
+        'contact_form_show_company' => ['source' => 'Contact Form Show Company', 'type' => 'bool'],
+        'contact_form_show_phone' => ['source' => 'Contact Form Show Phone', 'type' => 'bool'],
+        'contact_form_show_dropdown' => ['source' => 'Contact Form Show Dropdown', 'type' => 'bool'],
+        'contact_form_dropdown_label' => 'Contact Form Dropdown Label',
+        'contact_form_options' => ['source' => 'Contact Form Options', 'type' => 'lines'],
+        'contact_form_cta_text' => 'Contact Form CTA Text',
+        'contact_form_message_label' => 'Contact Form Message Label',
+        'contact_form_trust_signals' => ['source' => 'Contact Form Trust Signals', 'type' => 'lines'],
+        'contact_form_show_contact_person' => ['source' => 'Contact Form Show Contact Person', 'type' => 'bool'],
     ],
 ];

@@ -166,6 +166,16 @@ class EntityRepository {
         return isset($this->schema['table_id']) ? $this->schema['table_id'] : null;
     }
 
+    /**
+     * Optional base override for cross-base reads (e.g. SSOT in Wexoe NY).
+     * Falls back to Plugin::get_base_id() in AirtableClient if null.
+     */
+    public function get_base_id() {
+        return isset($this->schema['base_id']) && is_string($this->schema['base_id']) && $this->schema['base_id'] !== ''
+            ? $this->schema['base_id']
+            : null;
+    }
+
     public function get_ttl() {
         return isset($this->schema['cache_ttl']) ? (int) $this->schema['cache_ttl'] : DAY_IN_SECONDS;
     }
@@ -292,7 +302,7 @@ class EntityRepository {
             return ['success' => false, 'error' => 'missing_table_id', 'error_type' => 'config'];
         }
 
-        $airtable_result = AirtableClient::fetch_records($table_id);
+        $airtable_result = AirtableClient::fetch_records($table_id, [], $this->get_base_id());
         if (!$airtable_result['success']) {
             return [
                 'success' => false,

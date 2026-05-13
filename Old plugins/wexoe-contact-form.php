@@ -1,12 +1,30 @@
 <?php
 /**
- * Plugin Name: Wexoe Contact Form
- * Description: Konverteringsoptimerat kontaktformulär för Wexoe
- * Version: 1.3.0
+ * Plugin Name: [DEPRECATED] Wexoe Contact Form
+ * Description: ⚠️ DEPRECATED — använd \Wexoe\Core\Renderers\ContactForm via Wexoe Core (Fas 7+). Kvarstår bara för sidor som fortfarande använder [wexoe_contact_form]-shortcoden. Migrera dem och inaktivera detta plugin.
+ * Version: 1.3.0-deprecated
  * Author: Wexoe
  */
 
 if (!defined('ABSPATH')) exit;
+
+/* ============================================================
+   DEPRECATION NOTICE
+   ============================================================ */
+
+add_action('admin_notices', function () {
+    if (!current_user_can('manage_options')) return;
+    ?>
+    <div class="notice notice-warning is-dismissible">
+        <p>
+            <strong>Wexoe Contact Form är deprecated.</strong>
+            Använd Wexoe Cores <code>\Wexoe\Core\Renderers\ContactForm</code> (auto-renderas på LP/PA/Audience när
+            <code>Show Contact Form</code> är på i Airtable). Migrera sidor som använder
+            <code>[wexoe_contact_form]</code>-shortcoden och inaktivera sedan detta plugin.
+        </p>
+    </div>
+    <?php
+});
 
 class WexoeContactForm {
     

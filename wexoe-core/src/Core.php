@@ -89,7 +89,41 @@ class Core {
             ]);
             return null;
         }
-        return new WriteRepository($config['table_id'], null, $config['fields']);
+        $base_id = isset($config['base_id']) && is_string($config['base_id']) && $config['base_id'] !== ''
+            ? $config['base_id']
+            : null;
+        $field_types = isset($config['field_types']) && is_array($config['field_types'])
+            ? $config['field_types']
+            : [];
+        return new WriteRepository($config['table_id'], $base_id, $config['fields'], $field_types);
+    }
+
+    /**
+     * Map a renderer type → fully qualified class name.
+     *
+     * Returnerar klassnamn för att kunna anropa `::render($cfg)` på det.
+     * Returnerar tom sträng om typen är okänd.
+     *
+     * Användning:
+     *   $class = Core::renderer('team-grid');
+     *   if ($class !== '') echo $class::render(['h2' => 'Team', 'scope' => ['country' => 'SE']]);
+     *
+     * @param string $type
+     * @return string
+     */
+    public static function renderer($type) {
+        $map = [
+            'hero'             => Renderers\Hero::class,
+            'text-image'       => Renderers\TextImage::class,
+            'text-only'        => Renderers\TextOnly::class,
+            'faq'              => Renderers\Faq::class,
+            'team-grid'        => Renderers\TeamGrid::class,
+            'partners-marquee' => Renderers\PartnersMarquee::class,
+            'testimonial-card' => Renderers\TestimonialCard::class,
+            'cta-banner'       => Renderers\CtaBanner::class,
+            'contact-form'     => Renderers\ContactForm::class,
+        ];
+        return isset($map[$type]) && class_exists($map[$type]) ? $map[$type] : '';
     }
 
     /**

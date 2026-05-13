@@ -19,6 +19,13 @@ class Plugin {
     const OPTION_BASE_ID = 'wexoe_core_airtable_base_id';
     const OPTION_WEBHOOK_SECRET = 'wexoe_core_webhook_secret';
 
+    /**
+     * Hård-kodad base ID för SSOT (Wexoe NY). Entity-scheman för core_* / cms_unique_pages
+     * sätter `'base_id' => Plugin::SSOT_BASE_ID` så att de läses från denna bas
+     * istället för standardbasen (Wexoe, som håller landing pages / submissions).
+     */
+    const SSOT_BASE_ID = 'appokKSTaBdCa8YiW';
+
     public static function instance() {
         if (self::$instance === null) {
             self::$instance = new self();
@@ -31,6 +38,8 @@ class Plugin {
     public function boot() {
         add_action('wexoe_core_refresh_entity_cache', [EntityRepository::class, 'cron_refresh_entity_cache'], 10, 1);
         add_action('rest_api_init', [RestApi::class, 'register_routes']);
+        add_action('rest_api_init', [EntityRestApi::class, 'register_routes']);
+        add_action('init', [ContactForm\Handler::class, 'register']);
         if (is_admin()) {
             Admin\Page::instance()->register();
             Admin\CacheTools::instance()->register();

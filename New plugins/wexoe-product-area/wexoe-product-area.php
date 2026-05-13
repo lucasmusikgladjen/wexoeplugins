@@ -4300,6 +4300,7 @@ function wexoe_product_area_test_shortcode($atts) {
 
     $html .= wexoe_pa_test_render_our_guy($data, $id);
     $html .= wexoe_pa_test_render_docs($data, $id);
+    $html .= wexoe_pa_render_contact_form_section($data);
 
     $html .= '</div>'; // wrapper
 
@@ -4310,6 +4311,51 @@ function wexoe_product_area_test_shortcode($atts) {
 }
 
 add_shortcode('wexoe_product_area', 'wexoe_product_area_test_shortcode');
+
+/* ============================================================
+   CONTACT FORM SECTION (Wexoe Core ContactForm-renderer)
+   ============================================================ */
+
+function wexoe_pa_render_contact_form_section($data) {
+    if (empty($data['contact_form_show'])) return '';
+    if (!class_exists('\\Wexoe\\Core\\Renderers\\ContactForm')) return '';
+
+    $contact_person = null;
+    if (!empty($data['contact_form_show_contact_person'])) {
+        $contact_person = [
+            'name'  => $data['contact_name'] ?? '',
+            'title' => $data['contact_title'] ?? '',
+            'email' => $data['contact_email'] ?? '',
+            'phone' => $data['contact_phone'] ?? '',
+            'image' => $data['contact_image'] ?? '',
+        ];
+    }
+
+    $html = \Wexoe\Core\Renderers\ContactForm::render([
+        'eyebrow'        => $data['contact_form_eyebrow'] ?? '',
+        'title'          => $data['contact_form_title'] ?? '',
+        'subtitle'       => $data['contact_form_subtitle'] ?? '',
+        'layout'         => $data['contact_form_layout'] ?? 'split',
+        'theme'          => $data['contact_form_theme'] ?? 'dark',
+        'show_company'   => $data['contact_form_show_company'] ?? true,
+        'show_phone'     => $data['contact_form_show_phone'] ?? true,
+        'show_dropdown'  => $data['contact_form_show_dropdown'] ?? true,
+        'dropdown_label' => $data['contact_form_dropdown_label'] ?? '',
+        'options'        => $data['contact_form_options'] ?? null,
+        'cta_text'       => $data['contact_form_cta_text'] ?? '',
+        'message_label'  => $data['contact_form_message_label'] ?? '',
+        'trust_signals'  => $data['contact_form_trust_signals'] ?? null,
+        'colors'         => [
+            'main'   => $data['hero_bg'] ?? '',
+            'accent' => $data['hero_accent'] ?? '',
+        ],
+        'source_plugin'  => 'wexoe-product-area',
+        'page_slug'      => $data['slug'] ?? '',
+        'contact_person' => $contact_person,
+    ]);
+
+    return '<section id="kontakt">' . $html . '</section>';
+}
 
 /* ============================================================
    REQUEST FORM — AJAX HANDLER
