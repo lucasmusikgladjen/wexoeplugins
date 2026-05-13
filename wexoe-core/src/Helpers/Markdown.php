@@ -85,8 +85,13 @@ class Markdown {
             return '';
         }
         $html = self::to_html($text);
-        // Strip outer <p> if the entire output is a single paragraph
-        if (preg_match('/^\s*<p>(.*?)<\/p>\s*$/s', trim($html), $m)) {
+        $trimmed = trim($html);
+        // Strip outer <p> only when the output is a SINGLE paragraph.
+        // (A non-greedy .*? still backtracks to the last </p> because of the
+        // end anchor, so we must explicitly require there to be no further
+        // <p> tags inside — otherwise multi-paragraph output gets mangled.)
+        if (substr_count($trimmed, '<p>') === 1
+            && preg_match('/^<p>(.*)<\/p>$/s', $trimmed, $m)) {
             return $m[1];
         }
         return $html;
