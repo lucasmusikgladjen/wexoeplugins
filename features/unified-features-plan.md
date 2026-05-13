@@ -4,14 +4,9 @@
 **Senast uppdaterad:** 2026-05-13 (rev 2)
 **Branch (båda repos):** `claude/plan-wexoe-features-5OxPZ`
 **Airtable-baser:** `Wexoe NY` (`appokKSTaBdCa8YiW`) — SSOT/CMS. `Wexoe` (`appXoUcK68dQwASjF`) — sid-data (kvarstår).
-**Ersätter (efter konsolidering):** `ssotanduniquepagesplan.md`, `contactformintegrationbuilder.md`, `contactformintegrationplugins.md`.
 
 Detta dokument är skrivet för att läsas och utföras av en LLM-agent. Varje fas är självstående med beroenden, konkreta artefakter, kodexempel och valideringar. Implementera faserna i ordning. Hoppa inte över valideringssteg.
 
-**Revisionsnoter (rev 2):**
-- Ingen separat `wexoe-sections`-plugin. Återanvändbara render-helpers bor som klasser i `wexoe-core`.
-- `cms_unique_pages` är en *fält-driven* tabell (samma mönster som LP-tabs / PA-Normals): många "kanske"-fält, renderaren visar sektion om data finns. Ingen sub-records-tabell (`cms_page_sections` skrotas). Ingen Data JSON. Ingen `Order`-kolumn — ordning kommer från schemat.
-- En ny plugin `wexoe-pages` orkestrerar Tier 2-rendering genom att läsa `cms_unique_pages` och anropa Core-render-helpers per sektion.
 
 ---
 
