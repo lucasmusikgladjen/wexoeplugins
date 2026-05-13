@@ -16,6 +16,7 @@ import {
   generateClientId,
 } from './product-area-types';
 import { AirtableRecord } from './airtable';
+import { ContactFormState, ContactFormLayout, ContactFormTheme, emptyContactFormState } from './contact-form-types';
 
 type Fields = Record<string, unknown>;
 
@@ -202,5 +203,34 @@ export function productAreaStateFromRecords(args: {
     solutions: orderedSolutions,
 
     division: ((f['Division'] as string[] | undefined) ?? []).slice(),
+
+    showContactForm: f['Show Contact Form'] === true,
+    contactForm: contactFormFromRecord(productArea),
+  };
+}
+
+function contactFormFromRecord(record: AirtableRecord): ContactFormState {
+  const f = record.fields;
+  const empty = emptyContactFormState();
+  const str = (k: string) => (typeof f[k] === 'string' ? (f[k] as string) : '');
+  const boolOr = (k: string, fallback: boolean) =>
+    f[k] === true ? true : f[k] === false ? false : fallback;
+  const layoutRaw = str('Contact Form Layout');
+  const themeRaw = str('Contact Form Theme');
+  return {
+    eyebrow: str('Contact Form Eyebrow'),
+    title: str('Contact Form Title'),
+    subtitle: str('Contact Form Subtitle'),
+    layout: (layoutRaw === 'centered' ? 'centered' : 'split') as ContactFormLayout,
+    theme: (themeRaw === 'light' ? 'light' : 'dark') as ContactFormTheme,
+    showCompany: boolOr('Contact Form Show Company', empty.showCompany),
+    showPhone: boolOr('Contact Form Show Phone', empty.showPhone),
+    showDropdown: boolOr('Contact Form Show Dropdown', empty.showDropdown),
+    dropdownLabel: str('Contact Form Dropdown Label'),
+    options: str('Contact Form Options'),
+    ctaText: str('Contact Form CTA Text'),
+    messageLabel: str('Contact Form Message Label'),
+    trustSignals: str('Contact Form Trust Signals'),
+    showContactPerson: boolOr('Contact Form Show Contact Person', empty.showContactPerson),
   };
 }

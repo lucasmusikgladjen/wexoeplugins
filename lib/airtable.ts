@@ -1,10 +1,16 @@
 const BASE_ID = 'appXoUcK68dQwASjF';
+/** SSOT-basen (Wexoe NY) — `core_*` + `cms_unique_pages`. */
+export const SSOT_BASE_ID = 'appokKSTaBdCa8YiW';
 
 export const TABLE_IDS = {
   landingPages: 'tbl8KDqGq0Ray1uqS',
   tabs: 'tblvecOh3rAGmw3mw',
   downloads: 'tblbLM827DzjWGjCR',
 } as const;
+
+function resolveBaseId(baseId?: string): string {
+  return baseId && baseId.length > 0 ? baseId : BASE_ID;
+}
 
 export interface AirtableRecord {
   id: string;
@@ -23,9 +29,10 @@ export async function createRecord(
   apiKey: string,
   tableId: string,
   fields: Record<string, unknown>,
+  baseId?: string,
 ): Promise<AirtableRecord> {
   const res = await fetch(
-    `https://api.airtable.com/v0/${BASE_ID}/${tableId}`,
+    `https://api.airtable.com/v0/${resolveBaseId(baseId)}/${tableId}`,
     {
       method: 'POST',
       headers: authHeaders(apiKey),
@@ -48,9 +55,10 @@ export async function getRecord(
   apiKey: string,
   tableId: string,
   recordId: string,
+  baseId?: string,
 ): Promise<AirtableRecord> {
   const res = await fetch(
-    `https://api.airtable.com/v0/${BASE_ID}/${tableId}/${recordId}`,
+    `https://api.airtable.com/v0/${resolveBaseId(baseId)}/${tableId}/${recordId}`,
     { headers: authHeaders(apiKey) },
   );
   if (!res.ok) {
@@ -68,9 +76,10 @@ export async function updateRecord(
   tableId: string,
   recordId: string,
   fields: Record<string, unknown>,
+  baseId?: string,
 ): Promise<AirtableRecord> {
   const res = await fetch(
-    `https://api.airtable.com/v0/${BASE_ID}/${tableId}/${recordId}`,
+    `https://api.airtable.com/v0/${resolveBaseId(baseId)}/${tableId}/${recordId}`,
     {
       method: 'PATCH',
       headers: authHeaders(apiKey),
@@ -121,13 +130,14 @@ export async function deleteRecords(
   apiKey: string,
   tableId: string,
   recordIds: string[],
+  baseId?: string,
 ): Promise<void> {
   if (recordIds.length === 0) return;
   for (let i = 0; i < recordIds.length; i += 10) {
     const batch = recordIds.slice(i, i + 10);
     const params = batch.map((id) => `records[]=${encodeURIComponent(id)}`).join('&');
     const res = await fetch(
-      `https://api.airtable.com/v0/${BASE_ID}/${tableId}?${params}`,
+      `https://api.airtable.com/v0/${resolveBaseId(baseId)}/${tableId}?${params}`,
       {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${apiKey}` },
@@ -146,7 +156,7 @@ export async function deleteRecords(
 export async function listRecords(
   apiKey: string,
   tableId: string,
-  opts: { filterByFormula?: string; fields?: string[]; sort?: Array<{ field: string; direction?: 'asc' | 'desc' }> } = {},
+  opts: { filterByFormula?: string; fields?: string[]; sort?: Array<{ field: string; direction?: 'asc' | 'desc' }>; baseId?: string } = {},
 ): Promise<AirtableRecord[]> {
   const all: AirtableRecord[] = [];
   let offset: string | undefined;
@@ -164,7 +174,7 @@ export async function listRecords(
     if (offset) params.set('offset', offset);
 
     const res = await fetch(
-      `https://api.airtable.com/v0/${BASE_ID}/${tableId}?${params.toString()}`,
+      `https://api.airtable.com/v0/${resolveBaseId(opts.baseId)}/${tableId}?${params.toString()}`,
       { headers: authHeaders(apiKey) },
     );
     if (!res.ok) {

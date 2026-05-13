@@ -16,6 +16,7 @@ import ProductsEditor from './editors/ProductsEditor';
 import SolutionsEditor from './editors/SolutionsEditor';
 import ContactEditor from './editors/ContactEditor';
 import SettingsEditor from './editors/SettingsEditor';
+import ContactFormEditor from '../contact-form/ContactFormEditor';
 
 interface Props {
   initialState: ProductAreaState;
@@ -27,7 +28,8 @@ const QUICK_NAV: Array<{ id: ProductAreaSectionId; label: string }> = [
   { id: 'content', label: 'Innehåll' },
   { id: 'products', label: 'Produkter' },
   { id: 'solutions', label: 'Lösningar' },
-  { id: 'contact', label: 'Kontakt' },
+  { id: 'contact', label: 'Visitkort' },
+  { id: 'contactForm', label: 'Kontaktform' },
   { id: 'settings', label: 'Inställningar' },
 ];
 
@@ -377,6 +379,38 @@ export default function ProductAreaBuilder({ initialState, divisions }: Props) {
                 visible={visibility.contact}
                 onToggleVisible={(v) => setVisible('contact', v)}
               />
+            </div>
+
+            <div
+              ref={(el) => {
+                sectionRefs.current.contactForm = el;
+              }}
+              className="cursor-pointer"
+              onClick={() => handleSectionClick('contactForm')}
+              onFocusCapture={() => handleSectionFocus('contactForm')}
+            >
+              <div className="border border-gray-100 rounded-md overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border-b border-gray-100">
+                  <span className="flex-1 text-sm font-medium text-gray-800">Kontaktformulär</span>
+                  <label className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                    <input
+                      type="checkbox"
+                      checked={state.showContactForm}
+                      onChange={(e) => setField('showContactForm', e.target.checked)}
+                      className="h-3.5 w-3.5"
+                    />
+                    Visa
+                  </label>
+                </div>
+                {state.showContactForm && (
+                  <div className="p-3">
+                    <ContactFormEditor
+                      state={state.contactForm}
+                      onChange={(s) => setField('contactForm', s)}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div

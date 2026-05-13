@@ -4,6 +4,8 @@
 // "Products" and "Solutions & Concepts" records for in-place editing, and a
 // read-only projection of linked "Articles" beneath each product.
 
+import { ContactFormState, emptyContactFormState } from './contact-form-types';
+
 export interface NormalSection {
   h2: string;
   text: string;
@@ -133,6 +135,10 @@ export interface ProductAreaState {
   /** Division linked-record IDs (multipleRecordLinks — currently the UI
    *  only exposes a single pick, but the state mirrors Airtable shape). */
   division: string[];
+
+  // Contact Form
+  showContactForm: boolean;
+  contactForm: ContactFormState;
 }
 
 /** Lightweight projection of a Division record for the picker UI. */
@@ -147,8 +153,12 @@ export type ProductAreaSectionId =
   | 'products'
   | 'solutions'
   | 'contact'
+  | 'contactForm'
   | 'docs'
   | 'settings';
+
+/** Helper för andra moduler som behöver re-exportera. */
+export { emptyContactFormState };
 
 export function emptyNormalSection(): NormalSection {
   return {
@@ -264,5 +274,8 @@ export function emptyProductAreaState(): ProductAreaState {
     solutions: [],
 
     division: [],
+
+    showContactForm: false,
+    contactForm: emptyContactFormState(),
   };
 }

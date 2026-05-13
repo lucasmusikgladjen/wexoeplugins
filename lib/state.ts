@@ -1,4 +1,5 @@
 import { PageState, PageAction, Tab, TabDownload, FaqItem, CompareRow, StepItem } from './types';
+import { emptyContactFormState } from './contact-form-types';
 
 let tabCounter = 0;
 export function generateTabId(): string {
@@ -107,6 +108,9 @@ export const initialState: PageState = {
 
   colorMain: '#11325D',
   colorSecondary: '#F28C28',
+
+  showContactForm: false,
+  contactForm: emptyContactFormState(),
 };
 
 export function pageReducer(state: PageState, action: PageAction): PageState {

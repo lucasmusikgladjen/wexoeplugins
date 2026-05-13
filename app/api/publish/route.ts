@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PageState } from '@/lib/types';
+import { contactFieldsEmpty, resolveDefaultCoworker } from '@/lib/default-coworker';
 import {
   createRecord,
   createRecords,
@@ -65,6 +66,23 @@ async function createNewPage(
   anthropicKey: string,
   state: PageState,
 ) {
+  // 0. Default-coworker injection — om alla contact_*-fält är tomma, slå upp
+  //    första aktiva coworker i SSOT (country=SE default) och förfyll. Manuella
+  //    värden bevaras eftersom guard:en bara triggar om allt är tomt.
+  if (contactFieldsEmpty(state)) {
+    const defaults = await resolveDefaultCoworker({ apiKey: airtableKey, countryCode: 'SE' });
+    if (defaults) {
+      state = {
+        ...state,
+        contactName: defaults.contactName,
+        contactTitle: defaults.contactTitle,
+        contactEmail: defaults.contactEmail,
+        contactPhone: defaults.contactPhone,
+        contactImage: defaults.contactImage,
+      };
+    }
+  }
+
   // 1. Claude transforms state → Airtable-ready fields
   const transformed = await transformLandingPage(anthropicKey, state, 'create');
 

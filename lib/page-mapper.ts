@@ -18,6 +18,7 @@ import {
 } from './types';
 import { createEmptyTab, initialState } from './state';
 import { AirtableRecord } from './airtable';
+import { ContactFormState, ContactFormLayout, ContactFormTheme, emptyContactFormState } from './contact-form-types';
 
 type Fields = Record<string, unknown>;
 
@@ -227,5 +228,68 @@ export function pageStateFromRecords(args: {
 
     colorMain: str(f, 'Color Main') || '#11325D',
     colorSecondary: str(f, 'Color Secondary') || '#F28C28',
+
+    showContactForm: bool(f, 'Show Contact Form', false),
+    contactForm: contactFormFromRecord(landingPage),
   };
+}
+
+/**
+ * Generic helper: hämta ContactFormState från ett Airtable-record vars fält
+ * följer `Contact Form *`-konventionen. Återanvänds från LP, PA, Audience.
+ */
+export function contactFormFromRecord(record: AirtableRecord): ContactFormState {
+  const f = record.fields;
+  const layoutRaw = str(f, 'Contact Form Layout');
+  const themeRaw = str(f, 'Contact Form Theme');
+  const empty = emptyContactFormState();
+  return {
+    eyebrow: str(f, 'Contact Form Eyebrow'),
+    title: str(f, 'Contact Form Title'),
+    subtitle: str(f, 'Contact Form Subtitle'),
+    layout: (layoutRaw === 'centered' ? 'centered' : 'split') as ContactFormLayout,
+    theme: (themeRaw === 'light' ? 'light' : 'dark') as ContactFormTheme,
+    showCompany: bool(f, 'Contact Form Show Company', empty.showCompany),
+    showPhone: bool(f, 'Contact Form Show Phone', empty.showPhone),
+    showDropdown: bool(f, 'Contact Form Show Dropdown', empty.showDropdown),
+    dropdownLabel: str(f, 'Contact Form Dropdown Label'),
+    options: str(f, 'Contact Form Options'),
+    ctaText: str(f, 'Contact Form CTA Text'),
+    messageLabel: str(f, 'Contact Form Message Label'),
+    trustSignals: str(f, 'Contact Form Trust Signals'),
+    showContactPerson: bool(f, 'Contact Form Show Contact Person', empty.showContactPerson),
+  };
+}
+
+/**
+ * Generic helper: konvertera ContactFormState till Airtable-fält-map.
+ * Återanvänds från publish-flödena för LP/PA/Audience.
+ */
+export function contactFormToFields(
+  showContactForm: boolean,
+  state: ContactFormState,
+): Record<string, unknown> {
+  const fields: Record<string, unknown> = {
+    'Show Contact Form': showContactForm,
+    'Contact Form Eyebrow': state.eyebrow || null,
+    'Contact Form Title': state.title || null,
+    'Contact Form Subtitle': state.subtitle || null,
+    'Contact Form Layout': state.layout,
+    'Contact Form Theme': state.theme,
+    'Contact Form Show Company': state.showCompany,
+    'Contact Form Show Phone': state.showPhone,
+    'Contact Form Show Dropdown': state.showDropdown,
+    'Contact Form Dropdown Label': state.dropdownLabel || null,
+    'Contact Form Options': state.options || null,
+    'Contact Form CTA Text': state.ctaText || null,
+    'Contact Form Message Label': state.messageLabel || null,
+    'Contact Form Trust Signals': state.trustSignals || null,
+    'Contact Form Show Contact Person': state.showContactPerson,
+  };
+  // Strip null så Airtable inte sätter explicit null.
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(fields)) {
+    if (v !== null && v !== undefined) out[k] = v;
+  }
+  return out;
 }

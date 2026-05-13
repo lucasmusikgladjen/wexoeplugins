@@ -12,7 +12,7 @@ interface PageRow {
   type: PageType;
 }
 
-type PageType = 'landing' | 'product' | 'audience' | 'contact';
+type PageType = 'landing' | 'product' | 'audience' | 'unique' | 'contact';
 
 interface TypeDef {
   id: PageType;
@@ -45,6 +45,13 @@ const PAGE_TYPES: TypeDef[] = [
     editPath: (id) => `/editor/audience/${id}`,
   },
   {
+    id: 'unique',
+    label: 'Unik sida',
+    available: true,
+    description: 'Tier 2-sida (om-oss, karriär osv.) med fast sektion-struktur',
+    editPath: (id) => `/editor/unique/${id}`,
+  },
+  {
     id: 'contact',
     label: 'Kontaktsida',
     available: false,
@@ -57,6 +64,7 @@ const TYPE_LABEL: Record<PageType, string> = {
   landing: 'Landing',
   product: 'Produkt',
   audience: 'Audience',
+  unique: 'Unik',
   contact: 'Kontakt',
 };
 
@@ -106,10 +114,26 @@ export default function PageManager() {
           console.error('[page-manager] Audience fetch failed:', err);
           return [] as PageRow[];
         }),
+      fetch('/api/unique-page?action=list')
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.error) throw new Error(data.error);
+          return (data.pages ?? []).map((p: { id: string; slug: string; h1: string }) => ({
+            id: p.id,
+            name: p.h1 || p.slug,
+            slug: p.slug,
+            h1: p.h1,
+            type: 'unique' as const,
+          }));
+        })
+        .catch((err) => {
+          console.error('[page-manager] Unique fetch failed:', err);
+          return [] as PageRow[];
+        }),
     ])
-      .then(([lps, pas, auds]) => {
+      .then(([lps, pas, auds, uniques]) => {
         if (cancelled) return;
-        const merged = [...lps, ...pas, ...auds].sort((a, b) => a.name.localeCompare(b.name, 'sv'));
+        const merged = [...lps, ...pas, ...auds, ...uniques].sort((a, b) => a.name.localeCompare(b.name, 'sv'));
         setPages(merged);
       })
       .catch((err) => {
@@ -140,6 +164,7 @@ export default function PageManager() {
     landing: pages?.filter((p) => p.type === 'landing').length ?? 0,
     product: pages?.filter((p) => p.type === 'product').length ?? 0,
     audience: pages?.filter((p) => p.type === 'audience').length ?? 0,
+    unique: pages?.filter((p) => p.type === 'unique').length ?? 0,
     contact: 0,
   };
 
@@ -157,13 +182,22 @@ export default function PageManager() {
               {pages === null ? 'Laddar…' : `${counts.all} ${counts.all === 1 ? 'sida' : 'sidor'}`}
             </p>
           </div>
-          <button
-            onClick={() => setShowAddDialog(true)}
-            className="px-4 py-2 rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90"
-            style={{ background: '#11325D' }}
-          >
-            Ny sida
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/globals"
+              className="px-4 py-2 rounded-md text-sm font-medium text-gray-600 border border-gray-200 hover:border-gray-400 hover:text-gray-900 transition-colors"
+              title="Företag, partners, medarbetare, citat osv."
+            >
+              Globaler
+            </Link>
+            <button
+              onClick={() => setShowAddDialog(true)}
+              className="px-4 py-2 rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90"
+              style={{ background: '#11325D' }}
+            >
+              Ny sida
+            </button>
+          </div>
         </div>
 
         {/* Search */}
@@ -254,18 +288,21 @@ export default function PageManager() {
 
                   {/* Kopiera button — sibling of the Link, hidden until the
                       row is hovered (pointer-events-none so touch taps still
-                      fall through to the Link). */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCopyTarget(page);
-                    }}
-                    className="flex-none px-2.5 py-0.5 text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto transition-opacity"
-                    title="Kopiera sidan"
-                  >
-                    Kopiera
-                  </button>
+                      fall through to the Link). Unique-sidor saknar copy-path
+                      i /api/copy och döljs därför helt. */}
+                  {page.type !== 'unique' && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCopyTarget(page);
+                      }}
+                      className="flex-none px-2.5 py-0.5 text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto transition-opacity"
+                      title="Kopiera sidan"
+                    >
+                      Kopiera
+                    </button>
+                  )}
 
                   <span className="flex-none text-[10px] uppercase tracking-wider text-gray-300 whitespace-nowrap">
                     {TYPE_LABEL[page.type]}
@@ -287,6 +324,8 @@ export default function PageManager() {
               router.push('/editor/product-area');
             } else if (type === 'audience') {
               router.push('/editor/audience');
+            } else if (type === 'unique') {
+              router.push('/editor/unique');
             }
           }}
         />
@@ -317,6 +356,7 @@ function AddPageDialog({
     { id: 'landing', label: 'Landing page', description: 'Kampanj- och konverteringssida', enabled: true },
     { id: 'product', label: 'Produktsida', description: 'Produktområdesida med produkter och lösningar', enabled: true },
     { id: 'audience', label: 'Audience-sida', description: 'Audience hero + värdeproposition', enabled: true },
+    { id: 'unique', label: 'Unik sida', description: 'Tier 2-sida (om-oss, karriär osv.) med fast sektion-struktur', enabled: true },
     { id: 'contact', label: 'Kontaktsida', description: 'Kommer snart', enabled: false },
   ];
 

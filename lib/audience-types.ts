@@ -4,6 +4,8 @@
 // the `wexoe-audience-hero` plugin's [wexoe_audience slug="..."] shortcode.
 // Flat schema — no linked records.
 
+import { ContactFormState, emptyContactFormState } from './contact-form-types';
+
 export interface AudienceState {
   /** `create` before the record has ever been persisted; `edit` once it has an Airtable id. */
   mode: 'edit' | 'create';
@@ -35,9 +37,13 @@ export interface AudienceState {
   caseResult: string;
   caseLinkText: string;
   caseLinkUrl: string;
+
+  // Contact form
+  showContactForm: boolean;
+  contactForm: ContactFormState;
 }
 
-export type AudienceSectionId = 'hero' | 'value' | 'case' | 'settings';
+export type AudienceSectionId = 'hero' | 'value' | 'case' | 'contactForm' | 'settings';
 
 export function emptyAudienceState(): AudienceState {
   return {
@@ -67,5 +73,8 @@ export function emptyAudienceState(): AudienceState {
     caseResult: '',
     caseLinkText: '',
     caseLinkUrl: '',
+
+    showContactForm: false,
+    contactForm: emptyContactFormState(),
   };
 }

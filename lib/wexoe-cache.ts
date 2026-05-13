@@ -76,3 +76,14 @@ export async function invalidateWexoeCoreCache(
 export const LP_ENTITIES = ['landing_pages', 'lp_tabs', 'lp_downloads'] as const;
 export const PA_ENTITIES = ['product_areas', 'products', 'solutions'] as const;
 export const AUDIENCE_ENTITIES = ['audience_heroes'] as const;
+export const SSOT_ENTITIES = [
+  'core_company',
+  'core_graphic_profile',
+  'core_countries',
+  'core_divisions',
+  'core_customer_types',
+  'core_coworkers',
+  'core_partners',
+  'core_testimonials',
+] as const;
+export const UNIQUE_PAGES_ENTITIES = ['cms_unique_pages'] as const;
