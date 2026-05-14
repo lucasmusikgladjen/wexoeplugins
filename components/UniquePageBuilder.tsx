@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import BuilderShell from './BuilderShell';
+import { SaveButton, SaveStatus } from './shared/builder';
 import {
   UniquePageState,
   UniquePageSectionId,
@@ -118,25 +119,16 @@ export default function UniquePageBuilder({ initialState, countryOptions, divisi
   );
 
   const toolbarMiddle = (
-    <>
-      {error && <span className="text-xs text-red-500 truncate max-w-xs">{error}</span>}
-      {slugError && !error && <span className="text-xs text-red-500">{slugError}</span>}
-      {justSaved && !error && <span className="text-xs text-gray-400">Sparat ✓</span>}
-      {!canSave && !error && !slugError && (
-        <span className="text-xs text-gray-300">Slug + H1 krävs</span>
-      )}
-    </>
+    <SaveStatus
+      error={error || slugError || null}
+      justSaved={justSaved}
+      hint="Slug + H1 krävs"
+      canSave={canSave}
+    />
   );
 
   const toolbarRight = (
-    <button
-      onClick={handleSave}
-      disabled={saving || !canSave}
-      className="px-4 py-1.5 rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-      style={{ background: '#11325D' }}
-    >
-      {saving ? (isCreate ? 'Skapar…' : 'Sparar…') : isCreate ? 'Skapa' : 'Spara'}
-    </button>
+    <SaveButton onClick={handleSave} saving={saving} canSave={canSave} isCreate={isCreate} />
   );
 
   return (

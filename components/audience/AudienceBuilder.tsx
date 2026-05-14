@@ -9,6 +9,7 @@ import ValueEditor from './editors/ValueEditor';
 import CaseEditor from './editors/CaseEditor';
 import SettingsEditor from './editors/SettingsEditor';
 import BuilderShell from '../BuilderShell';
+import { SaveButton, SaveStatus } from '../shared/builder';
 import ContactFormSection from '../contact-form/ContactFormSection';
 
 interface Props {
@@ -114,24 +115,16 @@ export default function AudienceBuilder({ initialState }: Props) {
   );
 
   const toolbarMiddle = (
-    <>
-      {error && <span className="text-xs text-red-500 truncate max-w-xs">{error}</span>}
-      {justSaved && !error && <span className="text-xs text-gray-400">Sparat ✓</span>}
-      {!canSave && !error && (
-        <span className="text-xs text-gray-300">Slug + titel krävs</span>
-      )}
-    </>
+    <SaveStatus
+      error={error}
+      justSaved={justSaved}
+      hint="Slug + titel krävs"
+      canSave={canSave}
+    />
   );
 
   const toolbarRight = (
-    <button
-      onClick={handleSave}
-      disabled={saving || !canSave}
-      className="px-4 py-1.5 rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-      style={{ background: '#11325D' }}
-    >
-      {saving ? (isCreate ? 'Skapar…' : 'Sparar…') : isCreate ? 'Skapa' : 'Spara'}
-    </button>
+    <SaveButton onClick={handleSave} saving={saving} canSave={canSave} isCreate={isCreate} />
   );
 
   return (

@@ -17,6 +17,7 @@ import SolutionsEditor from './editors/SolutionsEditor';
 import ContactEditor from './editors/ContactEditor';
 import SettingsEditor from './editors/SettingsEditor';
 import ContactFormSection from '../contact-form/ContactFormSection';
+import { SaveButton, SaveStatus } from '../shared/builder';
 
 interface Props {
   initialState: ProductAreaState;
@@ -254,20 +255,9 @@ export default function ProductAreaBuilder({ initialState, divisions }: Props) {
 
         <div className="flex-1" />
 
-        {error && <span className="text-xs text-red-500 truncate max-w-xs">{error}</span>}
-        {justSaved && !error && <span className="text-xs text-gray-400">Sparat ✓</span>}
-        {!canSave && !error && (
-          <span className="text-xs text-gray-300">Slug + rubrik krävs</span>
-        )}
+        <SaveStatus error={error} justSaved={justSaved} hint="Slug + rubrik krävs" canSave={canSave} />
 
-        <button
-          onClick={handleSave}
-          disabled={saving || !canSave}
-          className="px-4 py-1.5 rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ background: '#11325D' }}
-        >
-          {saving ? (isCreate ? 'Skapar…' : 'Sparar…') : isCreate ? 'Skapa' : 'Spara'}
-        </button>
+        <SaveButton onClick={handleSave} saving={saving} canSave={canSave} isCreate={isCreate} />
       </header>
 
       {/* 2-pane layout: preview + editor */}
