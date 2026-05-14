@@ -13,7 +13,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createRecord, updateRecord, deleteRecords, listRecords, SSOT_BASE_ID } from '@/lib/airtable';
-import { CORE_ENTITIES, isCoreEntityName, CoreEntityName } from '@/lib/core/registry';
+import { CORE_ENTITIES, isCoreEntityName, isSingleRecordEntity, CoreEntityName } from '@/lib/core/registry';
 import { readEntityRecord, writeEntityFields } from '@/lib/core/mapper';
 import { invalidateWexoeCoreCache } from '@/lib/wexoe-cache';
 
@@ -72,7 +72,7 @@ export async function POST(
     return badRequest('Ogiltig JSON-body.');
   }
 
-  if (CORE_ENTITIES[entity].singleRecord) {
+  if (isSingleRecordEntity(entity)) {
     try {
       const existing = await listRecords(apiKey, CORE_ENTITIES[entity].tableId, {
         baseId: SSOT_BASE_ID,
@@ -176,7 +176,7 @@ export async function DELETE(
   const recordId = url.searchParams.get('id');
   if (!recordId) return badRequest('Saknar query-param ?id=recXXX.');
 
-  if (CORE_ENTITIES[entity].singleRecord) {
+  if (isSingleRecordEntity(entity)) {
     return NextResponse.json(
       { success: false, code: 'cannot_delete', error: `${CORE_ENTITIES[entity].label} kan inte raderas — bara redigeras.` },
       { status: 409 },

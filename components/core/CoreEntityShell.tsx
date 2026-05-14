@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CoreEntityName, CORE_ENTITIES, CORE_ENTITY_NAMES } from '@/lib/core/registry';
+import { CoreEntityName, CORE_ENTITIES, CORE_ENTITY_NAMES, isSingleRecordEntity } from '@/lib/core/registry';
 import { CORE_ENTITY_FORMS, emptyEntityState } from '@/lib/core/forms';
 import CoreEntityForm from './CoreEntityForm';
 
@@ -22,7 +22,7 @@ export default function CoreEntityShell({ entity, initialRecords, linkOptions }:
   const router = useRouter();
   const def = CORE_ENTITIES[entity];
   const formCfg = CORE_ENTITY_FORMS[entity];
-  const singleRecord = def.singleRecord === true;
+  const singleRecord = isSingleRecordEntity(entity);
   const [records, setRecords] = useState<Array<Record<string, unknown>>>(initialRecords);
   const [selectedId, setSelectedId] = useState<string | null>(initialRecords[0]?._recordId as string | null);
   const [editorState, setEditorState] = useState<Record<string, unknown>>(() => {

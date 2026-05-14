@@ -89,3 +89,12 @@ export const CORE_ENTITY_NAMES = Object.keys(CORE_ENTITIES) as CoreEntityName[];
 export function isCoreEntityName(s: string): s is CoreEntityName {
   return s in CORE_ENTITIES;
 }
+
+/** Returnera entity-def som widened `CoreEntityDef` så optionella fält syns vid uppslag på unionstypen. */
+export function getCoreEntityDef(name: CoreEntityName): CoreEntityDef {
+  return CORE_ENTITIES[name] as CoreEntityDef;
+}
+
+export function isSingleRecordEntity(name: CoreEntityName): boolean {
+  return getCoreEntityDef(name).singleRecord === true;
+}
