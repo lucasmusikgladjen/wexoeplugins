@@ -17,7 +17,7 @@ export default async function GlobalsPage() {
   }
 
   const grouped = {
-    singleton: CORE_ENTITY_NAMES.filter((n) => CORE_ENTITIES[n].role === 'singleton'),
+    grunddata: CORE_ENTITY_NAMES.filter((n) => CORE_ENTITIES[n].role === 'singleton'),
     taxonomy: CORE_ENTITY_NAMES.filter((n) => CORE_ENTITIES[n].role === 'taxonomy'),
     collection: CORE_ENTITY_NAMES.filter((n) => CORE_ENTITIES[n].role === 'collection'),
   };
@@ -47,8 +47,8 @@ export default async function GlobalsPage() {
           </div>
         )}
 
-        <Section title="Singleton" description="Ett record per scope. Fallback via Is Default.">
-          {grouped.singleton.map((name) => (
+        <Section title="Grunddata" description="Övergripande inställningar och profil.">
+          {grouped.grunddata.map((name) => (
             <EntityCard key={name} name={name} count={counts[name] ?? 0} />
           ))}
         </Section>

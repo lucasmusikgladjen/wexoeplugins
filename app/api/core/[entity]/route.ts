@@ -13,7 +13,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createRecord, updateRecord, deleteRecords, listRecords, SSOT_BASE_ID } from '@/lib/airtable';
-import { CORE_ENTITIES, isCoreEntityName, CoreEntityName } from '@/lib/core/registry';
+import { CORE_ENTITIES, isCoreEntityName, isSingleRecordEntity, CoreEntityName } from '@/lib/core/registry';
 import { readEntityRecord, writeEntityFields } from '@/lib/core/mapper';
 import { invalidateWexoeCoreCache } from '@/lib/wexoe-cache';
 
@@ -72,8 +72,21 @@ export async function POST(
     return badRequest('Ogiltig JSON-body.');
   }
 
-  // Singleton-invariant: max ett record med is_default=true.
-  if ((entity === 'core_company' || entity === 'core_graphic_profile') && state.is_default === true) {
+  if (isSingleRecordEntity(entity)) {
+    try {
+      const existing = await listRecords(apiKey, CORE_ENTITIES[entity].tableId, {
+        baseId: SSOT_BASE_ID,
+      });
+      if (existing.length > 0) {
+        return NextResponse.json(
+          { success: false, code: 'already_exists', error: `${CORE_ENTITIES[entity].label} finns redan — bara ett record tillåts.` },
+          { status: 409 },
+        );
+      }
+    } catch (err) {
+      console.warn('Kunde inte verifiera single-record-invariant:', err);
+    }
+  } else if (entity === 'core_graphic_profile' && state.is_default === true) {
     try {
       const existing = await listRecords(apiKey, CORE_ENTITIES[entity].tableId, {
         baseId: SSOT_BASE_ID,
@@ -86,7 +99,7 @@ export async function POST(
         );
       }
     } catch (err) {
-      console.warn('Kunde inte verifiera singleton-invariant:', err);
+      console.warn('Kunde inte verifiera default-invariant:', err);
     }
   }
 
@@ -121,7 +134,7 @@ export async function PATCH(
     return badRequest('Ogiltig JSON-body.');
   }
 
-  if ((entity === 'core_company' || entity === 'core_graphic_profile') && state.is_default === true) {
+  if (entity === 'core_graphic_profile' && state.is_default === true) {
     try {
       const existing = await listRecords(apiKey, CORE_ENTITIES[entity].tableId, {
         baseId: SSOT_BASE_ID,
@@ -135,7 +148,7 @@ export async function PATCH(
         );
       }
     } catch (err) {
-      console.warn('Kunde inte verifiera singleton-invariant:', err);
+      console.warn('Kunde inte verifiera default-invariant:', err);
     }
   }
 
@@ -162,6 +175,13 @@ export async function DELETE(
   const url = new URL(req.url);
   const recordId = url.searchParams.get('id');
   if (!recordId) return badRequest('Saknar query-param ?id=recXXX.');
+
+  if (isSingleRecordEntity(entity)) {
+    return NextResponse.json(
+      { success: false, code: 'cannot_delete', error: `${CORE_ENTITIES[entity].label} kan inte raderas — bara redigeras.` },
+      { status: 409 },
+    );
+  }
 
   try {
     await deleteRecords(apiKey, CORE_ENTITIES[entity].tableId, [recordId], SSOT_BASE_ID);
