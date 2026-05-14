@@ -28,6 +28,7 @@ import {
   FieldGroup,
 } from '@/components/editors/FieldInput';
 import ButtonFieldset from '@/components/editors/ButtonFieldset';
+import LinkedRecords from './LinkedRecords';
 
 export const Field = {
   Text: FieldInput,
@@ -38,6 +39,7 @@ export const Field = {
   Color: FieldColor,
   Buttons: ButtonFieldset,
   Group: FieldGroup,
+  LinkedRecords: LinkedRecords,
 } as const;
 
 export {
@@ -49,4 +51,5 @@ export {
   FieldColor,
   FieldGroup,
   ButtonFieldset,
+  LinkedRecords,
 };
