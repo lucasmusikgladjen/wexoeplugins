@@ -1,7 +1,8 @@
 'use client';
 
 import { HeroState } from '@/lib/unique-page-types';
-import CollapsibleSection, { FieldRow, TextInput, TextareaInput, SelectInput } from './CollapsibleSection';
+import { Field } from '@/components/shared/fields';
+import EditorSection from '@/components/editors/EditorSection';
 
 interface Props {
   state: HeroState;
@@ -14,22 +15,24 @@ export default function HeroEditor({ state, onChange, visible, onToggleVisible }
   const set = <K extends keyof HeroState>(k: K, v: HeroState[K]) => onChange({ ...state, [k]: v });
 
   return (
-    <CollapsibleSection title="Hero" visible={visible} onToggleVisible={onToggleVisible}>
-      <FieldRow label="Eyebrow"><TextInput value={state.eyebrow} onChange={(v) => set('eyebrow', v)} /></FieldRow>
-      <FieldRow label="H1 Override" help="Tom = använd top-level H1.">
-        <TextInput value={state.h1Override} onChange={(v) => set('h1Override', v)} />
-      </FieldRow>
-      <FieldRow label="Subtitle"><TextareaInput value={state.subtitle} onChange={(v) => set('subtitle', v)} rows={3} /></FieldRow>
-      <FieldRow label="Bild-URL"><TextInput value={state.imageUrl} onChange={(v) => set('imageUrl', v)} placeholder="https://..." /></FieldRow>
-      <FieldRow label="CTA-text"><TextInput value={state.ctaText} onChange={(v) => set('ctaText', v)} /></FieldRow>
-      <FieldRow label="CTA-URL"><TextInput value={state.ctaUrl} onChange={(v) => set('ctaUrl', v)} placeholder="/kontakt" /></FieldRow>
-      <FieldRow label="Tema">
-        <SelectInput
-          value={state.theme}
-          onChange={(v) => set('theme', v)}
-          options={[{ value: 'dark', label: 'Mörkt' }, { value: 'light', label: 'Ljust' }]}
-        />
-      </FieldRow>
-    </CollapsibleSection>
+    <EditorSection title="Hero" visible={visible} onToggleVisible={onToggleVisible}>
+      <Field.Text label="Eyebrow" value={state.eyebrow} onChange={(v) => set('eyebrow', v)} />
+      <Field.Text
+        label="H1 Override"
+        description="Tom = använd top-level H1."
+        value={state.h1Override}
+        onChange={(v) => set('h1Override', v)}
+      />
+      <Field.Textarea label="Subtitle" rows={3} value={state.subtitle} onChange={(v) => set('subtitle', v)} />
+      <Field.Text label="Bild-URL" placeholder="https://..." value={state.imageUrl} onChange={(v) => set('imageUrl', v)} />
+      <Field.Text label="CTA-text" value={state.ctaText} onChange={(v) => set('ctaText', v)} />
+      <Field.Text label="CTA-URL" placeholder="/kontakt" value={state.ctaUrl} onChange={(v) => set('ctaUrl', v)} />
+      <Field.Select<'dark' | 'light'>
+        label="Tema"
+        value={state.theme}
+        onChange={(v) => set('theme', v)}
+        options={[{ value: 'dark', label: 'Mörkt' }, { value: 'light', label: 'Ljust' }]}
+      />
+    </EditorSection>
   );
 }

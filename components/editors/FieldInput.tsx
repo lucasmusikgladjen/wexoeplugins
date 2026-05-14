@@ -3,6 +3,32 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { HexColorPicker, HexColorInput } from 'react-colorful';
 
+/**
+ * Field-grupp för custom inputs (multi-select, kombinerade kontroller, etc.)
+ * som behöver standardiserad label + description-formatering men inte passar
+ * i någon av de namngivna Field.*-primitivema.
+ *
+ * Använd som sista utväg — föredra Field.Text/Textarea/Select/Checkbox när
+ * de räcker.
+ */
+export function FieldGroup({
+  label,
+  description,
+  children,
+}: {
+  label: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block">
+      <span className="text-[11px] text-gray-400">{label}</span>
+      <div className="mt-0.5">{children}</div>
+      {description && <span className="block mt-0.5 text-[10px] text-gray-400">{description}</span>}
+    </label>
+  );
+}
+
 /** Resize the textarea's height to fit its content so callers never need to
  *  scroll — the `rows` prop becomes a minimum, content extends past it. Runs
  *  in a layout effect so the new height is committed before paint. */
@@ -30,9 +56,11 @@ interface InputProps {
   onChange: (value: string) => void;
   placeholder?: string;
   type?: string;
+  /** Liten hjälptext under fältet, t.ex. "Tom = använd top-level H1". */
+  description?: string;
 }
 
-export function FieldInput({ label, value, onChange, placeholder, type = 'text' }: InputProps) {
+export function FieldInput({ label, value, onChange, placeholder, type = 'text', description }: InputProps) {
   return (
     <label className="block">
       <span className="text-[11px] text-gray-400">{label}</span>
@@ -43,6 +71,7 @@ export function FieldInput({ label, value, onChange, placeholder, type = 'text' 
         placeholder={placeholder}
         className="mt-0.5 block w-full rounded bg-gray-100/80 px-3 py-2 text-sm text-gray-700 placeholder:text-gray-300 focus:bg-white focus:ring-1 focus:ring-gray-200 focus:outline-none"
       />
+      {description && <span className="block mt-0.5 text-[10px] text-gray-400">{description}</span>}
     </label>
   );
 }
@@ -53,10 +82,13 @@ interface TextareaProps {
   onChange: (value: string) => void;
   placeholder?: string;
   rows?: number;
+  /** Kort inline-tips vid label, t.ex. "(stödjer markdown)". */
   hint?: string;
+  /** Längre hjälptext under fältet. */
+  description?: string;
 }
 
-export function FieldTextarea({ label, value, onChange, placeholder, rows = 8, hint }: TextareaProps) {
+export function FieldTextarea({ label, value, onChange, placeholder, rows = 8, hint, description }: TextareaProps) {
   const ref = useRef<HTMLTextAreaElement>(null);
   useAutoGrow(ref, value);
   return (
@@ -71,6 +103,7 @@ export function FieldTextarea({ label, value, onChange, placeholder, rows = 8, h
         rows={rows}
         className={TEXTAREA_CLASS}
       />
+      {description && <span className="block mt-0.5 text-[10px] text-gray-400">{description}</span>}
     </label>
   );
 }
@@ -233,26 +266,28 @@ function ToolbarButton({
   );
 }
 
-interface SelectProps {
+interface SelectProps<T extends string> {
   label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: { value: string; label: string }[];
+  value: T;
+  onChange: (value: T) => void;
+  options: ReadonlyArray<{ value: T; label: string }>;
+  description?: string;
 }
 
-export function FieldSelect({ label, value, onChange, options }: SelectProps) {
+export function FieldSelect<T extends string = string>({ label, value, onChange, options, description }: SelectProps<T>) {
   return (
     <label className="block">
       <span className="text-[11px] text-gray-400">{label}</span>
       <select
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value as T)}
         className="mt-0.5 block w-full rounded bg-gray-100/80 px-3 py-2 text-sm text-gray-700 focus:bg-white focus:ring-1 focus:ring-gray-200 focus:outline-none"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>
+      {description && <span className="block mt-0.5 text-[10px] text-gray-400">{description}</span>}
     </label>
   );
 }

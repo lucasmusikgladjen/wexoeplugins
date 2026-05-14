@@ -1,7 +1,8 @@
 'use client';
 
 import { PartnersMarqueeState } from '@/lib/unique-page-types';
-import CollapsibleSection, { FieldRow, TextInput } from './CollapsibleSection';
+import { Field } from '@/components/shared/fields';
+import EditorSection from '@/components/editors/EditorSection';
 
 interface Props {
   state: PartnersMarqueeState;
@@ -13,20 +14,19 @@ interface Props {
 export default function PartnersMarqueeEditor({ state, onChange, visible, onToggleVisible }: Props) {
   const set = (v: PartnersMarqueeState) => onChange(v);
   return (
-    <CollapsibleSection title="Partners (marquee)" hint="SSOT" visible={visible} onToggleVisible={onToggleVisible}>
-      <FieldRow label="H2"><TextInput value={state.h2} onChange={(h2) => set({ ...state, h2 })} placeholder="Våra partners" /></FieldRow>
-      <FieldRow label="Scope: Land (ISO-kod)" help="Tomt = använd sidans Country.">
-        <TextInput
-          value={state.scope.country}
-          onChange={(country) => set({ ...state, scope: { ...state.scope, country } })}
-        />
-      </FieldRow>
-      <FieldRow label="Scope: Division (slug)">
-        <TextInput
-          value={state.scope.division}
-          onChange={(division) => set({ ...state, scope: { ...state.scope, division } })}
-        />
-      </FieldRow>
-    </CollapsibleSection>
+    <EditorSection title="Partners (marquee)" visible={visible} onToggleVisible={onToggleVisible}>
+      <Field.Text label="H2" placeholder="Våra partners" value={state.h2} onChange={(h2) => set({ ...state, h2 })} />
+      <Field.Text
+        label="Scope: Land (ISO-kod)"
+        description="Tomt = använd sidans Country."
+        value={state.scope.country}
+        onChange={(country) => set({ ...state, scope: { ...state.scope, country } })}
+      />
+      <Field.Text
+        label="Scope: Division (slug)"
+        value={state.scope.division}
+        onChange={(division) => set({ ...state, scope: { ...state.scope, division } })}
+      />
+    </EditorSection>
   );
 }

@@ -1,7 +1,8 @@
 'use client';
 
 import { TeamGridState } from '@/lib/unique-page-types';
-import CollapsibleSection, { FieldRow, TextInput } from './CollapsibleSection';
+import { Field } from '@/components/shared/fields';
+import EditorSection from '@/components/editors/EditorSection';
 
 interface Props {
   state: TeamGridState;
@@ -14,28 +15,28 @@ export default function TeamGridEditor({ state, onChange, visible, onToggleVisib
   const set = (v: TeamGridState) => onChange(v);
 
   return (
-    <CollapsibleSection title="Team grid" hint="SSOT" visible={visible} onToggleVisible={onToggleVisible}>
-      <FieldRow label="H2"><TextInput value={state.h2} onChange={(h2) => set({ ...state, h2 })} placeholder="Vårt team" /></FieldRow>
-      <FieldRow label="Scope: Land (ISO-kod)" help="Tomt = använd sidans Country.">
-        <TextInput
-          value={state.scope.country}
-          onChange={(country) => set({ ...state, scope: { ...state.scope, country } })}
-          placeholder="SE"
-        />
-      </FieldRow>
-      <FieldRow label="Scope: Division (slug)" help="Tomt = använd sidans Division.">
-        <TextInput
-          value={state.scope.division}
-          onChange={(division) => set({ ...state, scope: { ...state.scope, division } })}
-          placeholder="industri"
-        />
-      </FieldRow>
-      <FieldRow label="Max antal" help="0 = obegränsat.">
-        <TextInput
-          value={String(state.scope.limit ?? 0)}
-          onChange={(v) => set({ ...state, scope: { ...state.scope, limit: Number(v) || 0 } })}
-        />
-      </FieldRow>
-    </CollapsibleSection>
+    <EditorSection title="Team grid" visible={visible} onToggleVisible={onToggleVisible}>
+      <Field.Text label="H2" placeholder="Vårt team" value={state.h2} onChange={(h2) => set({ ...state, h2 })} />
+      <Field.Text
+        label="Scope: Land (ISO-kod)"
+        description="Tomt = använd sidans Country."
+        placeholder="SE"
+        value={state.scope.country}
+        onChange={(country) => set({ ...state, scope: { ...state.scope, country } })}
+      />
+      <Field.Text
+        label="Scope: Division (slug)"
+        description="Tomt = använd sidans Division."
+        placeholder="industri"
+        value={state.scope.division}
+        onChange={(division) => set({ ...state, scope: { ...state.scope, division } })}
+      />
+      <Field.Text
+        label="Max antal"
+        description="0 = obegränsat."
+        value={String(state.scope.limit ?? 0)}
+        onChange={(v) => set({ ...state, scope: { ...state.scope, limit: Number(v) || 0 } })}
+      />
+    </EditorSection>
   );
 }
