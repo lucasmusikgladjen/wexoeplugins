@@ -1,10 +1,212 @@
 # Wexoe enhetlig utvecklingsplan — Implementationslogg
 
-**Branch (båda repon):** `claude/execute-dev-plan-YRjeI`
-**Källplan:** `unifiedfeaturesplan.md` (rev 2, 2026-05-13)
+**Branch (båda repon):** `claude/execute-dev-plan-YRjeI` (initial), `claude/migrate-wexoe-database-7KILw` (Wexoe → Wexoe NY-migration)
+**Källplan:** `unifiedfeaturesplan.md` (rev 2, 2026-05-13), `MIGRATION-PLAN.md` (2026-05-14)
 **Implementation startad:** 2026-05-13
 
 Detta dokument loggar varje konkret åtgärd som tas under implementationen av planen. Filer som skapas/ändras, Airtable-mutationer, designbeslut som dyker upp på vägen, samt manuella TODO:s som användaren måste utföra (när utökning till runtime krävs).
+
+---
+
+## Wexoe → Wexoe NY-migration (2026-05-14)
+
+**Branch:** `claude/migrate-wexoe-database-7KILw` (båda repon)
+**Källplan:** `MIGRATION-PLAN.md` (rotbiblioteket i `wexoeplugins`)
+**Mål:** Migrera all aktiv data från `Wexoe` (`appXoUcK68dQwASjF`) till `Wexoe NY` (`appokKSTaBdCa8YiW`) med snake_case-konvention överallt.
+
+### Status översikt
+
+| Fas | Status |
+|---|---|
+| Naming-conventions etablerade | ✅ Klar (MIGRATION-PLAN.md) |
+| `Old plugins/` raderad | ✅ Klar |
+| `wexoe-core/entities/*.php` uppdaterade till nya basen + snake_case | ✅ Klar |
+| `wexoe-core/write-entities/core_*.php` uppdaterade | ✅ Klar |
+| Renaming av befintliga `core_*`-fält i Airtable till snake_case | ✅ Klar (alla 8 core_*-tabeller) |
+| `wexoebuilder` `lib/airtable.ts`, `lib/core/*` uppdaterade | ✅ Klar |
+| Build-out av `cms_*`-tabellscheman i Airtable | ⚠️ Återstår (se TODO nedan) |
+| `cms_unique_pages` fält-rename till snake_case | ⚠️ Återstår |
+| Datamigration från gamla basen | ⚠️ Återstår |
+| `wexoebuilder` `lib/page-mapper.ts`, `product-area-mapper.ts`, `audience-mapper.ts` snake_case-update | ⚠️ Återstår |
+| `wexoebuilder` `lib/claude-transform.ts` + `lib/airtable-schema-*.md` snake_case-update | ⚠️ Återstår |
+| `wexoebuilder` `app/api/*` route-handlers BASE_ID + fält-snake_case | ⚠️ Återstår |
+
+### Genomförda ändringar (kod)
+
+**wexoeplugins:**
+- `MIGRATION-PLAN.md` — ny fil, kanonisk plan med target-schema per tabell, naming conventions, migrationsordning.
+- `Old plugins/` — raderad (12 filer, ~14400 rader). Innehöll endast legacy plugins som inte längre används.
+- `wexoe-core/entities/landing_pages.php` — pekar på `cms_landing_pages` (tblpPlk17FZIKawXY) i Wexoe NY, snake_case-passthrough.
+- `wexoe-core/entities/lp_tabs.php` — pekar på `cms_landing_page_tabs` (tblp8d32aj5BgGMvE).
+- `wexoe-core/entities/lp_downloads.php` — pekar på `cms_landing_page_downloads` (tbltAtilGKnQ2wc7I).
+- `wexoe-core/entities/product_areas.php` — pekar på `cms_product_pages` (tbl5PQR7FNHCogeya). `sections` pseudo-array borttagen — sektioner ligger nu i separat `product_page_sections`-entitet.
+- `wexoe-core/entities/audience_heroes.php` — pekar på `cms_customer_type_pages` (tblZufoWVNKPuJdMK). Case-fält borttagna — finns nu i separat `case_pages`-entitet.
+- `wexoe-core/entities/articles.php` — pekar på `cms_articles` (tblhnz3MQG1JwfKrN).
+- `wexoe-core/entities/products.php` — pekar på `cms_products` (tblN23V7uAMpeZoO1).
+- `wexoe-core/entities/solutions.php` — pekar på `cms_solutions_mini` (tblxK7ikOgLFuze6m, omdöpt från cms_solutions_concepts).
+- `wexoe-core/entities/automation_offerings.php` — pekar på (planerad) `cms_offerings`.
+- `wexoe-core/entities/automation_product_navigation.php` — pekar på (planerad) `cms_product_navigation`.
+- `wexoe-core/entities/automation_team_members.php` — flaggad `@deprecated`. Pekar fortfarande på gamla `Coworkers` i Wexoe-basen. Migreras till `core_coworkers` när `New plugins/automation-pillar/wexoe-team-rack.php` uppdateras.
+- `wexoe-core/entities/cms_unique_pages.php` — snake_case-passthrough.
+- `wexoe-core/entities/core_company.php` — snake_case-passthrough. `company_name`-fält tillagt.
+- `wexoe-core/entities/core_countries.php` — snake_case-passthrough. `active` → `is_active`.
+- `wexoe-core/entities/core_divisions.php` — snake_case-passthrough.
+- `wexoe-core/entities/core_customer_types.php` — snake_case-passthrough.
+- `wexoe-core/entities/core_coworkers.php` — snake_case-passthrough. `image` → `image_url`.
+- `wexoe-core/entities/core_partners.php` — snake_case-passthrough. `logo` → `logo_url`, `logo_transparent` → `logo_transparent_url`.
+- `wexoe-core/entities/core_testimonials.php` — snake_case-passthrough. `author_image` → `author_image_url`, `featured` → `is_featured`.
+- `wexoe-core/entities/core_graphic_profile.php` — snake_case-passthrough. `logo_primary` → `logo_primary_url`, `logo_dark_background` → `logo_dark_url`, `favicon` → `favicon_url`.
+- `wexoe-core/entities/case_pages.php` — **NY**. Schema för cms_case_pages (tbl3uMV6IpRIZeucA).
+- `wexoe-core/entities/partner_pages.php` — **NY**. Schema för cms_partner_pages (tblQv5E8pSgwxy6wU).
+- `wexoe-core/entities/product_page_sections.php` — **NY**. Schema för cms_product_page_sections (skapas).
+- `wexoe-core/entities/inbox_form_submissions.php` — **NY**. Schema för inbox_form_submissions (skapas).
+- `wexoe-core/entities/customers.php` — **RADERAD**. Tabellen migreras inte (oanvänd).
+- `wexoe-core/entities/partners.php` — **RADERAD**. Duplikat av `core_partners`.
+- `wexoe-core/write-entities/core_company.php` — snake_case-passthrough.
+- `wexoe-core/write-entities/core_countries.php` — snake_case-passthrough.
+- `wexoe-core/write-entities/core_divisions.php` — snake_case-passthrough.
+- `wexoe-core/write-entities/core_customer_types.php` — snake_case-passthrough.
+- `wexoe-core/write-entities/core_coworkers.php` — snake_case-passthrough.
+- `wexoe-core/write-entities/core_partners.php` — snake_case-passthrough.
+- `wexoe-core/write-entities/core_testimonials.php` — snake_case-passthrough.
+- `wexoe-core/write-entities/core_graphic_profile.php` — snake_case-passthrough.
+
+**wexoebuilder:**
+- `lib/airtable.ts` — `BASE_ID` ändrad till `appokKSTaBdCa8YiW`. `SSOT_BASE_ID` är nu alias. `TABLE_IDS` uppdaterade till nya cms_*-tabell-IDs. `createRecords` och `updateRecords` accepterar nu valfri `baseId`.
+- `lib/core/mapper.ts` — alla readers och writers använder snake_case fält-keys. Bildfält bytt till `*_url`-konvention.
+- `lib/core/types.ts` — TS-interfaces uppdaterade till snake_case. `internal_notes` lagt till på alla. `active` → `is_active`, `featured` → `is_featured`.
+- `lib/core/forms.ts` — form-config använder snake_case keys. `image` → `image_url`, `logo` → `logo_url`, etc. `core_company` har nytt `company_name`-fält.
+
+### Airtable-mutationer
+
+**Renaming till snake_case (alla via MCP):**
+
+Tabell-rename:
+- `cms_solutions_concepts` → `cms_solutions_mini` (tblxK7ikOgLFuze6m)
+
+Fält-rename per tabell:
+- `core_company` (tblwq9y74ertsNyYG): 19 fält omdöpta (Slug → slug, Internal Notes → internal_notes, Is Default → is_default, Company Name → company_name, etc.)
+- `core_countries` (tblCZ082jWGUBrUAK): 9 fält omdöpta (Name → name, Code → code, Domain → domain, URL Prefix → url_prefix, Currency → currency, Locale → locale, Default Language → default_language, Order → order, Active → is_active)
+- `core_divisions` (tblyxs2zsoRBozxQS): 6 fält omdöpta
+- `core_customer_types` (tblLsYRMZz6JA6GBK): 6 fält omdöpta
+- `core_coworkers` (tblYwMQlW9HFd41pg): 11 fält omdöpta (inkl Image → image_url, Division → division_ids, Country → country_ids)
+- `core_partners` (tblZ5YIYFelxA0nBm): 9 fält omdöpta (inkl Logo → logo_url, Logo Transparent → logo_transparent_url)
+- `core_testimonials` (tbl1pe0bWz5zdkqJF): 11 fält omdöpta (inkl Author Image → author_image_url, Featured → is_featured)
+- `core_graphic_profile` (tbl4c4HjiKVCcJI5v): 16 fält omdöpta (inkl Logo Primary → logo_primary_url, Logo Dark Background → logo_dark_url, Favicon → favicon_url)
+
+**Totalt: 87 fält omdöpta.**
+
+### Återstående arbete (manuella TODOs eller follow-up-session)
+
+Allt nedan följer mönstret som etablerats. Kan automatiseras i en uppföljande session — kräver främst ytterligare MCP-anrop.
+
+#### A. Bygg ut cms_*-tabellscheman i Airtable
+
+Stub-tabellerna (`cms_landing_pages`, `cms_landing_page_tabs`, `cms_landing_page_downloads`, `cms_product_pages`, `cms_customer_type_pages`, `cms_case_pages`, `cms_partner_pages`, `cms_products`, `cms_articles`, `cms_solutions_mini`) har idag bara `Name` + `Notes` + `Assignee` + `Status` + `Attachments` + `Attachment Summary`-fält. De behöver utökas med fält enligt `MIGRATION-PLAN.md` (avsnitt "Target-schema per tabell").
+
+Per tabell:
+1. Rename `Name` → primary key från spec (`slug` eller `name`)
+2. Rename `Notes` → `internal_notes`
+3. Rename `Assignee`, `Status`, `Attachments`, `Attachment Summary` → `__deprecated_*` (MCP saknar delete_field)
+4. Skapa alla övriga fält enligt spec via `create_field`. Linked records sist (efter att alla tabeller finns).
+
+Nya tabeller att skapa (via `create_table`):
+- `cms_product_page_sections`
+- `cms_offerings`
+- `cms_product_navigation`
+- `inbox_form_submissions`
+
+#### B. Rename `cms_unique_pages` fält till snake_case
+
+`cms_unique_pages` (tblpAM1wZWDbrpeai) har idag ~50 fält i PascalCase. Måste döpas om till snake_case enligt sektionen "core_*-fält — renaming till snake_case" i MIGRATION-PLAN.md (samma mönster).
+
+#### C. Migrera data från gamla basen
+
+Per tabell, läs records från gamla basen, transformera fält, skriv till nya basen via MCP. Volymerna är hanterbara:
+
+| Källa | Mål | Volym |
+|---|---|---|
+| Partners (tblsCOF5BPAxN6nmq) | core_partners | 17 records |
+| Divisions (tblKam1tUTlR13atl) | core_divisions | 4 records (men nya basen har redan 3 namngivna + 3 tomma; behöver konsolideras) |
+| Coworkers (tblldarIcIpxlZ9GV) | core_coworkers | 9 records |
+| Landing Pages (tbl8KDqGq0Ray1uqS) | cms_landing_pages | 9 records |
+| LP Tabs (tblvecOh3rAGmw3mw) | cms_landing_page_tabs | 24 records |
+| LP Downloads (tblbLM827DzjWGjCR) | cms_landing_page_downloads | 4 records |
+| Product Areas (tblgatNFYFMwF4EcQ) | cms_product_pages + cms_product_page_sections | 19 records (sektion-splittas) |
+| Customer types (tblvNf1CqAYEFvTpu) | cms_customer_type_pages + cms_case_pages | 9 records (case-splittas) |
+| Products (tblHafyCEyh7S3Y64) | cms_products | ~100 records (uppskattat) |
+| Articles (tblb87eWIjnW3ttOL) | cms_articles | 59 records |
+| Solutions & Concepts (tblc98m9MJcpbWAVU) | cms_solutions_mini | 11 records |
+| Offerings (tbldQZJu3NHHP5dUh) | cms_offerings | 7 records |
+| Product navigation (tblJa2Kd6QHjFXPJZ) | cms_product_navigation | 20 records |
+
+**Division-mappning:** Gamla basens divisioner (INDUSTRY, IT INFRA, POWER, BUILDING INFRASTRUCTURE) matchar inte nya basens (Automation, Industri, Kassasystem). Användaren behöver besluta mappning innan division-länkar kan migreras. Förslag: skapa 4 extra divisions i nya basen (eller mappa INDUSTRY→Automation, övriga→nya divisioner som ska skapas).
+
+**Linked-record-rewiring:** Efter all data är kopierad, gå igenom varje länk-fält och ersätt gamla record-IDs med nya enligt en `gammalt_record_id → nytt_record_id`-mappning.
+
+#### D. Uppdatera wexoebuilder-mappers för cms_*-tabeller
+
+Följande filer i `wexoebuilder/lib/` har hårdkodade PascalCase-fältnamn som måste uppdateras till snake_case efter att Airtable-renames är gjorda:
+
+- `lib/page-mapper.ts` — LP record → state
+- `lib/product-area-mapper.ts` — PA record → state
+- `lib/audience-mapper.ts` — Audience record → state
+- `lib/unique-page-mapper.ts` — kontrollera om fältreferenser behöver uppdateras
+
+Plus Claude-prompt-filer:
+- `lib/claude-transform.ts`
+- `lib/airtable-schema-lp.md`
+- `lib/airtable-schema-pa.md`
+
+Plus API routes:
+- `app/api/read/route.ts` — hårdkodat `appXoUcK68dQwASjF` på rad 6 → byt till `BASE_ID`-import
+- `app/api/publish/route.ts` — hårdkodat `appXoUcK68dQwASjF` på rad 236
+- `app/api/copy/route.ts`
+- `app/api/product-area/route.ts`
+- `app/api/audience/route.ts`
+
+#### E. Migrera `automation_team_members` till `core_coworkers`
+
+Plugin `New plugins/automation-pillar/wexoe-team-rack.php` använder fortfarande `Core::entity('automation_team_members')` som pekar på gamla Wexoe-basen. För att kunna släcka gamla basen:
+
+1. Lägg till team-rack-specifika fält på `core_coworkers` om de behövs publikt (`team_rack_tag`, `module_color`, `module_id`)
+2. Uppdatera `wexoe-team-rack.php` att kalla `Core::entity('core_coworkers')` med nya fältnamn
+3. Radera `wexoe-core/entities/automation_team_members.php`
+
+#### F. Rensa gamla basen
+
+Efter att alla data är migrerade och produktion verifierad:
+1. Exportera gamla basen till CSV som backup
+2. Sätt gamla basen till read-only i Airtable UI
+3. Vänta minst 2 veckor utan trafik mot den
+4. Slutgiltigt: radera basen
+
+### Designbeslut
+
+- **snake_case ÖVERALLT.** Airtable display-namn och kod-fält är identiska. Detta gör att mapper-koden blir trivial passthrough.
+- **kebab-case för slug-VÄRDEN** (inte fältnamn). Slugs är web-URLs.
+- **`is_*`-prefix för booleans** (is_active, is_default, is_featured). Tidigare `active`/`featured` byttes ut.
+- **`*_url`-suffix för WP Media-URL-fält** (image_url, logo_url, author_image_url, etc.). Tidigare osuffigerade.
+- **`internal_notes`-fält på alla entiteter** för redaktörs-noteringar. Inte renderat publikt.
+- **Domain keys i wexoe-core matchar Airtable-fältnamn 1:1.** Eliminerar översättnings-lager.
+- **Sektioner (Normal 1-4) bryts ut till egen tabell `cms_product_page_sections`.** Variabelt antal av samma typ ger renare schema än pseudo-array.
+- **Case-fält bryts ut till egen tabell `cms_case_pages`.** Återanvändbara cases istället för inline på audience-sidor.
+- **Pillar-sidor migreras inte separat — slås ihop med `cms_unique_pages`.** Samma data-driven-mönster fungerar för båda.
+- **`Customers`, `Leads`, `Webpage campaigns`, `Product news RA` migreras inte.** Verifierat oanvända.
+- **Make.com är out-of-scope.** Användaren har lagt om submission-flödet att gå direkt till Airtable.
+
+### Verifiering efter deploy
+
+1. Trigga `wexoe-core`-cache-rensning för alla migrerade entiteter (via REST-endpoint eller WP-admin).
+2. Verifiera produktion:
+   - Öppna en LP, jämför mot screenshot från före migration
+   - Öppna en Product Area, jämför
+   - Öppna en Audience-sida, jämför
+   - Verifiera team-grids, partners-marquee, testimonials
+3. Verifiera wexoebuilder:
+   - Öppna `/globals/company`, `/globals/coworkers`, `/globals/partners`, etc. — bör nu visa data från Wexoe NY
+   - Skapa ett test-record, publicera, verifiera Airtable-sidan
+   - Redigera ett befintligt record, publicera, verifiera ändringen
 
 ---
 

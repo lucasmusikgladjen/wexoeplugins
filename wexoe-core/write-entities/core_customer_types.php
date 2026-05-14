@@ -5,11 +5,12 @@ return [
     'base_id'  => \Wexoe\Core\Plugin::SSOT_BASE_ID,
     'field_types' => [],
     'fields' => [
-        'name' => 'Name',
-        'slug' => 'Slug',
-        'description' => 'Description',
-        'icon' => 'Icon',
-        'order' => 'Order',
-        'active' => 'Active',
+        'name' => 'name',
+        'slug' => 'slug',
+        'description' => 'description',
+        'icon' => 'icon',
+        'order' => 'order',
+        'is_active' => 'is_active',
+        'internal_notes' => 'internal_notes',
     ],
 ];

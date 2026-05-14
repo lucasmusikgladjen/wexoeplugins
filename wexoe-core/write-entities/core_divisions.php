@@ -7,11 +7,12 @@ return [
         'country_ids' => 'link',
     ],
     'fields' => [
-        'name' => 'Name',
-        'slug' => 'Slug',
-        'description' => 'Description',
-        'order' => 'Order',
-        'active' => 'Active',
-        'country_ids' => 'Country',
+        'name' => 'name',
+        'slug' => 'slug',
+        'description' => 'description',
+        'order' => 'order',
+        'is_active' => 'is_active',
+        'country_ids' => 'country_ids',
+        'internal_notes' => 'internal_notes',
     ],
 ];
