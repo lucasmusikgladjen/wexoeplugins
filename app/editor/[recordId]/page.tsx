@@ -37,28 +37,28 @@ export default async function EditExistingPage({ params }: Props) {
     );
   }
 
-  const tabIds: string[] = (lp.fields['LP Tabs'] as string[] | undefined) ?? [];
+  const tabIds: string[] = (lp.fields['tab_ids'] as string[] | undefined) ?? [];
   let tabs: AirtableRecord[] = [];
   if (tabIds.length > 0) {
     const formula = `OR(${tabIds.map((id) => `RECORD_ID()='${id}'`).join(',')})`;
-    tabs = await listRecords(apiKey, TABLE_IDS.tabs, { filterByFormula: formula });
+    tabs = await listRecords(apiKey, TABLE_IDS.landingPageTabs, { filterByFormula: formula });
   }
 
   const downloadIds = new Set<string>();
   for (const tab of tabs) {
-    const ids = (tab.fields['LP Downloads'] as string[] | undefined) ?? [];
+    const ids = (tab.fields['download_ids'] as string[] | undefined) ?? [];
     ids.forEach((id) => downloadIds.add(id));
   }
 
   let downloads: AirtableRecord[] = [];
   if (downloadIds.size > 0) {
     const formula = `OR(${[...downloadIds].map((id) => `RECORD_ID()='${id}'`).join(',')})`;
-    downloads = await listRecords(apiKey, TABLE_IDS.downloads, { filterByFormula: formula });
+    downloads = await listRecords(apiKey, TABLE_IDS.landingPageDownloads, { filterByFormula: formula });
   }
 
   const downloadsByTabId: Record<string, AirtableRecord[]> = {};
   for (const dl of downloads) {
-    const tabRefs = (dl.fields['Tab'] as string[] | undefined) ?? [];
+    const tabRefs = (dl.fields['tab_ids'] as string[] | undefined) ?? [];
     for (const tabId of tabRefs) {
       (downloadsByTabId[tabId] ??= []).push(dl);
     }

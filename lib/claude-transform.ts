@@ -339,11 +339,11 @@ Output-format:
 
 KRITISKT:
 - _clientIndex, _tabClientIndex och _recordId måste echas OFÖRÄNDRADE från input till output. Backend använder dem för att korrelera mot existerande records.
-- Använd exakta Airtable-fältnamn från schemat.
-- Utelämna "Landing Page"-fältet från tabs.fields — backend länkar.
-- Utelämna "Tab"-fältet från downloads.fields — backend länkar.
-- Tabs.fields måste innehålla Name, Tab Type, Order (= _clientIndex + 1), Visa: true och typ-specifika fält.
-- Downloads.fields måste innehålla Name, Order (= _clientIndex + 1 inom dess tab), Visa: true.
+- Använd exakta Airtable-fältnamn från schemat (snake_case för cms_landing_pages-familjen).
+- Utelämna "landing_page_ids"-fältet från tabs.fields — backend länkar.
+- Utelämna "tab_ids"-fältet från downloads.fields — backend länkar.
+- Tabs.fields måste innehålla name, tab_type, order (= _clientIndex + 1), is_active: true och typ-specifika fält.
+- Downloads.fields måste innehålla name, order (= _clientIndex + 1 inom dess tab), is_active: true.
 - Applicera alla formateringsregler i schemat (benefits-splitting, FAQ Q:/A:-prefix, pipe-format, osv.).`;
 
   if (mode === 'create') {
@@ -351,7 +351,7 @@ KRITISKT:
 
 MODE: CREATE
 - Utelämna fält med tomt värde (tomma strängar, null).
-- Inkludera ALLTID boolean-fält (Show Content, Show Sidebar, Show Tabs, Show Contact, Show Contact Form, Visa, TI Inverted, Contact Form Show Company, Contact Form Show Phone, Contact Form Show Dropdown, Contact Form Show Contact Person).
+- Inkludera ALLTID boolean-fält (show_content, show_sidebar, show_tabs, show_contact, show_contact_form, is_active, ti_inverted, contact_form_show_company, contact_form_show_phone, contact_form_show_dropdown, contact_form_show_contact_person).
 - Utelämna downloads, FAQ-items, compare-rows och steps-items som är helt tomma.`;
   }
 
@@ -364,8 +364,8 @@ MODE: UPDATE
 - Du MÅSTE emittera en post i tabs-arrayen för VARJE tab i input — aldrig utelämna. Det är nödvändigt för att backend ska kunna korrelera.
 - Du MÅSTE emittera en post i downloads-arrayen för VARJE download i input — även helt tomma.
 - Inkludera ALLA FAQ-items, compare-rows och steps-items från input.
-- Inkludera ALLTID boolean-fält (Show Content/Sidebar/Tabs/Contact, Show Contact Form, alla Contact Form Show *-checkboxes, Visa, TI Inverted).
-- Inkludera ALLTID alla 15 Contact Form *-fält i landingPage.fields (även om värdet är tomt/falskt) så att de inte tappas vid PATCH.`;
+- Inkludera ALLTID boolean-fält (show_content/sidebar/tabs/contact, show_contact_form, alla contact_form_show_*-checkboxes, is_active, ti_inverted).
+- Inkludera ALLTID alla 15 contact_form_*-fält i landingPage.fields (även om värdet är tomt/falskt) så att de inte tappas vid PATCH.`;
 }
 
 export async function transformLandingPage(
@@ -616,29 +616,29 @@ export async function transformProductArea(
 // `faq` — or an LP sidebar from `case` to `event` — wipes the old data.
 
 export const LP_SIDEBAR_CASE_FIELDS = [
-  'Case Title',
-  'Case Description',
-  'Case Image',
-  'Case Outcomes',
-  'Case CTA Text',
-  'Case CTA URL',
+  'case_title',
+  'case_description',
+  'case_image_url',
+  'case_outcomes',
+  'case_cta_text',
+  'case_cta_url',
 ];
 export const LP_SIDEBAR_EVENT_FIELDS = [
-  'Event Type',
-  'Event Title',
-  'Event Description',
-  'Event Date',
-  'Event Location',
-  'Event Webhook',
+  'event_type',
+  'event_title',
+  'event_description',
+  'event_date',
+  'event_location',
+  'event_webhook',
 ];
 export const LP_SIDEBAR_LEADMAGNET_FIELDS = [
-  'Magnet Title',
-  'Magnet Format',
-  'Magnet Description',
-  'Magnet File URL',
-  'Magnet Webhook',
+  'magnet_title',
+  'magnet_format',
+  'magnet_description',
+  'magnet_file_url',
+  'magnet_webhook',
 ];
-export const LP_SIDEBAR_CALC_FIELDS = ['Calc Title', 'Calc HTML'];
+export const LP_SIDEBAR_CALC_FIELDS = ['calc_title', 'calc_html'];
 
 const ALL_LP_SIDEBAR_FIELDS = [
   ...LP_SIDEBAR_CASE_FIELDS,
@@ -648,29 +648,29 @@ const ALL_LP_SIDEBAR_FIELDS = [
 ];
 
 export const LP_TAB_TEXTIMAGE_FIELDS = [
-  'TI H2',
-  'TI Text',
-  'TI Benefits',
-  'TI Image',
-  'TI Inverted',
+  'ti_h2',
+  'ti_text',
+  'ti_benefits',
+  'ti_image_url',
+  'ti_inverted',
 ];
-export const LP_TAB_FULLMEDIA_FIELDS = ['FM URL'];
-export const LP_TAB_FAQ_FIELDS = ['FAQ Items'];
+export const LP_TAB_FULLMEDIA_FIELDS = ['fm_url'];
+export const LP_TAB_FAQ_FIELDS = ['faq_items'];
 export const LP_TAB_CALAMEO_FIELDS = [
-  'Calameo 1 Title',
-  'Calameo 1 Src',
-  'Calameo 2 Title',
-  'Calameo 2 Src',
-  'Calameo 3 Title',
-  'Calameo 3 Src',
+  'calameo_1_title',
+  'calameo_1_src',
+  'calameo_2_title',
+  'calameo_2_src',
+  'calameo_3_title',
+  'calameo_3_src',
 ];
 export const LP_TAB_COMPARE_FIELDS = [
-  'Compare Title',
-  'Compare Col A',
-  'Compare Col B',
-  'Compare Rows',
+  'compare_title',
+  'compare_col_a',
+  'compare_col_b',
+  'compare_rows',
 ];
-export const LP_TAB_STEPS_FIELDS = ['Steps Title', 'Steps'];
+export const LP_TAB_STEPS_FIELDS = ['steps_title', 'steps'];
 
 const ALL_LP_TAB_FIELDS = [
   ...LP_TAB_TEXTIMAGE_FIELDS,
@@ -710,7 +710,7 @@ export function clearsForTabType(newType: string): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const field of ALL_LP_TAB_FIELDS) {
     if (!keep.has(field)) {
-      out[field] = field === 'TI Inverted' ? false : '';
+      out[field] = field === 'ti_inverted' ? false : '';
     }
   }
   return out;
