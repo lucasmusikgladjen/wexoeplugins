@@ -557,3 +557,36 @@ OBS: Airtable MCP-servern saknar `delete_field`-endpoint. Gamla attachment-fält
 - Verifiera att Audience-editor fungerar likadant som före refaktor.
 
 ---
+
+## Wexoe ALB Blocks — Avia Layout Builder-element (2026-05-14)
+
+**Branch:** `claude/alb-blocks-development-TKF1u`
+**Plan:** `UTVECKLINGSPLAN-ALB-BLOCKS.md`
+**Status:** Klar (fas 1, alt. A: förladdad lista + JS-filter).
+**Testat mot Enfold-version:** Ej verifierat i WP — pinna versionsnummer efter första deploy.
+
+**Syfte:** Ersätta manuella `[wexoe_page slug="..."]`-shortcodes i Code Block med ett riktigt ALB-element ("Wexoe Content") som har två dropdowns: innehållstyp + post.
+
+**Filer skapade i `New plugins/wexoe-alb-blocks/`:**
+- `wexoe-alb-blocks.php` — bootstrap, dependency checks (`wexoe-core` + Enfold), `avia_load_shortcodes`-hook som pekar Enfold på vår `shortcodes/`-katalog, frontend shortcode-fallback, `admin_enqueue_scripts`.
+- `includes/content-types.php` — filtrerbar `wexoe_alb_content_types()`-registry, generisk `wexoe_alb_list_by_slug()`, render-dispatch `wexoe_alb_render()` (med core_ready-guard), fyra render-wrappers.
+- `shortcodes/wexoe_content/wexoe_content.php` — `Wexoe_Content_Block extends aviaShortcodeTemplate` (popup_elements, editor_element, shortcode_handler). Sökväg/filnamn följer Enfolds discovery-konvention.
+- `assets/builder.js` — delegerad change-lyssnare + MutationObserver för att filtrera `content_id`-options på vald `content_type`. Optionernas value har formatet `{type}:{slug}`.
+- `assets/builder-icon.svg` — enkel ikon för builder-modalen.
+
+**Designbeslut på vägen:**
+- **Scope fas 1:** fyra entiteter med slug-primärnyckel och befintlig render-funktion: `cms_unique_pages`, `landing_pages`, `audience_heroes`, `product_areas`. `automation_pillar` (samling av fem shortcodes utan egen entitet) och `partners`/`contact_page` (saknar slug-baserad render) hoppas över i denna fas.
+- **Wrap-funktioner i registry:** varje typ har en egen render-callback i `content-types.php` som anpassar API-skillnader (rått slug vs `['slug' => $slug]`-array vs do_shortcode för klassmetoder).
+- **Dropdown-strategi:** alt. A enligt plan (alla optioner förladdade + JS-filter). Migration till alt. B (AJAX) först om totala antalet poster överstiger ~500.
+- **Prefix-format `{type}:{raw_id}`:** löser slug-kollisioner mellan entiteter. `shortcode_handler` strippar prefixet före render — råa IDs fungerar fortfarande (bakåtkompat).
+- **Frontend-shortcode-fallback:** `[wexoe_content]` registreras alltid via `init`-hook, även när Enfolds builder-pipeline inte är aktiv (t.ex. AMP, REST-render).
+
+**Manuella TODOs efter deploy:**
+- Aktivera pluginet i WP-admin på sajt med Enfold + wexoe-core.
+- Verifiera att "Wexoe Content"-ikonen visas under "Content Elements" i ALB.
+- Klicka "Update Avia Templates" i Enfold → Theme Options om modalen inte visar nya fälten (Avia cachar element-struktur).
+- Testa att båda dropdowns fungerar och att `content_id`-listan filtreras när `content_type` byts.
+- Skapa testsida som renderar varje entitetstyp och jämför HTML mot motsvarande manuella shortcode.
+- Pinna faktisk Enfold-version här i loggen efter första deploy.
+
+---
