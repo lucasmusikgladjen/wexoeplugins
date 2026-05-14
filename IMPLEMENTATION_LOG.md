@@ -120,6 +120,61 @@ OBS: Tre tomma stub-records ligger fortfarande i `core_partners` och tre i `core
 
 Alla länk-fält (tab_ids på LPs, download_ids på downloads-tabs) kopplade korrekt. Country=SE på alla LPs.
 
+### Articles fullt migrerat (2026-05-14, fortsättning)
+
+Alla **59 articles** migrerade från gamla `Articles`-tabellen (`tblb87eWIjnW3ttOL`) till `cms_articles` (`tblhnz3MQG1JwfKrN`) i Wexoe NY.
+
+**Schema byggt i cms_articles:**
+- `name` (primary, fanns redan) — artikelnamn
+- `internal_notes`, `is_active` — standard-konvention
+- `article_number` — leverantörs-artikelnummer (R&M R-prefix, Fibrain 79.74.x)
+- `description`, `datasheet_url`, `webshop_url`, `image_url`, `variants`
+- `supplier_ids` (link → core_partners) — automatisk back-link `article_ids` skapad och omdöpt på core_partners
+
+**Supplier-mappning gamla → nya partners:**
+- R&M: `recMmERnDdYBcrWTc` → `recZLKKd0QejsMilJ`
+- Fibrain: `recownOIUhe24Jw44` → `recrl80IrxgD0Fo25`
+- LBW: `recOMlO0NS73wa3yr` → `recaOEsWnO1gq7Opp`
+
+**Volym per leverantör:**
+- R&M: ~30 records (Cat6/Cat7 kabel, RJ45-jack, Uttag, etc.)
+- Fibrain: ~25 records (Pigtails, Patchkablar, Adaptrar, ODF, Blåsfiber, etc.)
+- LBW: ~5 records (ODF-system)
+- Utan supplier: 1 record (ODF DIN-skena)
+
+OBS: Articles-entiteten i `wexoe-core/entities/articles.php` pekar fortfarande på gamla basen som fallback (eftersom PA-renderern läser articles via PA → product → article-länken, och PA-data inte är migrerat). När PA migreras byts entitetens table_id till `tblhnz3MQG1JwfKrN`.
+
+### Codex review-fix (2026-05-14, fortsättning)
+
+PR#25 (wexoeplugins) och PR#42 (wexoebuilder) review:ades av Codex och fyra typer av buggar identifierades:
+
+1. **`landing_pages.php` — hero_image vs hero_image_url, contact_form_show vs show_contact_form.** LP renderer i `wexoe-landing-page.php` läste fortfarande de gamla nycklarna. Eftersom LP är fullt migrerat denna session uppdaterades renderern till nya snake_case_url-namnen.
+
+2. **`product_areas.php` — section_ids vs sections-pseudo-array.** PA-renderern läste `$row['sections']` (gammalt pseudo-array-mönster) men entiteten exposed bara `section_ids`-länkar. Eftersom PA-data inte är migrerat till `cms_product_pages` än, reverterades PA-entiteten till att peka på gamla basen med pseudo-array intakt.
+
+3. **PA + Audience-entiteter pekade på tomma cms_*-stubbar.** Liknande problem — entitet uppdaterad till nya basen i föregående PR utan att data migrerats. Reverterade till gamla basen.
+
+4. **`lib/airtable.ts` — default BASE_ID byttes utan att uppdatera unmigrated routes.** Product Area och Audience routes använder fortfarande `PA_TABLE_IDS` / `AUDIENCE_TABLE_IDS` som pekar på gamla basen. Lade till `LEGACY_BASE_ID`-export och uppdaterade alla PA/audience-anrop att explicit pass:a `baseId: PA_BASE_ID` / `AUDIENCE_BASE_ID`.
+
+5. **Hardcoded `appXoUcK68dQwASjF` i route handlers.** `app/api/read/route.ts`, `publish/route.ts`, `copy/route.ts` hade gamla bas-ID hårdkodat. Fixade alla att använda `BASE_ID` / `LEGACY_BASE_ID` korrekt och konverterade LP-route handlers att läsa snake_case-fält.
+
+6. **`{Is Default}=TRUE()` formula i core/[entity]/route.ts.** Duplicate-default-guarden för core_graphic_profile filtrerade på den gamla PascalCase-fältnamnet. Bytt till `{is_default}=TRUE()`.
+
+**Filer ändrade i wexoeplugins (fix-PR `claude/fix-codex-review-and-continue-migration`):**
+- `New plugins/wexoe-landing-page/wexoe-landing-page.php` — hero_image_url, case_image_url, contact_image_url, show_contact_form
+- `wexoe-core/entities/{audience_heroes,product_areas,products,solutions,articles}.php` — reverted till OLD base + PascalCase sources
+
+**Filer ändrade i wexoebuilder (fix-PR `claude/fix-codex-review-base-id-and-formula`):**
+- `lib/airtable.ts` — LEGACY_BASE_ID export
+- `lib/audience-mapper.ts`, `lib/product-area-mapper.ts` — AUDIENCE_BASE_ID, PA_BASE_ID export
+- `lib/audience-loader.ts`, `lib/product-area-loader.ts` — pass baseId
+- `lib/page-mapper.ts` — full snake_case conversion för LP-fält + Contact Form
+- `app/api/read/route.ts` — snake_case + remove hardcoded BASE_ID
+- `app/api/publish/route.ts` — snake_case + use TABLE_IDS.landingPageTabs/Downloads
+- `app/api/copy/route.ts` — split LP (NEW base, snake_case) + PA/Audience (legacy)
+- `app/api/audience/route.ts`, `app/api/product-area/route.ts` — pass legacy baseId
+- `app/api/core/[entity]/route.ts` — `{Is Default}=TRUE()` → `{is_default}=TRUE()`
+
 ### Återstående arbete (manuella TODOs eller follow-up-session)
 
 Allt nedan följer mönstret som etablerats. Kan automatiseras i en uppföljande session — kräver främst ytterligare MCP-anrop.
