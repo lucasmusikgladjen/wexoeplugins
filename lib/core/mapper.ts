@@ -57,11 +57,11 @@ function readCompany(rec: AirtableRecord) {
     slug: asString(f['Slug']),
     is_default: asBool(f['Is Default']),
     country_ids: asLinkIds(f['Country']),
-    company_name: asString(f['Company Name']),
     tagline: asString(f['Tagline']),
     org_number: asString(f['Org Number']),
     vat_number: asString(f['VAT Number']),
     email: asString(f['Email']),
+    email_order: asString(f['Email order']),
     phone: asString(f['Phone']),
     phone_emergency: asString(f['Phone Emergency']),
     address_line_1: asString(f['Address Line 1']),
@@ -71,11 +71,8 @@ function readCompany(rec: AirtableRecord) {
     facebook_url: asString(f['Facebook URL']),
     instagram_url: asString(f['Instagram URL']),
     youtube_url: asString(f['YouTube URL']),
-    hours_mon_fri: asString(f['Hours Mon-Fri']),
-    hours_saturday: asString(f['Hours Saturday']),
-    hours_sunday: asString(f['Hours Sunday']),
-    hours_lunch: asString(f['Hours Lunch']),
-    hours_override: asString(f['Hours Override']),
+    hours_mon_thur: asString(f['Hours Mon-Thur']),
+    hours_friday: asString(f['Hours Friday']),
     internal_notes: asString(f['Internal Notes']),
   };
 }
@@ -226,13 +223,14 @@ function cleanField(v: unknown): unknown {
 function writeCompany(s: Record<string, unknown>): Record<string, unknown> {
   return {
     'Slug': cleanField(s.slug),
-    'Is Default': !!s.is_default,
+    // Singleton: bara ett record finns och det är alltid default.
+    'Is Default': true,
     'Country': asLinkIds(s.country_ids),
-    'Company Name': cleanField(s.company_name),
     'Tagline': cleanField(s.tagline),
     'Org Number': cleanField(s.org_number),
     'VAT Number': cleanField(s.vat_number),
     'Email': cleanField(s.email),
+    'Email order': cleanField(s.email_order),
     'Phone': cleanField(s.phone),
     'Phone Emergency': cleanField(s.phone_emergency),
     'Address Line 1': cleanField(s.address_line_1),
@@ -242,11 +240,8 @@ function writeCompany(s: Record<string, unknown>): Record<string, unknown> {
     'Facebook URL': cleanField(s.facebook_url),
     'Instagram URL': cleanField(s.instagram_url),
     'YouTube URL': cleanField(s.youtube_url),
-    'Hours Mon-Fri': cleanField(s.hours_mon_fri),
-    'Hours Saturday': cleanField(s.hours_saturday),
-    'Hours Sunday': cleanField(s.hours_sunday),
-    'Hours Lunch': cleanField(s.hours_lunch),
-    'Hours Override': cleanField(s.hours_override),
+    'Hours Mon-Thur': cleanField(s.hours_mon_thur),
+    'Hours Friday': cleanField(s.hours_friday),
     'Internal Notes': cleanField(s.internal_notes),
   };
 }

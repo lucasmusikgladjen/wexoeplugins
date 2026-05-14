@@ -13,11 +13,11 @@ export interface CoreCompany extends CoreRecordCommon {
   slug: string;
   is_default: boolean;
   country_ids: string[];
-  company_name: string;
   tagline: string;
   org_number: string;
   vat_number: string;
   email: string;
+  email_order: string;
   phone: string;
   phone_emergency: string;
   address_line_1: string;
@@ -27,11 +27,8 @@ export interface CoreCompany extends CoreRecordCommon {
   facebook_url: string;
   instagram_url: string;
   youtube_url: string;
-  hours_mon_fri: string;
-  hours_saturday: string;
-  hours_sunday: string;
-  hours_lunch: string;
-  hours_override: string;
+  hours_mon_thur: string;
+  hours_friday: string;
   internal_notes: string;
 }
 

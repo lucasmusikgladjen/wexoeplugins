@@ -22,6 +22,7 @@ export default function CoreEntityShell({ entity, initialRecords, linkOptions }:
   const router = useRouter();
   const def = CORE_ENTITIES[entity];
   const formCfg = CORE_ENTITY_FORMS[entity];
+  const singleRecord = def.singleRecord === true;
   const [records, setRecords] = useState<Array<Record<string, unknown>>>(initialRecords);
   const [selectedId, setSelectedId] = useState<string | null>(initialRecords[0]?._recordId as string | null);
   const [editorState, setEditorState] = useState<Record<string, unknown>>(() => {
@@ -126,7 +127,6 @@ export default function CoreEntityShell({ entity, initialRecords, linkOptions }:
 
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-800">{def.label}</span>
-          <span className="text-[10px] uppercase tracking-wider text-gray-300 ml-2">{def.role}</span>
         </div>
 
         <div className="flex-1" />
@@ -134,7 +134,7 @@ export default function CoreEntityShell({ entity, initialRecords, linkOptions }:
         {error && <span className="text-xs text-red-500 truncate max-w-xs">{error}</span>}
         {justSaved && !error && <span className="text-xs text-gray-400">Sparat ✓</span>}
 
-        {!isCreating && selectedId && (
+        {!singleRecord && !isCreating && selectedId && (
           <button
             onClick={handleDelete}
             disabled={saving}
@@ -155,48 +155,48 @@ export default function CoreEntityShell({ entity, initialRecords, linkOptions }:
       </header>
 
       <div className="flex-1 flex min-h-0">
-        {/* List panel */}
-        <div className="w-[280px] border-r border-gray-100 bg-gray-50 flex flex-col min-h-0">
-          <button
-            onClick={handleCreate}
-            className="m-3 px-3 py-2 text-sm rounded-md border border-dashed border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-          >
-            + Lägg till {def.label.toLowerCase()}
-          </button>
-          <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-1">
-            {records.length === 0 && (
-              <p className="text-xs text-gray-400 py-2">Inga records ännu.</p>
-            )}
-            {records.map((r) => {
-              const id = r._recordId as string;
-              const label = String(r[formCfg.listLabelField] ?? '(ingen titel)');
-              const meta = formCfg.listMetaField ? String(r[formCfg.listMetaField] ?? '') : '';
-              const isDefault = r.is_default === true;
-              const isActive = r.active !== false;
-              return (
-                <button
-                  key={id}
-                  onClick={() => handleSelect(id)}
-                  className={`w-full text-left px-2 py-1.5 rounded-md text-xs transition-colors ${
-                    !isCreating && selectedId === id ? 'bg-white shadow-sm' : 'hover:bg-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <span className={`font-medium truncate ${isActive ? 'text-gray-800' : 'text-gray-400 line-through'}`}>
-                      {label || '(tomt)'}
-                    </span>
-                    {isDefault && (
-                      <span className="text-[9px] uppercase tracking-wider bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">default</span>
-                    )}
-                  </div>
-                  {meta && <div className="text-[10px] text-gray-400 truncate">{meta}</div>}
-                </button>
-              );
-            })}
+        {!singleRecord && (
+          <div className="w-[280px] border-r border-gray-100 bg-gray-50 flex flex-col min-h-0">
+            <button
+              onClick={handleCreate}
+              className="m-3 px-3 py-2 text-sm rounded-md border border-dashed border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+            >
+              + Lägg till {def.label.toLowerCase()}
+            </button>
+            <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-1">
+              {records.length === 0 && (
+                <p className="text-xs text-gray-400 py-2">Inga records ännu.</p>
+              )}
+              {records.map((r) => {
+                const id = r._recordId as string;
+                const label = String(r[formCfg.listLabelField] ?? '(ingen titel)');
+                const meta = formCfg.listMetaField ? String(r[formCfg.listMetaField] ?? '') : '';
+                const isDefault = r.is_default === true;
+                const isActive = r.active !== false;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => handleSelect(id)}
+                    className={`w-full text-left px-2 py-1.5 rounded-md text-xs transition-colors ${
+                      !isCreating && selectedId === id ? 'bg-white shadow-sm' : 'hover:bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className={`font-medium truncate ${isActive ? 'text-gray-800' : 'text-gray-400 line-through'}`}>
+                        {label || '(tomt)'}
+                      </span>
+                      {isDefault && (
+                        <span className="text-[9px] uppercase tracking-wider bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">default</span>
+                      )}
+                    </div>
+                    {meta && <div className="text-[10px] text-gray-400 truncate">{meta}</div>}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Form panel */}
         <div className="flex-1 overflow-y-auto bg-white">
           <div className="max-w-2xl mx-auto p-6">
             <div className="mb-4 text-xs text-gray-500">{def.description}</div>
