@@ -269,7 +269,7 @@ function wexoe_pages_seo_meta() {
     global $post;
     if (!$post || !is_object($post)) return;
 
-    if (!preg_match('/\[wexoe_page\s+[^\]]*slug=["\']([^"\']+)["\'/i', $post->post_content, $m)) {
+    if (!preg_match('/\[wexoe_page\s+[^\]]*slug=["\']([^"\']+)["\']/i', $post->post_content, $m)) {
         return;
     }
     $slug = $m[1];
