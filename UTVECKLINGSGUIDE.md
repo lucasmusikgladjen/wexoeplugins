@@ -73,29 +73,31 @@ Allt feature-plugins ska behöva. Klassen `\Wexoe\Core\Core` är fasaden; allt a
 ```php
 use Wexoe\Core\Core;
 
-// Hämta repository för en entitet
-$repo = Core::entity('cms_landing_pages');  // returnerar EntityRepository|null
+// Hämta repository för en entitet (entity-namnet = filnamnet utan .php)
+$repo = Core::entity('landing_pages');  // returnerar EntityRepository|null
 
 // Hitta en post via primärnyckel (definierad i schemat)
-$page = Core::entity('cms_landing_pages')->find('fjarraccess');
+$page = Core::entity('landing_pages')->find('fjarraccess');
 
 // Alla poster (valfritt med filter)
 $all = Core::entity('core_partners')->all();
-$visible = Core::entity('cms_lp_tabs')->all(['is_active' => true]);
+$visible = Core::entity('lp_tabs')->all(['is_active' => true]);
 
 // Hitta första post där ett fält har ett visst värde
-$tab = Core::entity('cms_lp_tabs')->find_by('tab_type', 'faq');
+$tab = Core::entity('lp_tabs')->find_by('tab_type', 'faq');
 
 // Resolva linked records — tar array av Airtable record-IDs,
 // returnerar normaliserade poster i samma ordning
-$tabs = Core::entity('cms_lp_tabs')->find_by_ids($page['tab_ids']);
+$tabs = Core::entity('lp_tabs')->find_by_ids($page['tab_ids']);
 
 // Cache-hantering (används sällan i feature-plugins)
-Core::entity('cms_landing_pages')->clear_cache();
-Core::entity('cms_landing_pages')->force_refresh();
+Core::entity('landing_pages')->clear_cache();
+Core::entity('landing_pages')->force_refresh();
 ```
 
 `Core::entity()` returnerar `null` om schemat inte finns. Feature-plugins SKA null-checka vid uppstart.
+
+**Namnkonvention vs verklighet:** § 2 etablerar `cms_*` / `core_*`-prefix som mål. Migrationen är pågående — `core_*`-entiteter har bytt namn, medan flera `cms_*`-entiteter fortfarande heter t.ex. `landing_pages.php` / `lp_tabs.php` / `audience_heroes.php`. Använd det filnamn som faktiskt finns i `wexoe-core/entities/` (utan `.php`) som argument till `Core::entity()`. Nya entiteter SKA döpas med rätt prefix från start.
 
 ### 3.2 Normaliserat output-format
 
@@ -260,7 +262,7 @@ return [
         'benefits' => ['source' => 'Benefits', 'type' => 'lines'],
 
         // Linked records → array av record-IDs
-        'tab_ids' => ['source' => 'Tab Links', 'type' => 'link', 'entity' => 'cms_lp_tabs'],
+        'tab_ids' => ['source' => 'Tab Links', 'type' => 'link', 'entity' => 'lp_tabs'],
 
         // Attachment (första bilden)
         'hero_image' => ['source' => 'Hero Image', 'type' => 'attachment'],
@@ -281,7 +283,7 @@ return [
 ```
 
 **Regler:**
-- Filnamnet = entity-namnet. `cms_landing_pages.php` → `Core::entity('cms_landing_pages')`.
+- Filnamnet = entity-namnet. `landing_pages.php` → `Core::entity('landing_pages')`. Nya entiteter ska namnges med prefix enligt § 2 (`cms_*` / `core_*` / `inbox_*`).
 - Bara lowercase `a-z`, `0-9`, `_` i filnamn.
 - `primary_key` måste referera till ett fält i `fields`.
 - `required`-fält valideras vid load — poster som saknar dem loggas som warning och filtreras bort.
@@ -403,7 +405,7 @@ new Wexoe_Audience_Hero();
 ### Filtrera + sortera linked records
 
 ```php
-$all_tabs = Core::entity('cms_lp_tabs')->find_by_ids($page['tab_ids']);
+$all_tabs = Core::entity('lp_tabs')->find_by_ids($page['tab_ids']);
 
 $visible = array_filter($all_tabs, fn($t) => !empty($t['is_active']));
 usort($visible, fn($a, $b) => ($a['order'] ?? 999) - ($b['order'] ?? 999));
@@ -456,10 +458,11 @@ wexoe-core/
     RestApi.php            # Cache-clear endpoint (anropas från buildern)
     EntityRestApi.php
   entities/                # LÄS-scheman, en fil per entitet
-    cms_landing_pages.php
-    cms_lp_tabs.php
-    core_partners.php
+    landing_pages.php        # (cms_-prefix kommer vid migration)
+    lp_tabs.php
     audience_heroes.php
+    cms_unique_pages.php
+    core_partners.php
     ...
   write-entities/          # SKRIV-scheman, en fil per write-target
     user_submissions.php

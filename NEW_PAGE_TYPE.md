@@ -392,7 +392,7 @@ Visa förslag på state-struktur + section-uppdelning innan implementation.
 - `UTVECKLINGSGUIDE.md` — Core-API, schemaformat, plugin-anatomi
 - `wexoe-core/src/Core.php` — auktoritativ kod-dokumentation
 - `wexoe-core/entities/audience_heroes.php` — minsta läs-schema-referens
-- `wexoe-core/entities/cms_landing_pages.php` — komplext schema med många typer
+- `wexoe-core/entities/landing_pages.php` — komplext schema med många typer
 - `wexoe-core/write-entities/user_submissions.php` — write-schema-referens
 - `New plugins/wexoe-audience-hero/wexoe-audience-hero.php` — enklaste plugin
 - `New plugins/wexoe-landing-page/wexoe-landing-page.php` — komplext plugin med polymorfa tabs
