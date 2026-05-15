@@ -5,13 +5,13 @@
  * Samlar in alla typer av användarinlämningar från Wexoe-plugins:
  * lead magnets, eventanmälningar, kontaktformulär, bokningar, etc.
  *
- * Airtable-tabell: User data (tblxrwMhSysupcDwe)
- * Bas: Wexoe (appXoUcK68dQwASjF)
+ * Airtable-tabell: inbox_user_submissions
+ * Bas: Wexoe NY (\Wexoe\Core\Plugin::SSOT_BASE_ID)
  *
  * Skalbarhetsdesign:
  *   - Fält som inte behövs för en viss inlämningstyp lämnas tomma.
  *   - Typ-specifik data som inte har ett dedikerat fält skickas som
- *     JSON i "Extra"-fältet via nyckeln 'extra'.
+ *     JSON i "extra"-fältet via nyckeln 'extra'.
  *   - Nya inlämningstyper kan lägga till fält till detta schema eller
  *     packa extra data i 'extra' utan att behöva ändra Airtable-strukturen.
  */
@@ -19,7 +19,10 @@
 if (!defined('ABSPATH')) exit;
 
 return [
-    'table_id' => 'tblxrwMhSysupcDwe',
+    // Airtable accepterar tabellnamn i API-pathen, så vi använder namnet tills
+    // ett stabilt tbl-id för inbox_user_submissions finns dokumenterat i repo:t.
+    'table_id' => 'inbox_user_submissions',
+    'base_id'  => \Wexoe\Core\Plugin::SSOT_BASE_ID,
 
     /**
      * Fältmappning: domän-nyckel => Airtable-fältnamn
@@ -29,32 +32,36 @@ return [
      */
     'fields' => [
         // Identitet
-        'submission_id'      => 'ID',               // UUID genererat av plugin
-        'email'              => 'Email',
-        'name'               => 'Name',
-        'company'            => 'Company',
-        'phone'              => 'Phone',
+        'submission_id'      => 'submission_id',
+        'email'              => 'email',
+        'name'               => 'name',
+        'company'            => 'company',
+        'phone'              => 'phone',
 
         // Metadata
-        'submission_type'    => 'Submission Type',  // singleSelect: leadmagnet|event|contact|booking|calculator|download|form|other
-        'submitted_at'       => 'Submitted At',     // ISO 8601 datetime
-        'page_slug'          => 'Page Slug',
-        'page_url'           => 'URL',
-        'source_plugin'      => 'Source Plugin',    // t.ex. "wexoe-landing-page"
+        'submission_type'    => 'submission_type',
+        'submitted_at'       => 'submitted_at',
+        'page_slug'          => 'page_slug',
+        'source_plugin'      => 'source_plugin',
 
         // Innehåll
-        'message'            => 'Message',
-        'newsletter_consent' => 'Newsletter Consent', // bool
+        'message'            => 'message',
+        'newsletter_consent' => 'newsletter_consent',
 
         // Typ-specifika fält
-        'magnet_name'        => 'Magnet Name',      // leadmagnet: vilken resurs
-        'event_title'        => 'Event Title',      // event: vilket evenemang
-        'calculator_data'    => 'Calculator Data',  // calculator: indata + resultat (JSON/text)
+        'magnet_name'        => 'magnet_name',
+        'event_title'        => 'event_title',
+        'calculator_data'    => 'calculator_data',
 
         // CRM
-        'sent_to_crm'        => 'Sent to CRM',     // bool, sätts manuellt eller av automation
+        'sent_to_crm'        => 'sent_to_crm',
 
         // Spill: valfri JSON för plugin-specifika fält utan dedikerad kolumn
-        'extra'              => 'Extra',
+        'extra'              => 'extra',
+    ],
+
+    'field_types' => [
+        'calculator_data' => 'json',
+        'extra'           => 'json',
     ],
 ];
