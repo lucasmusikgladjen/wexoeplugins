@@ -1,52 +1,106 @@
-# Wexoe Core — utvecklingsguide för plugin-migration
+# Wexoe Plugins — utvecklingsguide
 
-Du ska migrera gamla Wexoe WordPress-plugins till att använda Wexoe Core som datalager. Denna guide innehåller allt du behöver. Du behöver INTE Core:s källkod som kontext.
+Hela referensen för att jobba med wexoe-core och dess page-plugins. Hur systemet är designat, vilket publikt API som finns, vilka konventioner som gäller och hur en typisk feature-plugin är byggd.
 
----
-
-## 1. Vad Core är
-
-Wexoe Core är ett aktivt WordPress-plugin som hanterar all kommunikation med Airtable. Det exponerar ett publikt API via klassen `\Wexoe\Core\Core` och fyra helper-klasser under `\Wexoe\Core\Helpers\*`. Feature-plugins ska aldrig prata med Airtable direkt.
+Pair-läs med `wexoebuilder/CLAUDE.md` för bygg-sidan av samma system. För att skapa en *ny* sidtyp, se `NEW_PAGE_TYPE.md` (denna mapp).
 
 ---
 
-## 2. Publikt API
+## 1. Systemöversikt
 
-### 2.1 Entity-repository
+```
+┌──────────────┐     write     ┌──────────┐  read    ┌──────────────┐  → wexoe-landing-page
+│ wexoebuilder │ ────────────► │ Airtable │ ◄─────── │  wexoe-core  │  → wexoe-audience-hero
+│ (Next.js)    │ ◄──────────── │  (CMS)   │          │  (transients)│  → wexoe-product-area
+└──────────────┘    display    └──────────┘          └──────────────┘  → wexoe-pages
+                                                            ▲          → wexoe-alb-blocks
+                                                            │          → wexoe-contact-page
+                                                            │          → automation-pillar
+                                                            │          → ... (en per sidtyp)
+                                                  ┌─────────┴─────────┐
+                                                  │  WordPress site   │
+                                                  │  (Enfold theme)   │
+                                                  └───────────────────┘
+```
+
+### Roller
+- **wexoebuilder** — Next.js-app där marknadsförare redigerar sidor. Skriver till Airtable via Claude API.
+- **Airtable** — vår CMS-datakälla. Två basar: `appokKSTaBdCa8YiW` (Wexoe NY, kanonisk) och `appXoUcK68dQwASjF` (Wexoe, legacy under utfasning).
+- **wexoe-core** — WordPress-plugin som är ENDA komponenten som pratar med Airtable från WP-sidan. Cachar i transients. Exponerar PHP-API till feature-plugins.
+- **Feature-plugins** — en per sidtyp. Renderar shortcode → läser data via Core → producerar HTML. Pratar ALDRIG med Airtable direkt.
+
+### Varför centraliserad Core?
+Tidigare hade varje plugin egen Airtable-klient, egen transient-hantering, egna fältnamnskonstanter, egna helpers (markdown, color, youtube). Det innebar kopior av samma kod i sju plugins, sju ställen att byta API-nyckel, sju olika cache-strategier. Core gör datalagret till en infrastrukturdetalj som feature-plugins inte behöver bry sig om.
+
+---
+
+## 2. Naming conventions (lås)
+
+Konventionerna gäller överallt — Airtable display-namn, PHP-fält i schemafiler, TS-state i buildern, kolumnetiketter.
+
+### Tabellprefix
+| Prefix | Användning |
+|---|---|
+| `core_` | SSOT — referensdata och singletons (företag, divisioner, partners, coworkers, ...) |
+| `cms_` | CMS-redigerat innehåll för publika sidor (landing pages, product pages, ...) |
+| `pim_` | Produktdata speglad från PIM (framtid) |
+| `inbox_` | Inkommande events (form-submissions) |
+| `ext_` | Speglade externa system (framtid) |
+
+### Format
+- **snake_case** överallt — fältnamn, schemanycklar, kod-identifierare.
+- **Plural** för kollektioner: `core_partners`, `cms_landing_pages`.
+- **Singular** för singletons: `core_company`, `core_graphic_profile`.
+- **kebab-case** för slug-VÄRDEN (inte fältnamn).
+- **Engelska** överallt.
+
+### Type-suffix
+`*_url`, `*_email`, `*_phone`, `*_at` (DateTime), `*_date`, `*_count` (int), `*_id` (single link), `*_ids` (multi link), `*_html`, `*_markdown`, `*_json`.
+
+### Domän-prefix inom tabell
+`hero_*`, `seo_*`, `contact_*`, `case_*`, `faq_*`, `cta_banner_*`, etc.
+
+---
+
+## 3. wexoe-core: publikt API
+
+Allt feature-plugins ska behöva. Klassen `\Wexoe\Core\Core` är fasaden; allt annat i `wexoe-core/src/` är implementation.
+
+### 3.1 Läs: entity-repositories
 
 ```php
 use Wexoe\Core\Core;
 
 // Hämta repository för en entitet
-$repo = Core::entity('landing_pages');  // returnerar EntityRepository|null
+$repo = Core::entity('cms_landing_pages');  // returnerar EntityRepository|null
 
 // Hitta en post via primärnyckel (definierad i schemat)
-$page = Core::entity('landing_pages')->find('fjarraccess');
+$page = Core::entity('cms_landing_pages')->find('fjarraccess');
 
 // Alla poster (valfritt med filter)
-$all = Core::entity('partners')->all();
-$visible = Core::entity('lp_tabs')->all(['visa' => true]);
+$all = Core::entity('core_partners')->all();
+$visible = Core::entity('cms_lp_tabs')->all(['is_active' => true]);
 
 // Hitta första post där ett fält har ett visst värde
-$tab = Core::entity('lp_tabs')->find_by('tab_type', 'faq');
+$tab = Core::entity('cms_lp_tabs')->find_by('tab_type', 'faq');
 
 // Resolva linked records — tar array av Airtable record-IDs,
 // returnerar normaliserade poster i samma ordning
-$tabs = Core::entity('lp_tabs')->find_by_ids($page['tab_ids']);
+$tabs = Core::entity('cms_lp_tabs')->find_by_ids($page['tab_ids']);
 
 // Cache-hantering (används sällan i feature-plugins)
-Core::entity('landing_pages')->clear_cache();
-Core::entity('landing_pages')->force_refresh();
+Core::entity('cms_landing_pages')->clear_cache();
+Core::entity('cms_landing_pages')->force_refresh();
 ```
 
-**Viktigt:** `Core::entity()` returnerar `null` om schemat inte finns. Feature-plugins bör kolla detta vid uppstart.
+`Core::entity()` returnerar `null` om schemat inte finns. Feature-plugins SKA null-checka vid uppstart.
 
-### 2.2 Normaliserat output-format
+### 3.2 Normaliserat output-format
 
-Alla metoder returnerar associativa arrays med domänfält (aldrig Airtable-fältnamn). Varje post har ett extra `_record_id`-fält med Airtable:s record-ID (`recXXX...`).
+Alla läsmetoder returnerar associativa arrays med **domänfält** (aldrig Airtable-fältnamn). Varje post har ett extra `_record_id`-fält med Airtable:s record-ID (`recXXX...`).
 
 ```php
-$partner = Core::entity('partners')->find('Rockwell');
+$partner = Core::entity('core_partners')->find('rockwell');
 // Returnerar:
 // [
 //     '_record_id' => 'recABC123...',
@@ -71,7 +125,29 @@ Fälttyper i output:
 | `['source' => '...', 'type' => 'attachments']` | `array` av attachment-objekt |
 | `['type' => 'pseudo_array', ...]` | `array` av objekt (tomma sektioner bortfiltrerade, varje objekt har `_index`) |
 
-### 2.3 Helpers
+### 3.3 Skriv: writers och submissions
+
+För formulär, lead magnets, eventanmälningar — saker som skapar nya records i Airtable från WP-sidan.
+
+```php
+// Rå writer — du anger Airtable-fältnamn direkt
+$result = Core::writer('tblXXXXXXXXXXXX')->create([
+    'Email' => sanitize_email($email),
+    'Namn'  => sanitize_text_field($name),
+]);
+
+// Schemabaserad writer — domänfält via write-entity-schema
+$result = Core::submission('user_submissions')->create_mapped([
+    'email'              => sanitize_email($email),
+    'submission_type'    => 'leadmagnet',
+    'newsletter_consent' => true,
+    'extra'              => ['custom_key' => 'value'],
+]);
+```
+
+Skriv-scheman bor i `wexoe-core/write-entities/{namn}.php` — se § 5 nedan. Skillnaden mot läs-scheman: write-scheman är bara fältmappning (ingen typ-normalisering, ingen cache).
+
+### 3.4 Helpers
 
 ```php
 use Wexoe\Core\Helpers\Markdown;
@@ -89,17 +165,12 @@ Color::normalize_hex('#abc');          // '#aabbcc'
 Color::normalize_hex('ABC123');        // '#abc123'
 Color::normalize_hex('ogiltig');       // null
 Color::is_dark('#11325D');             // true
-Color::is_dark('#ffffff');             // false
-Color::text_color('#11325D');          // '#ffffff'
-Color::text_color('#F5F6F8');          // '#000000'
+Color::text_color('#11325D');          // '#ffffff'  (kontrastfärg)
 
 // YouTube
-YouTube::extract_id('https://youtu.be/dQw4w9WgXcQ');              // 'dQw4w9WgXcQ'
-YouTube::extract_id('https://youtube.com/watch?v=dQw4w9WgXcQ');   // 'dQw4w9WgXcQ'
-YouTube::extract_id('dQw4w9WgXcQ');                                // 'dQw4w9WgXcQ'
-YouTube::extract_id('ogiltig');                                    // null
-YouTube::render_embed('dQw4w9WgXcQ');   // responsiv iframe (youtube-nocookie.com, lazy loading)
-YouTube::thumbnail_url('dQw4w9WgXcQ');  // https://i.ytimg.com/vi/.../hqdefault.jpg
+YouTube::extract_id('https://youtu.be/dQw4w9WgXcQ');   // 'dQw4w9WgXcQ'
+YouTube::render_embed('dQw4w9WgXcQ');                   // responsiv iframe
+YouTube::thumbnail_url('dQw4w9WgXcQ');                  // hqdefault.jpg URL
 
 // Lines (multi-line text ↔ array)
 Lines::to_array("rad 1\nrad 2\n\nrad 3");  // ['rad 1', 'rad 2', 'rad 3']
@@ -107,7 +178,46 @@ Lines::first("rad 1\nrad 2");              // 'rad 1'
 Lines::from_array(['a', 'b', 'c']);        // "a\nb\nc"
 ```
 
-### 2.4 Core-beroendekontroll
+Övriga helpers (mindre vanliga): `\Wexoe\Core\Helpers\Collections`, `\Wexoe\Core\Helpers\Context`, `\Wexoe\Core\Helpers\Singletons`.
+
+### 3.5 Renderers
+
+Core innehåller delade renderers för komponenter som flera sidtyper använder — hero, FAQ, team-grid, partners-marquee, testimonial-card, CTA-banner, kontaktformulär.
+
+```php
+$class = Core::renderer('team-grid');
+if ($class !== '') {
+    echo $class::render([
+        'h2'    => 'Vårt team',
+        'scope' => ['country' => 'SE'],
+    ]);
+}
+```
+
+Aktuell map (`Core::renderer($type)`):
+- `hero` → `Renderers\Hero`
+- `text-image` → `Renderers\TextImage`
+- `text-only` → `Renderers\TextOnly`
+- `faq` → `Renderers\Faq`
+- `team-grid` → `Renderers\TeamGrid`
+- `partners-marquee` → `Renderers\PartnersMarquee`
+- `testimonial-card` → `Renderers\TestimonialCard`
+- `cta-banner` → `Renderers\CtaBanner`
+- `contact-form` → `Renderers\ContactForm`
+
+**När bör en komponent ligga i Core?** När två eller fler feature-plugins behöver samma rendering. Annars håll den i pluginet. Att flytta in i Core senare är trivialt; att dela ut är mödosamt.
+
+### 3.6 Logging
+
+```php
+Core::log('info', 'Lead magnet downloaded', ['slug' => $slug, 'email' => $email]);
+Core::log('warning', 'Missing field in record', ['record_id' => $id]);
+Core::log('error', 'Airtable fetch failed', ['error' => $e->getMessage()]);
+```
+
+Loggar går till WP error log med prefix `[wexoe-core]`. Inkludera context — det är guld vid debug.
+
+### 3.7 Core-beroendekontroll
 
 Feature-plugins ska kontrollera att Core är aktivt:
 
@@ -118,50 +228,49 @@ function my_plugin_core_ready() {
 }
 ```
 
-Anropa i shortcode-funktionen och visa ett tydligt felmeddelande om Core saknas.
+Anropa i shortcode-funktionen och returnera ett synligt felmeddelande om Core saknas. Aktivera ALDRIG pluginet halvvägs.
 
 ---
 
-## 3. Schema-filformat
+## 4. Läs-schemaformat (entities/)
 
-Scheman bor i `wp-content/plugins/wexoe-core/entities/{namn}.php`. Varje fil returnerar en array:
+Läs-scheman bor i `wexoe-core/entities/{namn}.php`. Varje fil returnerar en array som mappar Airtable-fält till domänfält och deklarerar typer.
 
 ```php
 <?php
 if (!defined('ABSPATH')) exit;
 
 return [
-    'table_id' => 'tblXXXXXXXXXXXXXXX',     // Airtable table ID
-    'primary_key' => 'slug',                   // domänfält för find()
-    'cache_ttl' => 86400,                      // sekunder (default 24h)
-    'required' => ['slug', 'name'],            // poster utan dessa filtreras bort
+    'table_id'    => 'tblXXXXXXXXXXXXXX',
+    'primary_key' => 'slug',          // domänfält som find() söker mot
+    'cache_ttl'   => 86400,           // sekunder (default 24h)
+    'required'    => ['slug', 'name'], // poster utan dessa filtreras bort och loggas
     'fields' => [
         // Enkel passthrough: domänfält => Airtable-fältnamn
         'name' => 'Name',
         'slug' => 'Slug',
 
         // Typat fält
-        'visible' => ['source' => 'Visa', 'type' => 'bool'],
-        'order' => ['source' => 'Order', 'type' => 'float'],
-        'description' => ['source' => 'Description', 'type' => 'string'],
+        'is_active' => ['source' => 'Is Active', 'type' => 'bool'],
+        'order'     => ['source' => 'Order', 'type' => 'float'],
 
         // Multi-line text → array av strängar
         'benefits' => ['source' => 'Benefits', 'type' => 'lines'],
 
         // Linked records → array av record-IDs
-        'tab_ids' => ['source' => 'LP Tabs', 'type' => 'link', 'entity' => 'lp_tabs'],
+        'tab_ids' => ['source' => 'Tab Links', 'type' => 'link', 'entity' => 'cms_lp_tabs'],
 
         // Attachment (första bilden)
-        'hero_image' => ['source' => 'Image', 'type' => 'attachment'],
+        'hero_image' => ['source' => 'Hero Image', 'type' => 'attachment'],
 
         // Pseudo-array (numrerade Airtable-fält → array av objekt)
         'sections' => [
-            'type' => 'pseudo_array',
-            'prefix' => 'Normal',    // fältnamn: "Normal 1 H2", "Normal 2 H2", ...
-            'count' => 4,
+            'type'   => 'pseudo_array',
+            'prefix' => 'Normal',   // fältnamn: "Normal 1 H2", "Normal 2 H2", ...
+            'count'  => 4,
             'fields' => [
-                'h2' => 'H2',       // → "Normal 1 H2", "Normal 2 H2", etc.
-                'text' => 'Text',
+                'h2'    => 'H2',     // → "Normal 1 H2", "Normal 2 H2", etc.
+                'text'  => 'Text',
                 'image' => 'Image',
             ],
         ],
@@ -170,151 +279,240 @@ return [
 ```
 
 **Regler:**
-- Filnamnet = entity-namnet. `landing_pages.php` → `Core::entity('landing_pages')`.
+- Filnamnet = entity-namnet. `cms_landing_pages.php` → `Core::entity('cms_landing_pages')`.
 - Bara lowercase `a-z`, `0-9`, `_` i filnamn.
 - `primary_key` måste referera till ett fält i `fields`.
-- `required`-fält valideras — poster som saknar dem loggas som warning och filtreras bort.
-- Linked record-fält behöver `entity`-attributet bara som dokumentation. `find_by_ids()` kräver att du anger entity-namn explicit.
+- `required`-fält valideras vid load — poster som saknar dem loggas som warning och filtreras bort.
+- `entity`-attributet på `type: link` är dokumentation. `find_by_ids()` kräver att du anger entity-namn explicit i anropet.
 
 ---
 
-## 4. Migrationsrecept
+## 5. Skriv-schemaformat (write-entities/)
 
-### 4.1 Vad som tas bort
-
-Varje gammalt plugin har typiskt dessa delar som ska bort:
-
-```
-✗ Hårdkodade API-nycklar och Base ID (WEXOE_LP_AIRTABLE_API_KEY etc.)
-✗ Konstant-definitioner för tabellnamn och cache TTL
-✗ Egen airtable_request()-funktion
-✗ Egen fetch_page() / fetch_linked()-logik
-✗ All transient set/get/delete-kod
-✗ Egen pagination-logik (offset-loopar)
-✗ function_exists()-guards för delade funktioner
-✗ Lokala kopior av: markdown, hex-validering, youtube-id, lines_to_array
-```
-
-### 4.2 Vad som behålls
-
-```
-✓ Plugin-header (uppdatera version + description)
-✓ All CSS (pixelidentisk — kopiera verbatim)
-✓ All JavaScript (pixelidentisk)
-✓ Shortcode-registrering (add_shortcode)
-✓ Section-renderers (HTML-generering)
-✓ Parsers som är rendering-specifika (FAQ Q/A-parser, compare-rows, steps)
-✓ wexoe_lp_field()-helper (safe getter med default)
-```
-
-### 4.3 Vad som ändras
-
-**Fältreferenser:** Alla Airtable-fältnamn (`'Hero CTA Text'`, `'Content Benefits'`) byts till domänfält (`'hero_cta_text'`, `'content_benefits'`). Domänfälten definieras i schemat.
-
-**Datahämtning:** Från `wexoe_lp_fetch_page($slug)` till `Core::entity('landing_pages')->find($slug)`.
-
-**Linked records:** Från `wexoe_lp_fetch_linked($table, $ids, $prefix)` till `Core::entity('lp_tabs')->find_by_ids($ids)`.
-
-**Hjälpfunktioner:**
-- `wexoe_lp_md($text)` → `Markdown::to_inline($text)`
-- `wexoe_lp_hex($val, $default)` → `Color::normalize_hex($val) ?? $default`
-- `wexoe_lp_youtube_id($url)` → `YouTube::extract_id($url)`
-- `wexoe_lp_lines_to_array($text)` → schema-typ `lines` gör det automatiskt; för manuell konvertering: `Lines::to_array($text)`
-
-**Cache-rensning:** Från direkt SQL (`DELETE FROM options WHERE option_name LIKE '_transient_wexoe_lp_%'`) till `Core::entity('landing_pages')->clear_cache()`.
-
-**Synlighetsfiltrering och sortering:** Core normaliserar `Visa`-checkbox till `bool` och `Order` till `float`, men filtrering och sortering görs i feature-pluginet:
+Skriv-scheman bor i `wexoe-core/write-entities/{namn}.php`. Enklare än läs-scheman — bara fältmappning.
 
 ```php
-$all_tabs = Core::entity('lp_tabs')->find_by_ids($page['tab_ids']);
+<?php
+if (!defined('ABSPATH')) exit;
 
-// Filtrera synliga
-$tabs = array_filter($all_tabs, function($t) { return !empty($t['visa']); });
-
-// Sortera
-usort($tabs, function($a, $b) {
-    return ($a['order'] ?? 999) - ($b['order'] ?? 999);
-});
-$tabs = array_values($tabs);
+return [
+    'table_id' => 'tblxrwMhSysupcDwe',
+    'fields' => [
+        // domän-nyckel => Airtable-fältnamn
+        'email'              => 'Email',
+        'submission_type'    => 'Submission Type',
+        'submitted_at'       => 'Submitted At',
+        'newsletter_consent' => 'Newsletter Consent',
+        'extra'              => 'Extra',     // JSON-spillkolumn
+    ],
+];
 ```
 
-### 4.4 Test-version för parallellkörning
-
-Vid migration, döp om allt för att undvika kollision med det gamla pluginet:
-
-- Plugin Name: `Wexoe Landing Page` → `Wexoe Landing Page TEST`
-- Shortcode: `wexoe_landing` → `wexoe_landing_test`
-- Alla funktioner: `wexoe_lp_*` → `wexoe_lp_test_*`
-
-Det möjliggör att båda plugins är aktiva samtidigt. Test-sidan använder `[wexoe_landing_test slug="..."]`, jämförs visuellt med originalet.
+**Skalbarhetsmönster — `extra` som spillkolumn:** En enda `user_submissions`-tabell hanterar alla typer av inlämningar (lead magnets, events, kontakt, bokningar). Fält som inte behövs för en viss typ lämnas tomma. Typ-specifik data utan dedikerat fält packas i `extra` som JSON. Nya inlämningstyper kan utöka schemat eller bara använda `extra` — inga Airtable-schemaändringar krävs för MVP.
 
 ---
 
-## 5. Steg-för-steg: migration av ett plugin
+## 6. Anatomi av ett feature-plugin
 
-1. **Läs det gamla pluginet.** Identifiera: vilka Airtable-tabeller det använder, vilka fält som refereras, vilka hjälpfunktioner som finns, hur cache hanteras.
+Typisk struktur för ett page-plugin (`New plugins/wexoe-xxx/wexoe-xxx.php`):
 
-2. **Kolla om entitets-scheman redan finns i Core.** Befintliga: `partners`, `product_areas`, `landing_pages`, `lp_tabs`, `lp_downloads`. Om schemat saknas — skriv ett nytt (se avsnitt 3). Hämta Airtable-fältnamn och table IDs via Airtable MCP `list_tables_for_base` mot base `appokKSTaBdCa8YiW` (Wexoe NY) eller `appXoUcK68dQwASjF` (Wexoe gammal).
+```php
+<?php
+/**
+ * Plugin Name: Wexoe Audience Hero
+ * Description: Dynamic hero + value section for audience landing pages.
+ * Version: 2.x
+ * Author: Wexoe
+ */
 
-3. **Skriv den nya plugin-filen.** Behåll CSS, JS, och rendering-logik. Byt all datahämtning till Core. Byt alla fältreferenser till domänfält. Byt lokala helpers till Core Helpers.
+if (!defined('ABSPATH')) exit;
 
-4. **Döp om till test-version** (ändra plugin-namn, shortcode, funktionsnamn) för parallellkörning.
+// 1. Core-beroendekontroll
+function wexoe_ah_core_ready() {
+    return class_exists('\\Wexoe\\Core\\Core')
+        && method_exists('\\Wexoe\\Core\\Core', 'entity');
+}
 
-5. **Syntax-kontrollera** med `php -l`.
+class Wexoe_Audience_Hero {
 
-6. **Leverera** som zip (mapp med plugin-fil inuti) + separat schema-fil(er) om nya entiteter behövdes.
+    public function __construct() {
+        add_shortcode('wexoe_audience', [$this, 'render_shortcode']);
+    }
+
+    public function render_shortcode($atts) {
+        // 2. Shortcode-parametrar
+        $atts = shortcode_atts(['slug' => '', 'debug' => 'false'], $atts);
+        if (empty($atts['slug'])) {
+            return '<p style="color:red;">Wexoe Audience Hero: slug required</p>';
+        }
+
+        // 3. Core-guard
+        if (!wexoe_ah_core_ready()) {
+            return '<p style="color:red;">Wexoe Core är inte aktivt.</p>';
+        }
+
+        // 4. Hämta data via Core
+        $repo = \Wexoe\Core\Core::entity('audience_heroes');
+        if (!$repo) {
+            return '<p style="color:red;">Schema "audience_heroes" saknas.</p>';
+        }
+
+        $data = $repo->find($atts['slug']);
+        if ($data && empty($data['is_active'])) {
+            $data = null;
+        }
+        if (!$data) {
+            return '<p style="color:red;">Ingen data för slug "' . esc_html($atts['slug']) . '"</p>';
+        }
+
+        // 5. Rendera (CSS-scoping, defaults, helpers)
+        $id = 'wexoe-ah-' . uniqid();
+        ob_start();
+        ?>
+        <style>
+            #<?php echo $id; ?> .hero { background: <?php echo esc_attr($data['hero_bg'] ?? '#fff'); ?>; }
+            <?php /* mer scoped CSS här */ ?>
+        </style>
+        <div id="<?php echo $id; ?>">
+            <h1><?php echo esc_html($data['title'] ?? ''); ?></h1>
+            <?php if (!empty($data['description'])): ?>
+                <p><?php echo \Wexoe\Core\Helpers\Markdown::to_inline($data['description']); ?></p>
+            <?php endif; ?>
+            <?php /* sektioner med if-statements på checkboxar */ ?>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+}
+
+new Wexoe_Audience_Hero();
+```
+
+### Konventioner i feature-plugins
+
+- **CSS-scoping via uniq ID.** Varje render får en unik `wexoe-xxx-{uniqid}`-wrapper. CSS:en byggs i `<style>` med den ID-prefixen så att två instanser av samma shortcode på samma sida inte krockar.
+- **Defaults vid läsning.** Använd `$data['field'] ?? 'default'` i stället för att anta att fältet finns. Tomma valfria fält är `null` eller tom sträng beroende på typ.
+- **Boolean checkboxar är aldrig null.** `$data['show_sidebar']` är `true` eller `false` — säkert att använda direkt i `if`-statements.
+- **Linked records itereras, inte indexeras.** `find_by_ids()` hoppar tyst över raderade records. Iterera över returnerade arrayen, kolla inte mot ID-listan.
+- **Filtrering och sortering görs i pluginet, inte i schemat.** Core normaliserar `is_active` till bool och `order` till float; det är feature-pluginets ansvar att filtrera bort osynliga och sortera.
+- **`debug=true`-läge.** Lägg till en `debug`-shortcode-parameter som dumpar `print_r($data)` så att det går att inspektera vad Core returnerar utan att gräva i transients.
+- **Behåll en `wexoe_xxx_field()`-helper** (safe getter med default) i pluginet om det förenklar rendering. Det är en *rendering*-helper, inte en Airtable-helper.
+
+### Filtrera + sortera linked records
+
+```php
+$all_tabs = Core::entity('cms_lp_tabs')->find_by_ids($page['tab_ids']);
+
+$visible = array_filter($all_tabs, fn($t) => !empty($t['is_active']));
+usort($visible, fn($a, $b) => ($a['order'] ?? 999) - ($b['order'] ?? 999));
+$tabs = array_values($visible);
+```
+
+### Polymorfa records (tab-typer, sidebar-typer)
+
+Vissa entiteter har en `type`-kolumn som styr vilka fält som är meningsfulla. Pluginet branchar på den:
+
+```php
+foreach ($tabs as $tab) {
+    switch ($tab['tab_type']) {
+        case 'textimage':
+            echo render_textimage($tab);
+            break;
+        case 'faq':
+            echo render_faq($tab);
+            break;
+        case 'compare':
+            echo render_compare($tab);
+            break;
+        // ...
+    }
+}
+```
+
+Stale-field-clearing vid typbyten hanteras av buildern (via Claude-transform). Pluginet ska inte oroa sig — fält som inte är relevanta för den aktuella typen är tomma.
 
 ---
 
-## 6. Vanliga misstag att undvika
+## 7. Mappstruktur (wexoeplugins-repot)
 
-**Referera inte till Airtable-fältnamn i feature-plugins.** Aldrig `$data['Hero CTA Text']`. Alltid `$data['hero_cta_text']`. Airtable-fältnamn finns bara i schema-filer.
+```
+wexoe-core/
+  wexoe-core.php           # Plugin-bootstrap
+  src/
+    Core.php               # Publikt API (fasaden)
+    AirtableClient.php     # HTTP mot Airtable REST
+    Cache.php              # Transient-wrapper
+    EntityRepository.php   # Läs-API
+    WriteRepository.php    # Skriv-API
+    SchemaRegistry.php     # Schema-loader
+    Normalizer.php         # Airtable-record → domänobjekt
+    Logger.php
+    Helpers/               # Markdown, Color, YouTube, Lines, ...
+    Renderers/             # Delade renderers (Hero, Faq, TeamGrid, ...)
+    Admin/                 # WP-admin (settings page, debug tools)
+    ContactForm/           # Delad kontaktformulärsmodul
+    RestApi.php            # Cache-clear endpoint (anropas från buildern)
+    EntityRestApi.php
+  entities/                # LÄS-scheman, en fil per entitet
+    cms_landing_pages.php
+    cms_lp_tabs.php
+    core_partners.php
+    audience_heroes.php
+    ...
+  write-entities/          # SKRIV-scheman, en fil per write-target
+    user_submissions.php
+    core_partners.php
+    ...
 
-**Anta inte att `lines`-fält är strängar.** Om schemat definierar typen `lines` returnerar Core en array. Använd `foreach`, inte `Lines::to_array()` igen.
-
-**Glöm inte att `bool`-fält aldrig är null.** De är `true` eller `false`. Gamla plugins kollade ofta `!empty($data['Show Tabs'])` — det fungerar fortfarande, men `$data['show_tabs']` är redan en boolean.
-
-**`find_by_ids()` returnerar bara poster som finns i cachen.** Om en linked record-ID pekar på en post som inte finns (raderad i Airtable), hoppas den över tyst. Kontrollera inte mot ID-listan — iterera över det som returneras.
-
-**CSS ska kopieras byte-för-byte.** Försök inte "förbättra" eller refaktorera CSS:en vid migration. Målet är pixelidentisk output. CSS-förbättringar görs separat.
-
-**Behåll `wexoe_lp_field()` eller motsvarande i feature-pluginet.** Det är en rendering-helper (safe getter med default), inte en Airtable-helper. Den behövs fortfarande.
+New plugins/
+  wexoe-landing-page/      # En mapp per feature-plugin
+    wexoe-landing-page.php
+  wexoe-audience-hero/
+    wexoe-audience-hero.php
+  wexoe-product-area/
+    wexoe-product-area.php
+  wexoe-pages/             # Tier-2-sidor (om-oss, karriär, ...)
+  wexoe-alb-blocks/        # Avia Layout Builder-integrering
+  wexoe-contact-page/
+  automation-pillar/
+```
 
 ---
 
-## 7. Referens: existerande scheman
+## 8. Cachestrategi
 
-### partners (entities/partners.php)
-- Table: `tblsCOF5BPAxN6nmq`
-- Primary key: `name`
-- Fält: `name`, `logo_url`, `logo_transparent_url`, `division_ids` (link), `campaign_ids` (link), `deliverable_ids` (link), `activity_ids` (link), `article_ids` (link)
+Core cachar varje entitet i en WP-transient med default-TTL 24h (konfigurerbar per schema). Cache invalideras explicit:
 
-### product_areas (entities/product_areas.php)
-- Table: `tblgatNFYFMwF4EcQ`
-- Primary key: `slug`
-- 39 fält inklusive `sections` (pseudo_array med prefix "Normal", count 4)
-- Booleans: `use_side_menu`, `show_request`, `default_open`
-- Lines: `hero_benefits`
-- Links: `product_ids`, `solution_ids`, `division_ids`
+1. **Vid spar från buildern** — `/api/publish` på buildern anropar `/wp-json/wexoe-core/v1/cache/clear` med en lista över entitetsnamn. Routen är skyddad med `WP_CACHE_CLEAR_SECRET`.
+2. **Manuellt via Core::entity('xxx')->clear_cache()** — om något script behöver tvinga refresh.
+3. **TTL-utgång** — bakgrundsrefresh; första requesten efter expiry är långsam.
 
-### landing_pages (entities/landing_pages.php)
-- Table: `tbl8KDqGq0Ray1uqS`
-- Primary key: `slug`
-- 43 fält: hero, content, sidebar (case/calculator/event/leadmagnet), contact, colors, visibility toggles
-- Lines: `content_benefits`, `case_outcomes`
-- Booleans: `show_content`, `show_sidebar`, `show_contact`, `show_tabs`
-- Links: `tab_ids` → lp_tabs
+`force_refresh()` skiljer sig från `clear_cache()` så: clear tömmer transient och nästa läsning hämtar fresh; force_refresh hämtar fresh OCH lagrar omedelbart. Använd force när du *vet* att du strax kommer att läsa.
 
-### lp_tabs (entities/lp_tabs.php)
-- Table: `tblvecOh3rAGmw3mw`
-- Ingen primary key (uppslag via `find_by_ids`)
-- Polymorfa tab-typer: textimage, fullmedia, faq, calameo, downloads, compare, steps
-- Pseudo-array: `calameos` (prefix "Calameo", count 3)
-- Lines: `ti_benefits`
-- Bool: `visa`, `ti_inverted`
-- Links: `download_ids` → lp_downloads
+---
 
-### lp_downloads (entities/lp_downloads.php)
-- Table: `tblbLM827DzjWGjCR`
-- Ingen primary key
-- Fält: `name`, `description`, `thumbnail`, `file_url`, `button_text`, `order` (float), `visa` (bool)
+## 9. Felsökning
+
+**Plugin renderar tomt eller fel:**
+1. Aktivera `[wexoe_xxx slug="..." debug="true"]` — dumpa `$data` och se vad Core returnerar.
+2. Kolla WP error log för `[wexoe-core]`-rader — `required`-validering och Airtable-fel loggas där.
+3. `Core::entity('xxx')->force_refresh()` om data ändrats i Airtable men cache är stale.
+
+**Schema-fel:**
+- "Entity X not found" → schema-fil saknas eller filnamn matchar inte entity-namnet.
+- "Required field 'slug' missing" → posten i Airtable saknar slug. Antingen fix posten eller ta bort fältet ur `required`.
+
+**Airtable-fält syns inte i output:**
+- Är fältet listat i `fields`?
+- Stavning av `source` exakt som Airtable display-namnet (inkl. mellanslag, versaler)?
+- Är fält-typen rätt? En lines-typ förväntar multi-line text, en attachment förväntar single attachment-fält.
+
+---
+
+## 10. Vart pekar resten?
+
+- `NEW_PAGE_TYPE.md` (denna mapp) — receptet för att skapa en helt ny sidtyp (plugin + schema + builder-editor). Pair-läs med samma fil i `wexoebuilder/`.
+- `wexoebuilder/CLAUDE.md` — bygg-sidan av samma system. Page-type-ramverket, Claude-transform-mellanlaget, SSOT-redigerare.
+- `MIGRATION-PLAN.md` — kanonisk plan för Wexoe → Wexoe NY-migrationen (snake_case-omskrivning). Aktuell, men inte primärt utvecklingsmaterial.
+- `IMPLEMENTATION_LOG.md` — löpande logg av migrationsåtgärder. Historik, inte API.
+- `wexoe-core/src/Core.php` — koden själv. Doc-kommentarerna är auktoritativa när dokumentation och kod skiljer sig åt.
