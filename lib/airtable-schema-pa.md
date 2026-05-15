@@ -174,7 +174,7 @@ save-flödet. Dokumenteras för fullständighet.
 | **description** | multilineText | |
 | **datasheet_url** | url | URL till datablad. |
 | **webshop_url** | url | URL till webshop. |
-| **image_url** | singleLineText | URL. |
+| **image_url** | url | URL. |
 | **variants** | multilineText | Variant-definition. |
 | **product_ids** | multipleRecordLinks | Back-link till cms_products. |
 | **supplier_ids** | multipleRecordLinks | core_partners-länk. |
