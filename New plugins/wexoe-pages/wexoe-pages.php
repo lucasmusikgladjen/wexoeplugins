@@ -64,7 +64,7 @@ function wexoe_pages_render($slug) {
         return wexoe_pages_debug_comment('wexoe-pages: hittade inte slug=' . esc_html($slug));
     }
 
-    if (empty($page['published'])) {
+    if (empty($page['is_published'])) {
         return wexoe_pages_debug_comment('wexoe-pages: sidan finns men är inte publicerad');
     }
 
@@ -82,7 +82,7 @@ function wexoe_pages_render($slug) {
             'eyebrow'   => $page['hero_eyebrow'] ?? '',
             'title'     => !empty($page['hero_h1_override']) ? $page['hero_h1_override'] : ($page['h1'] ?? ''),
             'subtitle'  => $page['hero_subtitle'] ?? '',
-            'image_url' => (string) ($page['hero_image'] ?? ''),
+            'image_url' => (string) ($page['hero_image_url'] ?? ''),
             'cta_text'  => $page['hero_cta_text'] ?? '',
             'cta_url'   => $page['hero_cta_url'] ?? '',
             'theme'     => $page['hero_theme'] ?? 'dark',
@@ -93,7 +93,7 @@ function wexoe_pages_render($slug) {
         echo \Wexoe\Core\Renderers\TextImage::render([
             'h2'        => $page['text_image_a_h2'] ?? '',
             'body'      => $page['text_image_a_body'] ?? '',
-            'image_url' => (string) ($page['text_image_a_image'] ?? ''),
+            'image_url' => (string) ($page['text_image_a_image_url'] ?? ''),
             'reversed'  => !empty($page['text_image_a_reversed']),
             'theme'     => $page['text_image_a_theme'] ?? 'light',
         ]);
@@ -103,7 +103,7 @@ function wexoe_pages_render($slug) {
         echo \Wexoe\Core\Renderers\TextImage::render([
             'h2'        => $page['text_image_b_h2'] ?? '',
             'body'      => $page['text_image_b_body'] ?? '',
-            'image_url' => (string) ($page['text_image_b_image'] ?? ''),
+            'image_url' => (string) ($page['text_image_b_image_url'] ?? ''),
             'reversed'  => !empty($page['text_image_b_reversed']),
             'theme'     => $page['text_image_b_theme'] ?? 'light',
         ]);
@@ -278,7 +278,7 @@ function wexoe_pages_seo_meta() {
     $repo = \Wexoe\Core\Core::entity('cms_unique_pages');
     if ($repo === null) return;
     $page = $repo->find_by('slug', $slug);
-    if ($page === null || empty($page['published'])) return;
+    if ($page === null || empty($page['is_published'])) return;
 
     $title = !empty($page['seo_title']) ? $page['seo_title'] : ($page['h1'] ?? '');
     $description = !empty($page['seo_description']) ? $page['seo_description'] : '';

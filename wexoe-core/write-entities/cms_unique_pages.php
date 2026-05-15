@@ -4,6 +4,8 @@
  *
  * Domain-key → Airtable field name. Speglar entities/cms_unique_pages.php
  * men för WRITE-vägen (builder /editor/unique).
+ *
+ * Post-migration: snake_case överallt — passthrough.
  */
 
 if (!defined('ABSPATH')) exit;
@@ -23,94 +25,95 @@ return [
 
     'fields' => [
         // Metadata
-        'slug' => 'Slug',
-        'h1' => 'H1',
-        'seo_title' => 'SEO Title',
-        'seo_description' => 'SEO Description',
-        'og_image_url' => 'OG Image URL',
-        'published' => 'Published',
-        'country_ids' => 'Country',
-        'division_ids' => 'Division',
+        'slug' => 'slug',
+        'internal_notes' => 'internal_notes',
+        'h1' => 'h1',
+        'seo_title' => 'seo_title',
+        'seo_description' => 'seo_description',
+        'og_image_url' => 'og_image_url',
+        'is_published' => 'is_published',
+        'country_ids' => 'country_ids',
+        'division_ids' => 'division_ids',
 
         // Hero
-        'show_hero' => 'Show Hero',
-        'hero_eyebrow' => 'Hero Eyebrow',
-        'hero_h1_override' => 'Hero H1 Override',
-        'hero_subtitle' => 'Hero Subtitle',
-        'hero_image' => 'Hero Image',
-        'hero_cta_text' => 'Hero CTA Text',
-        'hero_cta_url' => 'Hero CTA URL',
-        'hero_theme' => 'Hero Theme',
+        'show_hero' => 'show_hero',
+        'hero_eyebrow' => 'hero_eyebrow',
+        'hero_h1_override' => 'hero_h1_override',
+        'hero_subtitle' => 'hero_subtitle',
+        'hero_image_url' => 'hero_image_url',
+        'hero_cta_text' => 'hero_cta_text',
+        'hero_cta_url' => 'hero_cta_url',
+        'hero_theme' => 'hero_theme',
 
         // Text-image A
-        'show_text_image_a' => 'Show Text Image A',
-        'text_image_a_h2' => 'Text Image A H2',
-        'text_image_a_body' => 'Text Image A Body',
-        'text_image_a_image' => 'Text Image A Image',
-        'text_image_a_reversed' => 'Text Image A Reversed',
-        'text_image_a_theme' => 'Text Image A Theme',
+        'show_text_image_a' => 'show_text_image_a',
+        'text_image_a_h2' => 'text_image_a_h2',
+        'text_image_a_body' => 'text_image_a_body',
+        'text_image_a_image_url' => 'text_image_a_image_url',
+        'text_image_a_reversed' => 'text_image_a_reversed',
+        'text_image_a_theme' => 'text_image_a_theme',
 
         // Text-image B
-        'show_text_image_b' => 'Show Text Image B',
-        'text_image_b_h2' => 'Text Image B H2',
-        'text_image_b_body' => 'Text Image B Body',
-        'text_image_b_image' => 'Text Image B Image',
-        'text_image_b_reversed' => 'Text Image B Reversed',
-        'text_image_b_theme' => 'Text Image B Theme',
+        'show_text_image_b' => 'show_text_image_b',
+        'text_image_b_h2' => 'text_image_b_h2',
+        'text_image_b_body' => 'text_image_b_body',
+        'text_image_b_image_url' => 'text_image_b_image_url',
+        'text_image_b_reversed' => 'text_image_b_reversed',
+        'text_image_b_theme' => 'text_image_b_theme',
 
         // Text-only
-        'show_text_only' => 'Show Text Only',
-        'text_only_h2' => 'Text Only H2',
-        'text_only_body' => 'Text Only Body',
-        'text_only_align' => 'Text Only Align',
+        'show_text_only' => 'show_text_only',
+        'text_only_h2' => 'text_only_h2',
+        'text_only_body' => 'text_only_body',
+        'text_only_align' => 'text_only_align',
 
         // FAQ
-        'show_faq' => 'Show FAQ',
-        'faq_h2' => 'FAQ H2',
-        'faq_items' => 'FAQ Items',
+        'show_faq' => 'show_faq',
+        'faq_h2' => 'faq_h2',
+        'faq_items' => 'faq_items',
 
         // Team Grid
-        'show_team_grid' => 'Show Team Grid',
-        'team_grid_h2' => 'Team Grid H2',
-        'team_grid_scope_division' => 'Team Grid Scope Division',
-        'team_grid_scope_country' => 'Team Grid Scope Country',
-        'team_grid_limit' => 'Team Grid Limit',
+        'show_team_grid' => 'show_team_grid',
+        'team_grid_h2' => 'team_grid_h2',
+        'team_grid_scope_division' => 'team_grid_scope_division',
+        'team_grid_scope_country' => 'team_grid_scope_country',
+        'team_grid_limit' => 'team_grid_limit',
 
         // Partners Marquee
-        'show_partners_marquee' => 'Show Partners Marquee',
-        'partners_marquee_h2' => 'Partners Marquee H2',
-        'partners_marquee_scope_division' => 'Partners Marquee Scope Division',
-        'partners_marquee_scope_country' => 'Partners Marquee Scope Country',
+        'show_partners_marquee' => 'show_partners_marquee',
+        'partners_marquee_h2' => 'partners_marquee_h2',
+        'partners_marquee_scope_division' => 'partners_marquee_scope_division',
+        'partners_marquee_scope_country' => 'partners_marquee_scope_country',
 
         // Testimonial Card
-        'show_testimonial_card' => 'Show Testimonial Card',
-        'testimonial_scope_customer_type' => 'Testimonial Scope Customer Type',
-        'testimonial_scope_division' => 'Testimonial Scope Division',
-        'testimonial_scope_country' => 'Testimonial Scope Country',
+        'show_testimonial_card' => 'show_testimonial_card',
+        'testimonial_scope_customer_type' => 'testimonial_scope_customer_type',
+        'testimonial_scope_division' => 'testimonial_scope_division',
+        'testimonial_scope_country' => 'testimonial_scope_country',
 
         // CTA Banner
-        'show_cta_banner' => 'Show CTA Banner',
-        'cta_banner_h2' => 'CTA Banner H2',
-        'cta_banner_body' => 'CTA Banner Body',
-        'cta_banner_cta_text' => 'CTA Banner CTA Text',
-        'cta_banner_cta_url' => 'CTA Banner CTA URL',
-        'cta_banner_theme' => 'CTA Banner Theme',
+        'show_cta_banner' => 'show_cta_banner',
+        'cta_banner_h2' => 'cta_banner_h2',
+        'cta_banner_body' => 'cta_banner_body',
+        'cta_banner_cta_text' => 'cta_banner_cta_text',
+        'cta_banner_cta_url' => 'cta_banner_cta_url',
+        'cta_banner_theme' => 'cta_banner_theme',
 
         // Contact Form
-        'show_contact_form' => 'Show Contact Form',
-        'contact_form_eyebrow' => 'Contact Form Eyebrow',
-        'contact_form_title' => 'Contact Form Title',
-        'contact_form_subtitle' => 'Contact Form Subtitle',
-        'contact_form_layout' => 'Contact Form Layout',
-        'contact_form_theme' => 'Contact Form Theme',
-        'contact_form_show_company' => 'Contact Form Show Company',
-        'contact_form_show_phone' => 'Contact Form Show Phone',
-        'contact_form_show_dropdown' => 'Contact Form Show Dropdown',
-        'contact_form_dropdown_label' => 'Contact Form Dropdown Label',
-        'contact_form_options' => 'Contact Form Options',
-        'contact_form_cta_text' => 'Contact Form CTA Text',
-        'contact_form_message_label' => 'Contact Form Message Label',
-        'contact_form_trust_signals' => 'Contact Form Trust Signals',
-        'contact_form_show_contact_person' => 'Contact Form Show Contact Person',
+        'show_contact_form' => 'show_contact_form',
+        'contact_form_eyebrow' => 'contact_form_eyebrow',
+        'contact_form_title' => 'contact_form_title',
+        'contact_form_subtitle' => 'contact_form_subtitle',
+        'contact_form_layout' => 'contact_form_layout',
+        'contact_form_theme' => 'contact_form_theme',
+        'contact_form_show_company' => 'contact_form_show_company',
+        'contact_form_show_phone' => 'contact_form_show_phone',
+        'contact_form_show_dropdown' => 'contact_form_show_dropdown',
+        'contact_form_dropdown_label' => 'contact_form_dropdown_label',
+        'contact_form_options' => 'contact_form_options',
+        'contact_form_cta_text' => 'contact_form_cta_text',
+        'contact_form_message_label' => 'contact_form_message_label',
+        'contact_form_trust_signals' => 'contact_form_trust_signals',
+        'contact_form_show_contact_person' => 'contact_form_show_contact_person',
     ],
 ];
