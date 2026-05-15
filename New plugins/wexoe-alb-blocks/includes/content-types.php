@@ -35,12 +35,12 @@ function wexoe_alb_content_types() {
             'list'   => 'wexoe_alb_list_by_slug',
             'render' => 'wexoe_alb_render_landing_page',
         ],
-        'audience_heroes' => [
-            'label'  => __('Audience Hero', 'wexoe'),
-            'entity' => 'audience_heroes',
+        'customer_type_pages' => [
+            'label'  => __('Kundtyp-sida', 'wexoe'),
+            'entity' => 'customer_type_pages',
             'pk'     => 'slug',
             'list'   => 'wexoe_alb_list_by_slug',
-            'render' => 'wexoe_alb_render_audience_hero',
+            'render' => 'wexoe_alb_render_customer_type_page',
         ],
         'product_areas' => [
             'label'  => __('Product Area', 'wexoe'),
@@ -194,13 +194,13 @@ function wexoe_alb_render_landing_page($slug) {
     return wexoe_landing_page_test_shortcode(['slug' => $slug]);
 }
 
-function wexoe_alb_render_audience_hero($slug) {
+function wexoe_alb_render_customer_type_page($slug) {
     // Klassmetod — säkraste anropet är via shortcode. Slug går genom
-    // sanitize_text_field i shortcode_handler:n så vi escapar för att
-    // undvika att en slug med citationstecken bryter shortcode-parsningen.
+    // sanitize_text_field för att undvika att en slug med citationstecken
+    // bryter shortcode-parsningen.
     $safe = sanitize_text_field($slug);
     if ($safe === '') return '';
-    return do_shortcode('[wexoe_audience slug="' . esc_attr($safe) . '"]');
+    return do_shortcode('[wexoe_customer_type slug="' . esc_attr($safe) . '"]');
 }
 
 function wexoe_alb_render_product_area($slug) {
