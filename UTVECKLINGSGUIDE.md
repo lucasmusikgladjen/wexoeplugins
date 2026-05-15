@@ -1,8 +1,10 @@
 # Wexoe Plugins — utvecklingsguide
 
+> **Vill du skapa en ny sidtyp?** Läs `SKAPA-SIDA.md` (i denna repo) — den guidar dig genom hela flowet steg för steg. Du behöver inte läsa filen du nu har öppen. Den är teknisk referens.
+
 Hela referensen för att jobba med wexoe-core och dess page-plugins. Hur systemet är designat, vilket publikt API som finns, vilka konventioner som gäller och hur en typisk feature-plugin är byggd.
 
-Pair-läs med `wexoebuilder/CLAUDE.md` för bygg-sidan av samma system. För att skapa en *ny* sidtyp, se `NEW_PAGE_TYPE.md` (denna mapp).
+Pair-läs med `wexoebuilder/CLAUDE.md` för bygg-sidan av samma system. För att skapa en *ny* sidtyp, se `SKAPA-SIDA.md`.
 
 ---
 

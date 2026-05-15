@@ -1,4 +1,6 @@
-# Skapa en ny sidtyp — plugin-sidan
+# Skapa en ny sidtyp — plugin-sidan (teknisk referens)
+
+> **Är du marknadsförare? Läs `SKAPA-SIDA.md` istället.** Den filen är skriven för dig och guidar dig genom hela flowet. Denna fil är teknisk referens som LLM:er och utvecklare kan dyka i vid behov.
 
 Receptet för att lägga till en helt ny sidtyp i Wexoe-systemet. Denna fil täcker plugin-sidan: Airtable-tabellen, Core-schemat och PHP-pluginet som renderar shortcode på WP. Builder-sidan (Next.js-editorn) täcks av `wexoebuilder/NEW_PAGE_TYPE.md` — pair-läs.
 
