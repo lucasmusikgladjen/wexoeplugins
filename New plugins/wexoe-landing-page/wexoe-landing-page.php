@@ -139,7 +139,7 @@ function wexoe_lp_test_render_hero($data, $id) {
     if (empty($h1)) return '';
 
     $desc = wexoe_lp_test_field($data, 'hero_description', '');
-    $image = wexoe_lp_test_field($data, 'hero_image', '');
+    $image = wexoe_lp_test_field($data, 'hero_image_url', '');
     $cta1_text = wexoe_lp_test_field($data, 'hero_cta_text', 'Kontakta oss');
     $cta1_url = wexoe_lp_test_field($data, 'hero_cta_url', '/kontakt/');
     $cta2_text = wexoe_lp_test_field($data, 'hero_cta2_text', '');
@@ -217,7 +217,7 @@ function wexoe_lp_test_render_content_sidebar($data, $id) {
 function wexoe_lp_test_render_sidebar_case($data, $id) {
     $title = wexoe_lp_test_field($data, 'case_title', '');
     $desc = wexoe_lp_test_field($data, 'case_description', '');
-    $image = wexoe_lp_test_field($data, 'case_image', '');
+    $image = wexoe_lp_test_field($data, 'case_image_url', '');
     $outcomes = wexoe_lp_test_lines_to_array(wexoe_lp_test_field($data, 'case_outcomes', ''));
     $cta_text = wexoe_lp_test_field($data, 'case_cta_text', '');
     $cta_url = wexoe_lp_test_field($data, 'case_cta_url', '');
@@ -486,7 +486,7 @@ function wexoe_lp_test_render_contact($data, $id) {
     $title = wexoe_lp_test_field($data, 'contact_title', '');
     $email = wexoe_lp_test_field($data, 'contact_email', '');
     $phone = wexoe_lp_test_field($data, 'contact_phone', '');
-    $image = wexoe_lp_test_field($data, 'contact_image', '');
+    $image = wexoe_lp_test_field($data, 'contact_image_url', '');
     $quote = wexoe_lp_test_field($data, 'contact_quote', '');
 
     $html = '<section class="wexoe-lp-contact-section">';
@@ -994,7 +994,7 @@ add_shortcode('wexoe_landing', 'wexoe_landing_page_test_shortcode');
  * skickar in sidans contact_*-fält som "kontaktperson"-data.
  */
 function wexoe_lp_render_contact_form_section($data) {
-    if (empty($data['contact_form_show'])) return '';
+    if (empty($data['show_contact_form'])) return '';
     if (!class_exists('\\Wexoe\\Core\\Renderers\\ContactForm')) return '';
 
     $contact_person = null;
@@ -1004,7 +1004,7 @@ function wexoe_lp_render_contact_form_section($data) {
             'title' => $data['contact_title'] ?? '',
             'email' => $data['contact_email'] ?? '',
             'phone' => $data['contact_phone'] ?? '',
-            'image' => $data['contact_image'] ?? '',
+            'image' => $data['contact_image_url'] ?? '',
             'quote' => $data['contact_quote'] ?? '',
         ];
     }

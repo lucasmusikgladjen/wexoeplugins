@@ -3,71 +3,64 @@
  * Entity schema: audience_heroes
  *
  * Dynamic hero + value-proposition sections for audience landing pages.
- * Airtable-tabell: cms_customer_type_pages (tblZufoWVNKPuJdMK) i Wexoe NY.
+ * Airtable-tabell: Audience Heroes (tblvNf1CqAYEFvTpu) i base appXoUcK68dQwASjF.
  *
  * Primärnyckel: 'slug' — matchar [wexoe_audience slug="..."] shortcodes.
- *
- * BREAKING CHANGE: case-fält (case_title, case_description, case_result, case_link)
- * har lyfts ut till en separat tabell `cms_case_pages` (entity `case_pages`).
- * Hämta dem via `case_ids`-länken.
+ * 'active' är en checkbox-flagga; feature-pluginet filtrerar själv.
  */
 
 if (!defined('ABSPATH')) exit;
 
 return [
-    'base_id' => \Wexoe\Core\Plugin::SSOT_BASE_ID,
-    'table_id' => 'tblZufoWVNKPuJdMK',
+    'table_id' => 'tblvNf1CqAYEFvTpu',
     'primary_key' => 'slug',
     'cache_ttl' => 86400,
     'required' => ['slug'],
     'fields' => [
         // Core
-        'slug' => 'slug',
-        'internal_notes' => 'internal_notes',
-        'is_active' => ['source' => 'is_active', 'type' => 'bool'],
-        'country_ids' => ['source' => 'country_ids', 'type' => 'link', 'entity' => 'core_countries'],
-        'customer_type_ids' => ['source' => 'customer_type_ids', 'type' => 'link', 'entity' => 'core_customer_types'],
+        'slug' => 'Slug',
+        'active' => ['source' => 'Active', 'type' => 'bool'],
 
         // Hero
-        'eyebrow' => 'eyebrow',
-        'title' => 'title',
-        'description' => 'description',
-        'cta_text' => 'cta_text',
-        'cta_url' => 'cta_url',
-        'hero_image_url' => 'hero_image_url',
-        'stat_number' => ['source' => 'stat_number', 'type' => 'int'],
-        'stat_label' => 'stat_label',
+        'eyebrow' => 'Eyebrow',
+        'title' => 'Title',
+        'description' => 'Description',
+        'cta_text' => 'CTA Text',
+        'cta_url' => 'CTA URL',
+        'hero_image' => 'Hero Image',
+        'stat_number' => ['source' => 'Stat Number', 'type' => 'int'],
+        'stat_label' => 'Stat Label',
 
         // Value proposition
-        'value_h2' => 'value_h2',
-        'value_text_1' => 'value_text_1',
-        'value_text_2' => 'value_text_2',
-        'benefit_1' => 'benefit_1',
-        'benefit_2' => 'benefit_2',
-        'benefit_3' => 'benefit_3',
+        'value_h2' => 'Value H2',
+        'value_text_1' => 'Value Text 1',
+        'value_text_2' => 'Value Text 2',
+        'benefit_1' => 'Benefit 1',
+        'benefit_2' => 'Benefit 2',
+        'benefit_3' => 'Benefit 3',
 
-        // Linked cases
-        'case_ids' => [
-            'source' => 'case_ids',
-            'type' => 'link',
-            'entity' => 'case_pages',
-        ],
+        // Case card
+        'case_title' => 'Case Title',
+        'case_description' => 'Case Description',
+        'case_result' => 'Case Result',
+        'case_link_text' => 'Case Link Text',
+        'case_link_url' => 'Case Link URL',
 
         // Contact Form (delad med ContactForm-renderer)
-        'show_contact_form' => ['source' => 'show_contact_form', 'type' => 'bool'],
-        'contact_form_eyebrow' => 'contact_form_eyebrow',
-        'contact_form_title' => 'contact_form_title',
-        'contact_form_subtitle' => 'contact_form_subtitle',
-        'contact_form_layout' => 'contact_form_layout',
-        'contact_form_theme' => 'contact_form_theme',
-        'contact_form_show_company' => ['source' => 'contact_form_show_company', 'type' => 'bool'],
-        'contact_form_show_phone' => ['source' => 'contact_form_show_phone', 'type' => 'bool'],
-        'contact_form_show_dropdown' => ['source' => 'contact_form_show_dropdown', 'type' => 'bool'],
-        'contact_form_dropdown_label' => 'contact_form_dropdown_label',
-        'contact_form_options' => ['source' => 'contact_form_options', 'type' => 'lines'],
-        'contact_form_cta_text' => 'contact_form_cta_text',
-        'contact_form_message_label' => 'contact_form_message_label',
-        'contact_form_trust_signals' => ['source' => 'contact_form_trust_signals', 'type' => 'lines'],
-        'contact_form_show_contact_person' => ['source' => 'contact_form_show_contact_person', 'type' => 'bool'],
+        'contact_form_show' => ['source' => 'Show Contact Form', 'type' => 'bool'],
+        'contact_form_eyebrow' => 'Contact Form Eyebrow',
+        'contact_form_title' => 'Contact Form Title',
+        'contact_form_subtitle' => 'Contact Form Subtitle',
+        'contact_form_layout' => 'Contact Form Layout',
+        'contact_form_theme' => 'Contact Form Theme',
+        'contact_form_show_company' => ['source' => 'Contact Form Show Company', 'type' => 'bool'],
+        'contact_form_show_phone' => ['source' => 'Contact Form Show Phone', 'type' => 'bool'],
+        'contact_form_show_dropdown' => ['source' => 'Contact Form Show Dropdown', 'type' => 'bool'],
+        'contact_form_dropdown_label' => 'Contact Form Dropdown Label',
+        'contact_form_options' => ['source' => 'Contact Form Options', 'type' => 'lines'],
+        'contact_form_cta_text' => 'Contact Form CTA Text',
+        'contact_form_message_label' => 'Contact Form Message Label',
+        'contact_form_trust_signals' => ['source' => 'Contact Form Trust Signals', 'type' => 'lines'],
+        'contact_form_show_contact_person' => ['source' => 'Contact Form Show Contact Person', 'type' => 'bool'],
     ],
 ];

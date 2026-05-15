@@ -3,114 +3,130 @@
  * Entity schema: product_areas
  *
  * CMS-tabell med produktområdessidor (fiber, vfd, robotics, etc.).
- * Airtable-tabell: cms_product_pages (tbl5PQR7FNHCogeya) i Wexoe NY.
+ * Airtable-tabell: Product Areas (tblgatNFYFMwF4EcQ)
  *
  * Primärnyckel: 'slug' — används av [wexoe_product_area slug="..."] shortcode.
  *
- * BREAKING CHANGE: Tidigare hade tabellen fyra pseudo-array-sektioner (Normal 1-4).
- * Dessa har lyfts ut till en separat tabell `cms_product_page_sections` (entity
- * `product_page_sections`). Hämta dem via `section_ids`-länken eller via
- * `Core::entity('product_page_sections')->all(['product_page_ids' => $page['_record_id']])`.
+ * SPECIAL: Fyra uppsättningar av "Normal {N} *"-fält kollapsas till en
+ * 'sections'-array via pseudo_array-typen. Detta är stresstestet för
+ * schema-lagret — om det klarar detta klarar det allt.
  */
 
 if (!defined('ABSPATH')) exit;
 
 return [
-    'base_id' => \Wexoe\Core\Plugin::SSOT_BASE_ID,
-    'table_id' => 'tbl5PQR7FNHCogeya',
+    'table_id' => 'tblgatNFYFMwF4EcQ',
     'primary_key' => 'slug',
-    'cache_ttl' => 86400,
+    'cache_ttl' => 86400, // 24h
     'required' => ['slug', 'name'],
     'fields' => [
-        // Core
-        'slug' => 'slug',
-        'internal_notes' => 'internal_notes',
-        'is_active' => ['source' => 'is_active', 'type' => 'bool'],
-        'country_ids' => ['source' => 'country_ids', 'type' => 'link', 'entity' => 'core_countries'],
-        'division_ids' => ['source' => 'division_ids', 'type' => 'link', 'entity' => 'core_divisions'],
-        'name' => 'name',
-        'h1' => 'h1',
+        // Core identifiers
+        'name' => 'Name',
+        'slug' => 'Slug',
+        'h1' => 'H1',
 
         // Top banner
-        'top_bg' => 'top_bg',
+        'top_bg' => 'Top BG',
 
         // Hero section
-        'hero_h2' => 'hero_h2',
-        'hero_text' => 'hero_text',
-        'hero_cta_text' => 'hero_cta_text',
-        'hero_cta_url' => 'hero_cta_url',
-        'hero_benefits' => ['source' => 'hero_benefits', 'type' => 'lines'],
-        'hero_image_url' => 'hero_image_url',
-        'hero_bg' => 'hero_bg',
-        'hero_accent' => 'hero_accent',
+        'hero_h2' => 'Hero H2',
+        'hero_text' => 'Hero Text',
+        'hero_cta_text' => 'Hero CTA Text',
+        'hero_cta_url' => 'Hero CTA URL',
+        'hero_benefits' => [
+            'source' => 'Hero Benefits',
+            'type' => 'lines',
+        ],
+        'hero_image' => 'Hero Image',
+        'hero_bg' => 'Hero BG',
+        'hero_accent' => 'Hero Accent',
 
         // NPI (new product introduction) card
-        'npi_title' => 'npi_title',
-        'npi_description' => 'npi_description',
-        'npi_image_url' => 'npi_image_url',
-        'npi_link' => 'npi_link',
+        'npi_title' => 'NPI Title',
+        'npi_description' => 'NPI Description',
+        'npi_image' => 'NPI Image',
+        'npi_link' => 'NPI Link',
 
         // Toggle section styling
-        'toggle_bg' => 'toggle_bg',
-        'toggle_header_bg' => 'toggle_header_bg',
-        'toggle_accent' => 'toggle_accent',
+        'toggle_bg' => 'Toggle BG',
+        'toggle_header_bg' => 'Toggle Header BG',
+        'toggle_accent' => 'Toggle Accent',
 
         // Solutions section
-        'solutions_title' => 'solutions_title',
-        'solutions_bg' => 'solutions_bg',
-        'solutions_card_bg' => 'solutions_card_bg',
+        'solutions_title' => 'Solutions Title',
+        'solutions_bg' => 'Solutions BG',
+        'solutions_card_bg' => 'Solutions Card BG',
 
         // Contact section
-        'contact_name' => 'contact_name',
-        'contact_title' => 'contact_title',
-        'contact_email' => 'contact_email',
-        'contact_phone' => 'contact_phone',
-        'contact_image_url' => 'contact_image_url',
-        'contact_text' => 'contact_text',
-        'contact_bg' => 'contact_bg',
+        'contact_name' => 'Contact Name',
+        'contact_title' => 'Contact Title',
+        'contact_email' => 'Contact Email',
+        'contact_phone' => 'Contact Phone',
+        'contact_image' => 'Contact Image',
+        'contact_text' => 'Contact Text',
+        'contact_bg' => 'Contact BG',
 
         // Docs section
-        'docs_title' => 'docs_title',
-        'docs_iframe' => 'docs_iframe',
-        'docs_bg' => 'docs_bg',
+        'docs_title' => 'Docs Title',
+        'docs_iframe' => 'Docs Iframe',
+        'docs_bg' => 'Docs BG',
 
         // Boolean flags
-        'use_side_menu' => ['source' => 'use_side_menu', 'type' => 'bool'],
-        'show_request' => ['source' => 'show_request', 'type' => 'bool'],
-        'default_open' => ['source' => 'default_open', 'type' => 'bool'],
+        'use_side_menu' => ['source' => 'Side menu', 'type' => 'bool'],
+        'show_request' => ['source' => 'Request', 'type' => 'bool'],
+        'default_open' => ['source' => 'Default open', 'type' => 'bool'],
+
+        // THE HARD ONE: Normal 1-4 pseudo-array
+        // Collapses "Normal 1 H2", "Normal 1 Text", "Normal 1 Bullets", ...
+        //         "Normal 2 H2", "Normal 2 Text", ...
+        // into a single 'sections' array. Empty sections filtered out.
+        'sections' => [
+            'type' => 'pseudo_array',
+            'prefix' => 'Normal',
+            'count' => 4,
+            'fields' => [
+                'h2' => 'H2',
+                'text' => 'Text',
+                'bullets' => 'Bullets',
+                'image' => 'Image',
+                'reversed' => 'Reversed',
+                'bg' => 'BG',
+                'shown_top' => 'upp',
+            ],
+        ],
 
         // Contact Form (delad med ContactForm-renderer)
-        'show_contact_form' => ['source' => 'show_contact_form', 'type' => 'bool'],
-        'contact_form_eyebrow' => 'contact_form_eyebrow',
-        'contact_form_title' => 'contact_form_title',
-        'contact_form_subtitle' => 'contact_form_subtitle',
-        'contact_form_layout' => 'contact_form_layout',
-        'contact_form_theme' => 'contact_form_theme',
-        'contact_form_show_company' => ['source' => 'contact_form_show_company', 'type' => 'bool'],
-        'contact_form_show_phone' => ['source' => 'contact_form_show_phone', 'type' => 'bool'],
-        'contact_form_show_dropdown' => ['source' => 'contact_form_show_dropdown', 'type' => 'bool'],
-        'contact_form_dropdown_label' => 'contact_form_dropdown_label',
-        'contact_form_options' => ['source' => 'contact_form_options', 'type' => 'lines'],
-        'contact_form_cta_text' => 'contact_form_cta_text',
-        'contact_form_message_label' => 'contact_form_message_label',
-        'contact_form_trust_signals' => ['source' => 'contact_form_trust_signals', 'type' => 'lines'],
-        'contact_form_show_contact_person' => ['source' => 'contact_form_show_contact_person', 'type' => 'bool'],
+        'contact_form_show' => ['source' => 'Show Contact Form', 'type' => 'bool'],
+        'contact_form_eyebrow' => 'Contact Form Eyebrow',
+        'contact_form_title' => 'Contact Form Title',
+        'contact_form_subtitle' => 'Contact Form Subtitle',
+        'contact_form_layout' => 'Contact Form Layout',
+        'contact_form_theme' => 'Contact Form Theme',
+        'contact_form_show_company' => ['source' => 'Contact Form Show Company', 'type' => 'bool'],
+        'contact_form_show_phone' => ['source' => 'Contact Form Show Phone', 'type' => 'bool'],
+        'contact_form_show_dropdown' => ['source' => 'Contact Form Show Dropdown', 'type' => 'bool'],
+        'contact_form_dropdown_label' => 'Contact Form Dropdown Label',
+        'contact_form_options' => ['source' => 'Contact Form Options', 'type' => 'lines'],
+        'contact_form_cta_text' => 'Contact Form CTA Text',
+        'contact_form_message_label' => 'Contact Form Message Label',
+        'contact_form_trust_signals' => ['source' => 'Contact Form Trust Signals', 'type' => 'lines'],
+        'contact_form_show_contact_person' => ['source' => 'Contact Form Show Contact Person', 'type' => 'bool'],
 
         // Linked records
-        'section_ids' => [
-            'source' => 'section_ids',
-            'type' => 'link',
-            'entity' => 'product_page_sections',
-        ],
         'product_ids' => [
-            'source' => 'product_ids',
+            'source' => 'Products',
             'type' => 'link',
             'entity' => 'products',
         ],
         'solution_ids' => [
-            'source' => 'solution_ids',
+            'source' => 'Solutions',
             'type' => 'link',
             'entity' => 'solutions',
+        ],
+        'division_ids' => [
+            'source' => 'Division',
+            'type' => 'link',
+            'entity' => 'divisions',
         ],
     ],
 ];
