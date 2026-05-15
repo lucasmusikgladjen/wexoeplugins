@@ -441,10 +441,9 @@ function buildPaPayload(state: ProductAreaState, mode: TransformMode): string {
     solutionsBg: state.solutionsBg,
     solutionsCardBg: state.solutionsCardBg,
 
-    normal1: state.normal1,
-    normal2: state.normal2,
-    normal3: state.normal3,
-    normal4: state.normal4,
+    // Normal 1-4 sektioner persisteras deterministiskt i
+    // product-area-actions.ts (egna cms_product_page_sections-records). Skickas
+    // inte till Claude.
 
     contactName: state.contactName,
     contactTitle: state.contactTitle,
@@ -540,20 +539,20 @@ Output-format:
 
 KRITISKT:
 - _clientIndex och _recordId måste echas OFÖRÄNDRADE från input till output.
-- Använd exakta Airtable-fältnamn från schemat.
-- Inkludera ALDRIG "Products", "Solutions" eller "Division" i productArea.fields — backend hanterar dessa länkar.
-- Inkludera ALDRIG "Product Area" i products.fields — backend länkar.
-- Inkludera ALDRIG "Product Areas" i solutions.fields — backend länkar.
-- Sätt ALLTID Order = _clientIndex + 1 på varje product och solution.
-- Inkludera ALLTID boolean-fält (Visa, Horizontal, Side menu, Request, Default open, Normal N Reversed, Normal N upp, Show Contact Form, Contact Form Show Company, Contact Form Show Phone, Contact Form Show Dropdown, Contact Form Show Contact Person).
-- Inkludera ALLTID alla 15 Contact Form *-fält i productArea.fields (även tomma) så de inte tappas vid PATCH.
+- Använd exakta Airtable-fältnamn från schemat (snake_case för cms_product_pages-familjen).
+- Inkludera ALDRIG "product_ids", "solution_ids", "division_ids", "section_ids", "country_ids" i productArea.fields — backend hanterar alla länkar.
+- Inkludera ALDRIG "product_page_ids" i products.fields — backend länkar.
+- Inkludera ALDRIG "product_page_ids" i solutions.fields — backend länkar.
+- Sätt ALLTID order = _clientIndex + 1 på varje product och solution.
+- Inkludera ALLTID boolean-fält (is_active, horizontal, use_side_menu, show_request, default_open, reversed, shown_top, show_contact_form, contact_form_show_company, contact_form_show_phone, contact_form_show_dropdown, contact_form_show_contact_person).
+- Inkludera ALLTID alla 15 contact_form_*-fält i productArea.fields (även tomma) så de inte tappas vid PATCH.
 - Applicera alla formateringsregler (bullets-splitting, benefits-splitting, osv.).`;
 
   if (mode === 'create') {
     return `${common}
 
 MODE: CREATE
-- Utelämna fält med tomt värde (tomma strängar, null), MEN inkludera ALLTID Contact Form-checkboxes och Layout/Theme även vid CREATE.`;
+- Utelämna fält med tomt värde (tomma strängar, null), MEN inkludera ALLTID Contact Form-checkboxes och layout/theme även vid CREATE.`;
   }
 
   return `${common}
@@ -564,7 +563,7 @@ MODE: UPDATE
 - Bevara ordningen via _clientIndex.
 - Du MÅSTE emittera en post i products-arrayen för VARJE product i input — aldrig utelämna. Backend behöver det för diffen.
 - Du MÅSTE emittera en post i solutions-arrayen för VARJE solution i input.
-- Inkludera ALLTID alla 15 Contact Form *-fält i productArea.fields även om värdena är tomma eller false.`;
+- Inkludera ALLTID alla 15 contact_form_*-fält i productArea.fields även om värdena är tomma eller false.`;
 }
 
 export async function transformProductArea(

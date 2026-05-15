@@ -1,162 +1,182 @@
 # Airtable Schema — Wexoe Product Areas
 
-**Base ID:** `appXoUcK68dQwASjF`
+**Base ID:** `appokKSTaBdCa8YiW` (Wexoe NY)
 
 Detta schema används av Claude-middlemannen för att transformera
-state-JSON till Airtable-fältnamn när en Produktsida (Product Area)
-skapas eller uppdateras via buildern.
+state-JSON till Airtable-fältnamn när en Produktområdes-sida (Product Area)
+skapas eller uppdateras via buildern. Post-migration: snake_case överallt.
 
-Till skillnad från Landing Pages har Product Areas två typer av
-linkade records (Products och Solutions & Concepts) som också kan
-skapas, uppdateras och länkas i samma save-flöde. Articles är
-read-only i buildern och rörs aldrig av save-flödet.
+PA-familjen består av fyra tabeller:
+- `cms_product_pages` — huvudrecorden (PA)
+- `cms_product_page_sections` — innehållssektioner (gamla "Normal 1-4"-pseudo-array)
+- `cms_products` — produktblock som listas på en PA
+- `cms_solutions_mini` — lösnings-/koncept-kort som listas på en PA
+
+Articles (`cms_articles`) är read-only i buildern och rörs aldrig av save-flödet.
 
 ---
 
-## Tabell 1: Product Areas
+## Tabell 1: cms_product_pages
 
-**Table ID:** `tblgatNFYFMwF4EcQ`
+**Table ID:** `tbl5PQR7FNHCogeya`
 
-Huvudrecorden. Innehåller ~60 direktfält samt linked-record-fält för
-Products, Solutions och Division.
+Huvudrecorden. Innehåller ~50 direktfält samt linked-record-fält för
+section_ids, product_ids, solution_ids, division_ids, country_ids.
 
 | Fältnamn | Typ | Kommentar |
 |---|---|---|
-| **Name** | singleLineText | Internt namn. Buildern sätter det lika med Slug. |
-| **Slug** | singleLineText | URL-slug, lowercase a-z, 0-9, bindestreck. |
-| **H1** | singleLineText | Sidans huvudrubrik i top-banner. |
-| **Top BG** | singleLineText | Hex-color för top-banner-bakgrunden. |
-| **Hero H2** | singleLineText | Underrubrik i hero. |
-| **Hero Text** | richText | Brödtext i hero (markdown). |
-| **Hero CTA Text** | singleLineText | Primär CTA. |
-| **Hero CTA URL** | url | |
-| **Hero Benefits** | richText | En benefit per rad — renderas som checkmark-lista i hero-högerkolumn. |
-| **Hero Image** | multilineText | Bild-URL. |
-| **Hero BG** | singleLineText | Hex-color. |
-| **Hero Accent** | singleLineText | Hex-color. |
-| **NPI Title** | multilineText | NPI-kortets titel (visas i hero-högerkolumn). |
-| **NPI Description** | multilineText | |
-| **NPI Image** | multilineText | URL. |
-| **NPI Link** | multilineText | URL som NPI-kortet klickar till. |
-| **Toggle BG** | singleLineText | Hex-color för produktsektionens bakgrund. |
-| **Toggle Header BG** | singleLineText | Hex-color för produktkortens headers. |
-| **Toggle Accent** | singleLineText | Hex-color för orange accent i produktsektionen. |
-| **Solutions Title** | singleLineText | Rubrik på solutions-griden, default "Lösningar & koncept". |
-| **Solutions BG** | singleLineText | Hex-color. |
-| **Solutions Card BG** | singleLineText | Hex-color. |
-| **Normal 1 H2** | singleLineText | Innehållssektion 1 — rubrik. |
-| **Normal 1 Text** | richText | Brödtext. |
-| **Normal 1 Bullets** | multilineText | En punkt per rad. |
-| **Normal 1 Image** | singleLineText | URL. |
-| **Normal 1 Reversed** | checkbox | Bild till vänster istället för höger. |
-| **Normal 1 upp** | checkbox | Renderar sektion 1 **före** produktlistan istället för efter. |
-| **Normal 1 BG** | singleLineText | Hex-color. |
-| **Normal 2 H2** / **Normal 2 Text** / **Normal 2 Bullets** / **Normal 2 Image** / **Normal 2 Reversed** / **Normal 2 BG** | samma | Innehållssektion 2. Ingen `upp`-checkbox (renderar alltid efter produkter). |
-| **Normal 3 H2** / … / **Normal 3 BG** | samma | Innehållssektion 3. |
-| **Normal 4 H2** / **Normal 4 Text** | singleLineText / multilineText | Innehållssektion 4. |
-| **Normal 4 Bullets** | multilineText | |
-| **Normal 4 Image** | url | OBS — Normal 4 Image är `url`-typ (inte multilineText som 1–3). |
-| **Normal 4 Reversed** / **Normal 4 BG** | checkbox / text | |
-| **Contact Name** | singleLineText | Kontaktperson. |
-| **Contact Title** | singleLineText | |
-| **Contact Email** | email | |
-| **Contact Phone** | phoneNumber | |
-| **Contact Image** | singleLineText | URL. |
-| **Contact Text** | multilineText | Quote/bio. |
-| **Contact BG** | singleLineText | Hex-color. |
-| **Docs Title** | singleLineText | Rubrik ovanför dokumentations-iframe. |
-| **Docs Iframe** | url | Iframe src-URL. |
-| **Docs BG** | singleLineText | Hex-color. |
-| **Side menu** | checkbox | Ska ALLTID inkluderas. Togglar sidomeny-layout. |
-| **Request** | checkbox | Ska ALLTID inkluderas. Togglar prisförfrågan-formulär. |
-| **Default open** | checkbox | Ska ALLTID inkluderas. |
-| **Products** | multipleRecordLinks | Länk till Products-tabellen. **Hanteras av backend — inkludera ej i Claudes output.** |
-| **Solutions** | multipleRecordLinks | Länk till Solutions & Concepts-tabellen. **Hanteras av backend — inkludera ej.** |
-| **Division** | multipleRecordLinks | Länk till Divisions-tabellen. **Hanteras av backend — inkludera ej.** |
+| **slug** | singleLineText | Primary key. URL-slug, lowercase a-z, 0-9, bindestreck. |
+| **internal_notes** | multilineText | Redaktörs-notering. Visas inte publikt. |
+| **is_active** | checkbox | False = sidan returnerar tom shortcode. |
+| **country_ids** | multipleRecordLinks | core_countries-länk. **Hanteras av backend — inkludera ej.** |
+| **division_ids** | multipleRecordLinks | core_divisions-länk. **Hanteras av backend — inkludera ej.** |
+| **name** | singleLineText | Visningsnamn ("Fibernät", "Frekvensomriktare"). |
+| **h1** | singleLineText | Sidans huvudrubrik. |
+| **top_bg** | singleLineText | Hex-color för top-banner. |
+| **hero_h2** | singleLineText | Underrubrik i hero. |
+| **hero_text** | multilineText | Brödtext i hero (markdown). |
+| **hero_cta_text** | singleLineText | Primär CTA. |
+| **hero_cta_url** | singleLineText | |
+| **hero_benefits** | multilineText | En benefit per rad — renderas som checkmark-lista. |
+| **hero_image_url** | singleLineText | URL till hero-bakgrundsbild. |
+| **hero_bg** | singleLineText | Hex-color. |
+| **hero_accent** | singleLineText | Hex-color. |
+| **npi_title** | singleLineText | NPI-kortets titel (i hero-högerkolumn). |
+| **npi_description** | multilineText | |
+| **npi_image_url** | singleLineText | URL till produktbild. |
+| **npi_link** | url | URL som NPI-kortet klickar till. |
+| **toggle_bg** | singleLineText | Produktsektionens bakgrundsfärg. |
+| **toggle_header_bg** | singleLineText | Produktkortens headers-färg. |
+| **toggle_accent** | singleLineText | Accent-färg (orange). |
+| **solutions_title** | singleLineText | Solutions-griden rubrik, default "Lösningar & koncept". |
+| **solutions_bg** | singleLineText | Hex-color. |
+| **solutions_card_bg** | singleLineText | Hex-color. |
+| **contact_name** | singleLineText | Kontaktperson. |
+| **contact_title** | singleLineText | |
+| **contact_email** | email | |
+| **contact_phone** | phoneNumber | |
+| **contact_image_url** | singleLineText | URL. |
+| **contact_text** | multilineText | Quote/bio. |
+| **contact_bg** | singleLineText | Hex-color. |
+| **docs_title** | singleLineText | Rubrik ovanför dokumentations-iframe. |
+| **docs_iframe** | url | Iframe src-URL. |
+| **docs_bg** | singleLineText | Hex-color. |
+| **use_side_menu** | checkbox | Ska ALLTID inkluderas. Togglar sidomeny-layout. |
+| **show_request** | checkbox | Ska ALLTID inkluderas. Togglar prisförfrågan-formulär. |
+| **default_open** | checkbox | Ska ALLTID inkluderas. |
+| **section_ids** | multipleRecordLinks | cms_product_page_sections-länk. **Hanteras av backend — inkludera ej.** |
+| **product_ids** | multipleRecordLinks | cms_products-länk. **Hanteras av backend — inkludera ej.** |
+| **solution_ids** | multipleRecordLinks | cms_solutions_mini-länk. **Hanteras av backend — inkludera ej.** |
 
 ---
 
-## Tabell 2: Products
+## Tabell 2: cms_product_page_sections
 
-**Table ID:** `tblHafyCEyh7S3Y64`
+**Table ID:** `tbl1r3T3ukIPJ0S3N`
 
-Products är linkade records som representerar produkter på en Product Area.
-En produkt kan i teorin vara linkad till flera Product Areas, men i praktiken
-äger varje PA sina egna produkter.
+Innehållssektioner (gamla "Normal 1-4"). Buildern hanterar fortfarande
+fyra slots i state (`normal1` … `normal4`); backend extraherar och skapar
+upp till fyra sub-records per save.
 
 | Fältnamn | Typ | Kommentar |
 |---|---|---|
-| **Name** | singleLineText | Produktnamn. |
-| **Header side menu** | singleLineText | Rubrik som används i sidomeny-läget. Fallback: `Name`. |
-| **Ecosystem Description** | singleLineText | Kort underrubrik som visas bredvid produktnamnet i toggle-headers. |
-| **Description** | richText | Brödtext (markdown). |
-| **Bullets** | multilineText | En punkt per rad. |
-| **Image** | singleLineText | URL. |
-| **Button 1 Text** | singleLineText | Sekundär knapps text. |
-| **Button 1 URL** | singleLineText | Sekundär knapps URL. |
-| **Button 2 Text** | singleLineText | Primär knapps text. |
-| **Button 2 URL** | singleLineText | Primär knapps URL. |
-| **Order** | number | 1-baserat. PHP-pluginet sorterar produkter på detta fält. |
-| **Visa** | checkbox | Ska ALLTID inkluderas. `false` döljer produkten. |
-| **Horizontal** | checkbox | Ska ALLTID inkluderas. Togglar horisontell layout för artikelkort. |
-| **Product Area** | multipleRecordLinks | Back-link. **Hanteras av backend — inkludera ej.** |
-| **Articles** | multipleRecordLinks | Länk till Articles. **Read-only i buildern — inkludera ej.** |
+| **name** | singleLineText | Internt namn, t.ex. "<page slug>: <h2>". |
+| **internal_notes** | multilineText | |
+| **is_active** | checkbox | False = sektionen visas inte. |
+| **order** | number | Renderingsordning. Lägre = visas först. |
+| **h2** | singleLineText | Sektionens rubrik. |
+| **text** | multilineText | Brödtext, markdown. |
+| **bullets** | multilineText | En punkt per rad. |
+| **image_url** | singleLineText | URL till bild. |
+| **bg** | singleLineText | Hex-färg. |
+| **reversed** | checkbox | Bild vänster, text höger. |
+| **shown_top** | checkbox | Sektion visas över hero/toggle (gamla "upp"). |
+| **product_page_ids** | multipleRecordLinks | Back-link till cms_product_pages. **Hanteras av backend.** |
 
 ---
 
-## Tabell 3: Solutions & Concepts
+## Tabell 3: cms_products
 
-**Table ID:** `tblc98m9MJcpbWAVU`
+**Table ID:** `tblN23V7uAMpeZoO1`
 
-Solutions är kort som renderas i en grid nedanför produktsektionen på en PA.
+Products är linkade records som representerar produkter på en PA.
+En produkt kan listas på flera PA:n (delas via product_ids).
 
 | Fältnamn | Typ | Kommentar |
 |---|---|---|
-| **Name** | singleLineText | Lösningens titel. |
-| **Image** | singleLineText | URL. |
-| **URL** | singleLineText | Länk som hela kortet klickar till. |
-| **Order** | number | 1-baserat, används för sortering. |
-| **Visa** | checkbox | Ska ALLTID inkluderas. |
-| **Product Areas** | multipleRecordLinks | Back-link till PA. **Hanteras av backend — inkludera ej.** |
-| **Description** | multilineText | Kort beskrivning. |
-| **Category** | singleLineText | Visas som uppercase-label ovanför titeln. |
-| **CTA Text** | singleLineText | Knapptext, default "Läs mer". |
+| **name** | singleLineText | Produktnamn. |
+| **internal_notes** | multilineText | |
+| **is_active** | checkbox | Ska ALLTID inkluderas. `false` döljer produkten. |
+| **order** | number | 1-baserat. PHP-pluginet sorterar produkter på detta fält. |
+| **ecosystem_description** | singleLineText | Kort etikett bredvid produktnamnet. |
+| **description** | multilineText | Brödtext, markdown. |
+| **bullets** | multilineText | En punkt per rad. |
+| **image_url** | singleLineText | URL. |
+| **button_1_text** | singleLineText | Sekundär knapps text. |
+| **button_1_url** | singleLineText | |
+| **button_2_text** | singleLineText | Primär knapps text. |
+| **button_2_url** | singleLineText | |
+| **horizontal** | checkbox | Ska ALLTID inkluderas. Togglar horisontell layout. |
+| **header_side_menu** | singleLineText | Sidomeny-rubrik. Fallback: `name`. |
+| **product_page_ids** | multipleRecordLinks | Back-link till PA. **Hanteras av backend.** |
+| **article_ids** | multipleRecordLinks | Länk till cms_articles. **Read-only i buildern — inkludera ej.** |
+| **supplier_ids** | multipleRecordLinks | core_partners-länk (valfritt). |
 
 ---
 
-## Tabell 4: Divisions (endast read/link)
+## Tabell 4: cms_solutions_mini
 
-**Table ID:** `tblKam1tUTlR13atl`
+**Table ID:** `tblxK7ikOgLFuze6m`
 
-Divisions är en liten lookup-tabell med Wexoes affärsområden (Automation,
-IT Infra etc.). Buildern **skapar aldrig** nya divisions — användaren väljer
-en befintlig i Inställningar. Linkas till PA via `Division`-fältet.
+Solutions är kort som renderas i en grid nedanför produktsektionen.
 
 | Fältnamn | Typ | Kommentar |
 |---|---|---|
-| **Name** | singleLineText | Divisionsnamn. |
+| **name** | singleLineText | Lösningens titel. |
+| **internal_notes** | multilineText | |
+| **is_active** | checkbox | Ska ALLTID inkluderas. |
+| **order** | number | 1-baserat, för sortering. |
+| **category** | singleLineText | Visas som uppercase-label ovanför titeln. |
+| **image_url** | singleLineText | URL. |
+| **url** | url | Hela kortets klick-länk. |
+| **description** | multilineText | Kort beskrivning. |
+| **cta_text** | singleLineText | Knapptext, default "Läs mer". |
+| **product_page_ids** | multipleRecordLinks | Back-link till PA. **Hanteras av backend.** |
 
 ---
 
-## Tabell 5: Articles (read-only)
+## Tabell 5: core_divisions (endast read/link)
 
-**Table ID:** `tblb87eWIjnW3ttOL`
+**Table ID:** `tblyxs2zsoRBozxQS`
+
+SSOT-tabellen med Wexoes affärsområden. Buildern **skapar aldrig** nya
+divisioner — användaren väljer en befintlig.
+
+| Fältnamn | Typ | Kommentar |
+|---|---|---|
+| **name** | singleLineText | Divisionsnamn. |
+
+---
+
+## Tabell 6: cms_articles (read-only)
+
+**Table ID:** `tblhnz3MQG1JwfKrN`
 
 Articles är artiklar (produktvarianter) som hör till en produkt. Buildern
-visar dem som en read-only lista under varje produktkort — aldrig editerbar
-och aldrig skriven av save-flödet. Dokumenteras här för fullständighet.
+visar dem som en read-only lista — aldrig editerbar och aldrig skriven av
+save-flödet. Dokumenteras för fullständighet.
 
 | Fältnamn | Typ | Kommentar |
 |---|---|---|
-| **Name** | multilineText | Artikelnamn. |
-| **Artikelnummer** | singleLineText | Unikt artikelnummer. |
-| **Description** | multilineText | |
-| **Datablad** | singleLineText | URL till datablad. |
-| **Länk till webshop** | singleLineText | URL till webshop. |
-| **Bild** | singleLineText | URL. |
-| **Link to products** | multipleRecordLinks | Back-link till Products. |
-| **Varianter** | multilineText | Variant-definition (se variant-format i wexoe-product-area.php). |
-| **Supplier** | multipleRecordLinks | Länk till Partners. |
+| **name** | singleLineText | Artikelnamn. |
+| **article_number** | singleLineText | Unikt artikelnummer. |
+| **description** | multilineText | |
+| **datasheet_url** | url | URL till datablad. |
+| **webshop_url** | url | URL till webshop. |
+| **image_url** | singleLineText | URL. |
+| **variants** | multilineText | Variant-definition. |
+| **product_ids** | multipleRecordLinks | Back-link till cms_products. |
+| **supplier_ids** | multipleRecordLinks | core_partners-länk. |
 
 ---
 
@@ -168,46 +188,47 @@ Claude ska **tolka** och **städa** user-edited data innan den går till Airtabl
    backend sätta explicit `""` för fält som ska rensas — Claude behöver inte
    bry sig om det.
 
-2. **Bullets, Hero Benefits, Normal N Bullets:** Om input ser ut som en paragraf
+2. **bullets, hero_benefits, sections.bullets:** Om input ser ut som en paragraf
    eller kommaseparerad lista, splitta till en per rad (`\n`).
 
-3. **Boolean-fält** (`Side menu`, `Request`, `Default open`, `Visa`, `Horizontal`,
-   `Normal N Reversed`, `Normal N upp`, `Show Contact Form`, alla
-   `Contact Form Show *`-checkboxes) ska ALLTID inkluderas, även `false`.
+3. **Boolean-fält** (`use_side_menu`, `show_request`, `default_open`, `is_active`,
+   `horizontal`, `reversed`, `shown_top`, `show_contact_form`, alla
+   `contact_form_show_*`-checkboxes) ska ALLTID inkluderas, även `false`.
 
-4. **Hex-färger** (alla `*BG`, `*Accent`, `Top BG`, etc.): om användaren har
+4. **Hex-färger** (alla `*_bg`, `*_accent`, `top_bg`, etc.): om användaren har
    satt en färg, skicka den som `#RRGGBB`. Om tom, utelämna vid CREATE.
 
-5. **Linkade records** (`Products`, `Solutions`, `Division`, `Product Area`,
-   `Articles`, `LP Downloads`): **Inkludera ALDRIG** i Claudes output. Backend
+5. **Linkade records** (`product_ids`, `solution_ids`, `section_ids`,
+   `division_ids`, `country_ids`, `product_page_ids`, `article_ids`,
+   `supplier_ids`): **Inkludera ALDRIG** i Claudes output. Backend
    hanterar all linked-record-logik.
 
-6. **Contact Form-fält:** Alla 15 `Contact Form *`-fält ska ALLTID inkluderas
-   i `productArea.fields` vid UPDATE (även tomma eller false). `Contact Form
-   Layout` = `split` eller `centered`. `Contact Form Theme` = `dark` eller
-   `light`. Trust signals format: `**Bold** | Resten` per rad, max 3.
+6. **Contact Form-fält:** Alla 15 `contact_form_*`-fält ska ALLTID inkluderas
+   i `productArea.fields` vid UPDATE (även tomma eller false). `contact_form_layout`
+   = `split` eller `centered`. `contact_form_theme` = `dark` eller `light`.
+   Trust signals format: `**Bold** | Resten` per rad, max 3.
 
 ---
 
-## Contact Form-fält (Product Areas-tabellen)
+## Contact Form-fält (cms_product_pages-tabellen)
 
 Samma 15 fält som i Landing Pages, renderas av `\Wexoe\Core\Renderers\ContactForm`
-sist på PA-sidan när `Show Contact Form` = true.
+sist på PA-sidan när `show_contact_form` = true.
 
 | Fältnamn | Typ |
 |---|---|
-| `Show Contact Form` | checkbox |
-| `Contact Form Eyebrow` | singleLineText |
-| `Contact Form Title` | singleLineText |
-| `Contact Form Subtitle` | multilineText |
-| `Contact Form Layout` | singleSelect (`split` / `centered`) |
-| `Contact Form Theme` | singleSelect (`dark` / `light`) |
-| `Contact Form Show Company` | checkbox |
-| `Contact Form Show Phone` | checkbox |
-| `Contact Form Show Dropdown` | checkbox |
-| `Contact Form Dropdown Label` | singleLineText |
-| `Contact Form Options` | multilineText (en per rad) |
-| `Contact Form CTA Text` | singleLineText |
-| `Contact Form Message Label` | singleLineText |
-| `Contact Form Trust Signals` | multilineText (`**Bold** \| Text`, max 3) |
-| `Contact Form Show Contact Person` | checkbox |
+| `show_contact_form` | checkbox |
+| `contact_form_eyebrow` | singleLineText |
+| `contact_form_title` | singleLineText |
+| `contact_form_subtitle` | multilineText |
+| `contact_form_layout` | singleSelect (`split` / `centered`) |
+| `contact_form_theme` | singleSelect (`dark` / `light`) |
+| `contact_form_show_company` | checkbox |
+| `contact_form_show_phone` | checkbox |
+| `contact_form_show_dropdown` | checkbox |
+| `contact_form_dropdown_label` | singleLineText |
+| `contact_form_options` | multilineText (en per rad) |
+| `contact_form_cta_text` | singleLineText |
+| `contact_form_message_label` | singleLineText |
+| `contact_form_trust_signals` | multilineText (`**Bold** \| Text`, max 3) |
+| `contact_form_show_contact_person` | checkbox |

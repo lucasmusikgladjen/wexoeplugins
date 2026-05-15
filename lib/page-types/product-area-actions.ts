@@ -17,11 +17,12 @@ import {
   createRecord,
   updateRecord,
   updateRecords,
+  deleteRecords,
   getRecord,
   listRecords,
 } from '../airtable';
 import { PA_TABLE_IDS, PA_BASE_ID } from '../product-area-mapper';
-import { ProductAreaState } from '../product-area-types';
+import { NormalSection, ProductAreaState } from '../product-area-types';
 import { transformProductArea } from '../claude-transform';
 import { contactFieldsEmpty, resolveDefaultCoworker } from '../default-coworker';
 import type { RelationSyncResult } from './types';
@@ -39,14 +40,44 @@ function sortByClientIndex<T extends { _clientIndex: number }>(arr: T[]): T[] {
   return [...arr].sort((a, b) => a._clientIndex - b._clientIndex);
 }
 
+type SectionSlot = 1 | 2 | 3 | 4;
+
+/** Bygg cms_product_page_sections-fält från en Normal-slot, eller null om
+ *  slotet är tomt (ingen H2). Sektioner är PA-ägda — varje skapas/uppdateras
+ *  deterministiskt här (ingen Claude-transform behövs). */
+function buildSectionFields(
+  slug: string,
+  slot: SectionSlot,
+  sec: NormalSection,
+): Record<string, unknown> | null {
+  if (!sec.h2?.trim()) return null;
+  return {
+    name: `${slug}: ${sec.h2}`.slice(0, 255),
+    is_active: true,
+    order: slot,
+    h2: sec.h2,
+    text: sec.text,
+    bullets: sec.bullets,
+    image_url: sec.image,
+    bg: sec.bg,
+    reversed: !!sec.reversed,
+    shown_top: slot === 1 ? !!sec.upp : false,
+  };
+}
+
+function getSlot(state: ProductAreaState, slot: SectionSlot): NormalSection {
+  return state[`normal${slot}` as 'normal1' | 'normal2' | 'normal3' | 'normal4'];
+}
+
 async function loadExistingPa(
   apiKey: string,
   recordId: string,
-): Promise<{ productIds: string[]; solutionIds: string[] }> {
+): Promise<{ productIds: string[]; solutionIds: string[]; sectionIds: string[] }> {
   const record = await getRecord(apiKey, PA_TABLE_IDS.productAreas, recordId, PA_BASE_ID);
   return {
-    productIds: (record.fields['Products'] as string[] | undefined) ?? [],
-    solutionIds: (record.fields['Solutions'] as string[] | undefined) ?? [],
+    productIds: (record.fields['product_ids'] as string[] | undefined) ?? [],
+    solutionIds: (record.fields['solution_ids'] as string[] | undefined) ?? [],
+    sectionIds: (record.fields['section_ids'] as string[] | undefined) ?? [],
   };
 }
 
@@ -114,6 +145,21 @@ export async function productAreaCreate(
     }
   }
 
+  // CREATE sections (deterministic — no Claude). Slot-ordningen 1-4 mappar
+  // till `order` på sub-records; tomma slots (utan H2) skippas.
+  const sectionIds: string[] = [];
+  for (const slot of [1, 2, 3, 4] as SectionSlot[]) {
+    const fields = buildSectionFields(workingState.slug, slot, getSlot(workingState, slot));
+    if (!fields) continue;
+    const created = await createRecord(
+      airtableKey,
+      PA_TABLE_IDS.productPageSections,
+      fields,
+      PA_BASE_ID,
+    );
+    sectionIds.push(created.id);
+  }
+
   // CREATE Product Area:n med rätt link-array-ordning. `Name` mirroras
   // slug (basens konvention).
   const productIdOrder = workingState.products
@@ -124,13 +170,14 @@ export async function productAreaCreate(
     .filter((id): id is string => !!id);
 
   const paFields: Record<string, unknown> = {
-    Name: workingState.slug,
+    name: workingState.slug,
     ...transformed.productArea,
-    Products: productIdOrder,
-    Solutions: solutionIdOrder,
+    product_ids: productIdOrder,
+    solution_ids: solutionIdOrder,
+    section_ids: sectionIds,
   };
   if (workingState.division.length > 0) {
-    paFields.Division = workingState.division;
+    paFields.division_ids = workingState.division;
   }
 
   const createdPa = await createRecord(airtableKey, PA_TABLE_IDS.productAreas, paFields, PA_BASE_ID);
@@ -242,6 +289,65 @@ export async function productAreaUpdate(
     }
   }
 
+  // Sections — sub-records ägda av PA:n. Match:a state-slots mot existerande
+  // records via `order`-fältet. Skapa nya, uppdatera matchande, ta bort
+  // orphans (sektioner som inte längre har en motsvarande state-slot).
+  const existingSectionIds = existingPa.sectionIds;
+  let existingSections: Array<{ id: string; order: number }> = [];
+  if (existingSectionIds.length > 0) {
+    const formula = `OR(${existingSectionIds.map((id) => `RECORD_ID()='${id}'`).join(',')})`;
+    const records = await listRecords(airtableKey, PA_TABLE_IDS.productPageSections, {
+      filterByFormula: formula,
+      baseId: PA_BASE_ID,
+      fields: ['order'],
+    });
+    existingSections = records.map((r) => ({
+      id: r.id,
+      order: ((r.fields.order as number) ?? 0),
+    }));
+  }
+  const sectionIdByOrder = new Map<number, string>(
+    existingSections.map((s) => [s.order, s.id]),
+  );
+  const usedSectionIds = new Set<string>();
+  const sectionIdOrder: string[] = [];
+  for (const slot of [1, 2, 3, 4] as SectionSlot[]) {
+    const fields = buildSectionFields(state.slug, slot, getSlot(state, slot));
+    if (!fields) continue;
+    const existingId = sectionIdByOrder.get(slot);
+    if (existingId) {
+      await updateRecord(
+        airtableKey,
+        PA_TABLE_IDS.productPageSections,
+        existingId,
+        fields,
+        PA_BASE_ID,
+      );
+      sectionIdOrder.push(existingId);
+      usedSectionIds.add(existingId);
+    } else {
+      const created = await createRecord(
+        airtableKey,
+        PA_TABLE_IDS.productPageSections,
+        fields,
+        PA_BASE_ID,
+      );
+      sectionIdOrder.push(created.id);
+      usedSectionIds.add(created.id);
+    }
+  }
+  const orphanSectionIds = existingSections
+    .map((s) => s.id)
+    .filter((id) => !usedSectionIds.has(id));
+  if (orphanSectionIds.length > 0) {
+    await deleteRecords(
+      airtableKey,
+      PA_TABLE_IDS.productPageSections,
+      orphanSectionIds,
+      PA_BASE_ID,
+    );
+  }
+
   // PATCH Product Area:n med Claude-fields + nya link-array-ordningar.
   const productIdOrder = state.products
     .map((_, i) => productIdByClientIndex[i])
@@ -252,9 +358,10 @@ export async function productAreaUpdate(
 
   await updateRecord(airtableKey, PA_TABLE_IDS.productAreas, recordId, {
     ...transformed.productArea,
-    Products: productIdOrder,
-    Solutions: solutionIdOrder,
-    Division: state.division,
+    product_ids: productIdOrder,
+    solution_ids: solutionIdOrder,
+    section_ids: sectionIdOrder,
+    division_ids: state.division,
   }, PA_BASE_ID);
 
   return {
@@ -278,14 +385,14 @@ export interface ProductAreaListItem {
 export async function listProductAreas(apiKey: string): Promise<ProductAreaListItem[]> {
   const records = await listRecords(apiKey, PA_TABLE_IDS.productAreas, {
     baseId: PA_BASE_ID,
-    fields: ['Name', 'Slug', 'H1', 'Division'],
-    sort: [{ field: 'Name', direction: 'asc' }],
+    fields: ['name', 'slug', 'h1', 'division_ids'],
+    sort: [{ field: 'slug', direction: 'asc' }],
   });
   return records.map((r) => ({
     id: r.id,
-    name: (r.fields.Name as string) || '',
-    slug: (r.fields.Slug as string) || '',
-    h1: (r.fields.H1 as string) || '',
-    divisionIds: (r.fields.Division as string[] | undefined) ?? [],
+    name: (r.fields.name as string) || '',
+    slug: (r.fields.slug as string) || '',
+    h1: (r.fields.h1 as string) || '',
+    divisionIds: (r.fields.division_ids as string[] | undefined) ?? [],
   }));
 }

@@ -69,19 +69,19 @@ export const productAreaServer: PageTypeServerDef<ProductAreaState, ProductAreaL
   },
   listItemMapper: (r: AirtableRecord): ProductAreaListItem => ({
     id: r.id,
-    name: (r.fields.Name as string) || '',
-    slug: (r.fields.Slug as string) || '',
-    h1: (r.fields.H1 as string) || '',
-    divisionIds: (r.fields.Division as string[] | undefined) ?? [],
+    name: (r.fields.name as string) || '',
+    slug: (r.fields.slug as string) || '',
+    h1: (r.fields.h1 as string) || '',
+    divisionIds: (r.fields.division_ids as string[] | undefined) ?? [],
   }),
-  listFields: ['Name', 'Slug', 'H1', 'Division'],
-  listSort: [{ field: 'Name', direction: 'asc' }],
+  listFields: ['name', 'slug', 'h1', 'division_ids'],
+  listSort: [{ field: 'slug', direction: 'asc' }],
 
   cacheEntities: PA_ENTITIES,
 
   slug: {
     accessor: (s) => s.slug,
-    field: 'Slug',
+    field: 'slug',
     checkDuplicate: true,
   },
 };

@@ -2,12 +2,17 @@
  * Bidirektional mappning för contact-form-fält i sidtyps-records.
  *
  * Contact-form-blocket återanvänds av flera sidtyper (audience, product-area,
- * unique-page, ...) och har historiskt definierats om i varje mapper.
+ * unique-page, ...). Sidtyperna ligger i olika baser och olika naming-eror:
  *
- * Fältnamnen prefixas så samma block kan ligga i flera tabeller. Default
- * är `Contact Form ` (Title Case) som matchar nuvarande Airtable-schema.
- * Vid framtida snake_case-rename räcker det att uppdatera default-prefixet
- * (eller skicka ett eget per anrop).
+ *  - Legacy-basen (audience, m.fl.) — Title Case-fält:
+ *    `Contact Form Eyebrow`, `Contact Form Show Company`, etc.
+ *  - Wexoe NY (cms_*-tabellerna) — snake_case-fält:
+ *    `contact_form_eyebrow`, `contact_form_show_company`, etc.
+ *
+ * Schemat väljs via `schema`-parametern. `title_case` är default för
+ * bakåtkompat med audience-mapper, men nya callsites (cms_*) ska skicka
+ * `snake_case`. Internt mappar funktionen mellan ContactFormState-fält och
+ * Airtable-fältnamn för rätt schema.
  *
  * Read-sidan använder `emptyContactFormState()` som fallback när record:en
  * saknar toggle-fält — så defaults som "Show Company = true" består även
@@ -25,36 +30,102 @@ import {
   emptyContactFormState,
 } from './contact-form-types';
 
-export const CONTACT_FORM_FIELD_PREFIX = 'Contact Form ';
+export type ContactFormSchema = 'title_case' | 'snake_case';
+
+interface SchemaSpec {
+  prefix: string;
+  /** Map från ContactFormState-fält → Airtable-fältnamn (utan prefix). */
+  keys: {
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    layout: string;
+    theme: string;
+    showCompany: string;
+    showPhone: string;
+    showDropdown: string;
+    dropdownLabel: string;
+    options: string;
+    ctaText: string;
+    messageLabel: string;
+    trustSignals: string;
+    showContactPerson: string;
+  };
+}
+
+const SCHEMAS: Record<ContactFormSchema, SchemaSpec> = {
+  title_case: {
+    prefix: 'Contact Form ',
+    keys: {
+      eyebrow: 'Eyebrow',
+      title: 'Title',
+      subtitle: 'Subtitle',
+      layout: 'Layout',
+      theme: 'Theme',
+      showCompany: 'Show Company',
+      showPhone: 'Show Phone',
+      showDropdown: 'Show Dropdown',
+      dropdownLabel: 'Dropdown Label',
+      options: 'Options',
+      ctaText: 'CTA Text',
+      messageLabel: 'Message Label',
+      trustSignals: 'Trust Signals',
+      showContactPerson: 'Show Contact Person',
+    },
+  },
+  snake_case: {
+    prefix: 'contact_form_',
+    keys: {
+      eyebrow: 'eyebrow',
+      title: 'title',
+      subtitle: 'subtitle',
+      layout: 'layout',
+      theme: 'theme',
+      showCompany: 'show_company',
+      showPhone: 'show_phone',
+      showDropdown: 'show_dropdown',
+      dropdownLabel: 'dropdown_label',
+      options: 'options',
+      ctaText: 'cta_text',
+      messageLabel: 'message_label',
+      trustSignals: 'trust_signals',
+      showContactPerson: 'show_contact_person',
+    },
+  },
+};
+
+/** @deprecated Kept for callers that still reference the constant directly. */
+export const CONTACT_FORM_FIELD_PREFIX = SCHEMAS.title_case.prefix;
 
 export function contactFormFromFields(
   fields: AirtableFields,
-  prefix: string = CONTACT_FORM_FIELD_PREFIX,
+  schema: ContactFormSchema = 'title_case',
 ): ContactFormState {
   const empty = emptyContactFormState();
-  const k = (key: string) => `${prefix}${key}`;
-  const layoutRaw = asString(fields[k('Layout')]);
-  const themeRaw = asString(fields[k('Theme')]);
+  const { prefix, keys } = SCHEMAS[schema];
+  const f = (k: keyof SchemaSpec['keys']) => fields[`${prefix}${keys[k]}`];
+  const layoutRaw = asString(f('layout'));
+  const themeRaw = asString(f('theme'));
   return {
-    eyebrow: asString(fields[k('Eyebrow')]),
-    title: asString(fields[k('Title')]),
-    subtitle: asString(fields[k('Subtitle')]),
+    eyebrow: asString(f('eyebrow')),
+    title: asString(f('title')),
+    subtitle: asString(f('subtitle')),
     layout: (layoutRaw === 'centered' ? 'centered' : 'split') as ContactFormLayout,
     theme: (themeRaw === 'light' ? 'light' : 'dark') as ContactFormTheme,
-    showCompany: asBool(fields[k('Show Company')], empty.showCompany),
-    showPhone: asBool(fields[k('Show Phone')], empty.showPhone),
-    showDropdown: asBool(fields[k('Show Dropdown')], empty.showDropdown),
-    dropdownLabel: asString(fields[k('Dropdown Label')]),
-    options: asString(fields[k('Options')]),
-    ctaText: asString(fields[k('CTA Text')]),
-    messageLabel: asString(fields[k('Message Label')]),
-    trustSignals: asString(fields[k('Trust Signals')]),
-    showContactPerson: asBool(fields[k('Show Contact Person')], empty.showContactPerson),
+    showCompany: asBool(f('showCompany'), empty.showCompany),
+    showPhone: asBool(f('showPhone'), empty.showPhone),
+    showDropdown: asBool(f('showDropdown'), empty.showDropdown),
+    dropdownLabel: asString(f('dropdownLabel')),
+    options: asString(f('options')),
+    ctaText: asString(f('ctaText')),
+    messageLabel: asString(f('messageLabel')),
+    trustSignals: asString(f('trustSignals')),
+    showContactPerson: asBool(f('showContactPerson'), empty.showContactPerson),
   };
 }
 
 export interface ContactFormToFieldsOptions {
-  prefix?: string;
+  schema?: ContactFormSchema;
   /** Konvertera tomma textfält till `null` (Airtable-konvention som
    *  unique-page-mapper använder för att rensa fält). Booleans påverkas inte. */
   nullForEmpty?: boolean;
@@ -64,24 +135,24 @@ export function contactFormToFields(
   state: ContactFormState,
   options: ContactFormToFieldsOptions = {},
 ): Record<string, unknown> {
-  const prefix = options.prefix ?? CONTACT_FORM_FIELD_PREFIX;
-  const k = (key: string) => `${prefix}${key}`;
+  const { prefix, keys } = SCHEMAS[options.schema ?? 'title_case'];
   const text = (v: string): string | null =>
     options.nullForEmpty && v === '' ? null : v;
+  const k = (key: keyof SchemaSpec['keys']) => `${prefix}${keys[key]}`;
   return {
-    [k('Eyebrow')]: text(state.eyebrow),
-    [k('Title')]: text(state.title),
-    [k('Subtitle')]: text(state.subtitle),
-    [k('Layout')]: state.layout,
-    [k('Theme')]: state.theme,
-    [k('Show Company')]: state.showCompany,
-    [k('Show Phone')]: state.showPhone,
-    [k('Show Dropdown')]: state.showDropdown,
-    [k('Dropdown Label')]: text(state.dropdownLabel),
-    [k('Options')]: text(state.options),
-    [k('CTA Text')]: text(state.ctaText),
-    [k('Message Label')]: text(state.messageLabel),
-    [k('Trust Signals')]: text(state.trustSignals),
-    [k('Show Contact Person')]: state.showContactPerson,
+    [k('eyebrow')]: text(state.eyebrow),
+    [k('title')]: text(state.title),
+    [k('subtitle')]: text(state.subtitle),
+    [k('layout')]: state.layout,
+    [k('theme')]: state.theme,
+    [k('showCompany')]: state.showCompany,
+    [k('showPhone')]: state.showPhone,
+    [k('showDropdown')]: state.showDropdown,
+    [k('dropdownLabel')]: text(state.dropdownLabel),
+    [k('options')]: text(state.options),
+    [k('ctaText')]: text(state.ctaText),
+    [k('messageLabel')]: text(state.messageLabel),
+    [k('trustSignals')]: text(state.trustSignals),
+    [k('showContactPerson')]: state.showContactPerson,
   };
 }
