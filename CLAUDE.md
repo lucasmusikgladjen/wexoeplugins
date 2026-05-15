@@ -177,7 +177,7 @@ För riktiga sidor är detta för fattigt — då går vi via page-types-ramverk
 | `AIRTABLE_BASE_ID` | Wexoe NY: `appokKSTaBdCa8YiW` | Default-base för läsning |
 | `ANTHROPIC_API_KEY` | Claude API-nyckel | `claude-transform.ts` + `/api/copy` |
 | `AUTH_USERNAME` / `AUTH_PASSWORD` | Basic auth | `/login`-gate (single-tenant) |
-| `WP_CACHE_CLEAR_URL` / `WP_CACHE_CLEAR_SECRET` | WP-endpoint | `/api/publish` → invalidera transients |
+| `WEXOE_CORE_WEBHOOK_URL` / `WEXOE_CORE_WEBHOOK_SECRET` | WP-endpoint + delad secret | Cache-invalidering via webhook (`lib/wexoe-cache.ts`). Utan dem skippas invalidering tyst. |
 
 ---
 

@@ -213,7 +213,9 @@ Annars skip Claude och håll mappers direkta.
 
 8. `lib/wexoe-cache-entities.ts`: lägg till `export const <TYPE>_ENTITIES = ['<entity_name>', ...] as const;`.
 
-9. `lib/page-types/registry.ts`: lägg till entry i `PAGE_TYPES` (id, label, description, createPath, editPath, cacheEntities, listUrl, mapList).
+9. `lib/page-types/registry.ts`:
+   - Utöka `PageTypeId`-unionen med det nya id:t (`'landing' | 'product' | ... | '<type>'`). Annars rejectar TypeScript ditt nya `id`/`type` innan routen ens kan byggas.
+   - Lägg till entry i `PAGE_TYPES` (id, label, description, createPath, editPath, cacheEntities, listUrl, mapList). `mapList` returnerar `PageRow[]` med `type: '<type>'` — samma literal som du la till i unionen.
 
 10. Testa: `npm run dev`, gå till `/`, klicka "Ny sida" → välj din nya typ → fyll i → spara → ladda om → editera → spara → kolla i Airtable. Aktivera pluginet på WP och verifiera att en publik sida renderas.
 
