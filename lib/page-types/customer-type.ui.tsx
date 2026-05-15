@@ -1,21 +1,16 @@
 /**
- * Audience — UI-side sidtypsdefinition.
- *
- * Bara React-komponenter, slug-input config och section-meta. Importeras
- * av client-kod (PageTypeBuilder) och av server-pages som re-renderar
- * client-komponenter med uiDef som prop.
+ * Customer-type-page — UI-side sidtypsdefinition.
  */
 
-import { AudienceState } from '../audience-types';
-import HeroEditor from '@/components/audience/editors/HeroEditor';
-import ValueEditor from '@/components/audience/editors/ValueEditor';
-import CaseEditor from '@/components/audience/editors/CaseEditor';
-import SettingsEditor from '@/components/audience/editors/SettingsEditor';
+import { CustomerTypePageState } from '../customer-type-types';
+import HeroEditor from '@/components/customer-type/editors/HeroEditor';
+import ValueEditor from '@/components/customer-type/editors/ValueEditor';
+import SettingsEditor from '@/components/customer-type/editors/SettingsEditor';
 import ContactFormEditor from '@/components/contact-form/ContactFormEditor';
-import AudiencePreviewPanel from '@/components/audience/preview/AudiencePreviewPanel';
+import CustomerTypePagePreviewPanel from '@/components/customer-type/preview/CustomerTypePagePreviewPanel';
 import type { PageTypeUIDef, SectionDef } from './types';
 
-const sections: SectionDef<AudienceState>[] = [
+const sections: SectionDef<CustomerTypePageState>[] = [
   {
     id: 'hero',
     label: 'Hero',
@@ -28,15 +23,6 @@ const sections: SectionDef<AudienceState>[] = [
     visibilityToggle: (state, setState) => ({
       value: state.showValue,
       onChange: (v) => setState({ ...state, showValue: v }),
-    }),
-  },
-  {
-    id: 'case',
-    label: 'Kundcase',
-    Editor: CaseEditor,
-    visibilityToggle: (state, setState) => ({
-      value: state.showCase,
-      onChange: (v) => setState({ ...state, showCase: v }),
     }),
   },
   {
@@ -60,15 +46,15 @@ const sections: SectionDef<AudienceState>[] = [
   },
 ];
 
-export const audienceUI: PageTypeUIDef<AudienceState> & {
-  canSave: (state: AudienceState) => boolean;
+export const customerTypeUI: PageTypeUIDef<CustomerTypePageState> & {
+  canSave: (state: CustomerTypePageState) => boolean;
   canSaveHint: string;
 } = {
-  id: 'audience',
+  id: 'customer-type',
   label: 'Kundtyp',
   sections,
   previewLayout: ({ state, activeSection, scrollTrigger, onSectionClick }) => (
-    <AudiencePreviewPanel
+    <CustomerTypePagePreviewPanel
       state={state}
       activeSection={activeSection}
       onSectionClick={onSectionClick}
@@ -78,8 +64,8 @@ export const audienceUI: PageTypeUIDef<AudienceState> & {
   slugInput: {
     accessor: (s) => s.slug,
     setter: (s, slug) => ({ ...s, slug }),
-    placeholder: 'min-sida',
-    badge: (_s, mode) => (mode === 'create' ? 'Ny audience-sida' : 'Audience-sida'),
+    placeholder: 'min-kundtyp',
+    badge: (_s, mode) => (mode === 'create' ? 'Ny kundtyp-sida' : 'Kundtyp-sida'),
   },
   canSave: (s) => !!s.slug.trim() && !!s.title.trim(),
   canSaveHint: 'Slug + titel krävs',

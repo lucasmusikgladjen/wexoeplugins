@@ -427,7 +427,7 @@ export function createPageRoute<TState, TListItem>(
  * factory:n utan att duplicera fält:
  *
  *   const { GET, POST, PATCH, DELETE } = createPageRoute(
- *     pageTypeToRouteConfig(audienceServer, process.env.AIRTABLE_API_KEY, loadAudienceState),
+ *     pageTypeToRouteConfig(customerTypeServer, process.env.AIRTABLE_API_KEY, loadCustomerTypePageState),
  *   );
  */
 export function pageTypeToRouteConfig<TState, TListItem>(

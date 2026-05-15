@@ -1,20 +1,28 @@
 'use client';
 
-import { AudienceState } from '@/lib/audience-types';
+import { CustomerTypePageState } from '@/lib/customer-type-types';
 import { Field } from '@/components/shared/fields';
 import type { SectionEditorProps } from '@/lib/page-types/types';
 
-export default function HeroEditor({ state, onChange }: SectionEditorProps<AudienceState>) {
-  const set = <K extends keyof AudienceState>(key: K, value: AudienceState[K]) =>
+export default function HeroEditor({ state, onChange }: SectionEditorProps<CustomerTypePageState>) {
+  const set = <K extends keyof CustomerTypePageState>(key: K, value: CustomerTypePageState[K]) =>
     onChange({ ...state, [key]: value });
 
   return (
     <>
       <Field.Text
+        label="Internt namn"
+        value={state.name}
+        onChange={(v) => set('name', v)}
+        placeholder="T.ex. Installatör, OEM"
+        description="Visas inte publikt — används som etikett i listor."
+      />
+
+      <Field.Text
         label="Eyebrow"
         value={state.eyebrow}
         onChange={(v) => set('eyebrow', v)}
-        placeholder="T.ex. AUTOMATION FÖR TILLVERKARE"
+        placeholder="T.ex. För installatörer"
       />
 
       <Field.RichText
@@ -44,8 +52,8 @@ export default function HeroEditor({ state, onChange }: SectionEditorProps<Audie
 
       <Field.Text
         label="Hero-bild"
-        value={state.heroImage}
-        onChange={(v) => set('heroImage', v)}
+        value={state.heroImageUrl}
+        onChange={(v) => set('heroImageUrl', v)}
         placeholder="https://wexoe.se/wp-content/uploads/..."
       />
 

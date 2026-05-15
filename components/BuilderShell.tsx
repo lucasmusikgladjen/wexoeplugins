@@ -39,7 +39,7 @@ export interface BuilderShellProps {
 }
 
 /**
- * BuilderShell — shared layout for builder pages (Audience, LP, PA, UniquePage,
+ * BuilderShell — shared layout for builder pages (CustomerType, LP, PA, UniquePage,
  * /globals/*). Owns:
  *   - Top toolbar (back link, slug input slot, status, save button)
  *   - Split layout (65% preview, 35% editor)

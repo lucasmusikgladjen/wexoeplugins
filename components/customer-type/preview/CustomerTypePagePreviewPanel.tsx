@@ -1,22 +1,21 @@
 'use client';
 
 import { useRef } from 'react';
-import { AudienceState, AudienceSectionId } from '@/lib/audience-types';
+import { CustomerTypePageState, CustomerTypePageSectionId } from '@/lib/customer-type-types';
 import { useScrollToActiveSection } from '@/hooks/useScrollToActiveSection';
 import HeroPreview from './HeroPreview';
 import ValuePreview from './ValuePreview';
-import CasePreview from './CasePreview';
 import ContactFormPreview from '@/components/contact-form/ContactFormPreview';
 
 interface Props {
-  state: AudienceState;
+  state: CustomerTypePageState;
   /** PageTypeBuilder skickar `string | null` — vi normaliserar nedan. */
-  activeSection: AudienceSectionId | string | null;
+  activeSection: CustomerTypePageSectionId | string | null;
   onSectionClick: (id: string) => void;
   scrollTrigger: number;
 }
 
-export default function AudiencePreviewPanel({
+export default function CustomerTypePagePreviewPanel({
   state,
   activeSection,
   onSectionClick,
@@ -24,16 +23,17 @@ export default function AudiencePreviewPanel({
 }: Props) {
   const pageRef = useRef<HTMLDivElement>(null);
   useScrollToActiveSection(pageRef, activeSection, scrollTrigger);
-  const activeId = activeSection as AudienceSectionId | null;
-  const onSelect = (id: AudienceSectionId) => onSectionClick(id);
+  const activeId = activeSection as CustomerTypePageSectionId | null;
+  const onSelect = (id: CustomerTypePageSectionId) => onSectionClick(id);
 
   const isEmpty =
     !state.title.trim() &&
     !state.eyebrow.trim() &&
     !state.description.trim() &&
     !state.valueH2.trim() &&
-    !state.valueText1.trim() &&
-    !state.caseTitle.trim();
+    !state.valueText1.trim();
+
+  const caseCount = state.caseIds.length;
 
   return (
     <div className="h-full overflow-y-auto bg-gray-100 hide-scrollbar">
@@ -56,17 +56,37 @@ export default function AudiencePreviewPanel({
           <HeroPreview state={state} active={activeId} onSelect={onSelect} />
 
           {state.showValue && (
-            <ValuePreview
-              state={state}
-              active={activeId}
-              onSelect={onSelect}
-              showCase={state.showCase}
-              caseSlot={
-                state.showCase ? (
-                  <CasePreview state={state} active={activeId} onSelect={onSelect} />
-                ) : null
-              }
-            />
+            <ValuePreview state={state} active={activeId} onSelect={onSelect} />
+          )}
+
+          {caseCount > 0 && (
+            <div
+              style={{
+                background: '#f8f9fa',
+                padding: '40px 40px 60px',
+                color: '#11325D',
+                borderTop: '1px solid #e5e7eb',
+              }}
+            >
+              <div style={{ maxWidth: 1270, margin: '0 auto' }}>
+                <div
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: 1.2,
+                    color: '#F28C28',
+                    marginBottom: 8,
+                  }}
+                >
+                  Kundcase ({caseCount})
+                </div>
+                <p style={{ fontSize: 14, color: '#666', margin: 0 }}>
+                  Linkade case-records renderas i strippen på publika sidan.
+                  Innehåll hanteras i Airtable (cms_case_pages).
+                </p>
+              </div>
+            </div>
           )}
 
           {state.showContactForm && (
@@ -82,7 +102,7 @@ export default function AudiencePreviewPanel({
 
         {isEmpty && (
           <div className="px-8 py-10 text-center text-gray-400 border-t border-gray-100">
-            <p className="text-sm mb-1">Börja bygga din audience-sida</p>
+            <p className="text-sm mb-1">Börja bygga din kundtyp-sida</p>
             <p className="text-xs">Fyll i fälten till höger — förhandsvisningen uppdateras direkt.</p>
           </div>
         )}

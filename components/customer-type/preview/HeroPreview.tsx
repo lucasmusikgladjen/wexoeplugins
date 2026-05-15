@@ -1,10 +1,10 @@
-import { AudienceState, AudienceSectionId } from '@/lib/audience-types';
+import { CustomerTypePageState, CustomerTypePageSectionId } from '@/lib/customer-type-types';
 import { PreviewSection, renderTitleHighlight } from './shared';
 
 interface Props {
-  state: AudienceState;
-  active: AudienceSectionId | null;
-  onSelect: (id: AudienceSectionId) => void;
+  state: CustomerTypePageState;
+  active: CustomerTypePageSectionId | null;
+  onSelect: (id: CustomerTypePageSectionId) => void;
 }
 
 export default function HeroPreview({ state, active, onSelect }: Props) {
@@ -12,7 +12,7 @@ export default function HeroPreview({ state, active, onSelect }: Props) {
   const hasTitle = !!state.title.trim();
   const hasDescription = !!state.description.trim();
   const hasCta = !!state.ctaText.trim();
-  const hasImage = !!state.heroImage.trim();
+  const hasImage = !!state.heroImageUrl.trim();
   const statNumber = parseInt(state.statNumber, 10);
   const hasStat = !!state.statNumber.trim() && !Number.isNaN(statNumber) && statNumber > 0;
 
@@ -113,7 +113,7 @@ export default function HeroPreview({ state, active, onSelect }: Props) {
               boxShadow: '0 24px 48px rgba(0,0,0,0.25)',
               aspectRatio: '4 / 3',
               background: hasImage
-                ? `center/cover url("${state.heroImage}")`
+                ? `center/cover url("${state.heroImageUrl}")`
                 : 'rgba(255,255,255,0.06)',
               border: hasImage ? 'none' : '2px dashed rgba(255,255,255,0.2)',
               display: 'flex',

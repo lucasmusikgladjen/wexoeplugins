@@ -1,11 +1,11 @@
 'use client';
 
-import { AudienceState } from '@/lib/audience-types';
+import { CustomerTypePageState } from '@/lib/customer-type-types';
 import { Field } from '@/components/shared/fields';
 import type { SectionEditorProps } from '@/lib/page-types/types';
 
-export default function ValueEditor({ state, onChange }: SectionEditorProps<AudienceState>) {
-  const set = <K extends keyof AudienceState>(key: K, value: AudienceState[K]) =>
+export default function ValueEditor({ state, onChange }: SectionEditorProps<CustomerTypePageState>) {
+  const set = <K extends keyof CustomerTypePageState>(key: K, value: CustomerTypePageState[K]) =>
     onChange({ ...state, [key]: value });
 
   return (

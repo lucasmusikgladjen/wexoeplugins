@@ -7,8 +7,11 @@ import {
 } from '@/lib/airtable';
 import { TABLE_IDS as LP_TABLE_IDS } from '@/lib/airtable';
 import { PA_TABLE_IDS, PA_BASE_ID } from '@/lib/product-area-mapper';
-import { AUDIENCE_TABLE_IDS, AUDIENCE_BASE_ID } from '@/lib/audience-mapper';
-import { invalidateWexoeCoreCache, AUDIENCE_ENTITIES } from '@/lib/wexoe-cache';
+import {
+  CUSTOMER_TYPE_TABLE_IDS,
+  CUSTOMER_TYPE_BASE_ID,
+} from '@/lib/customer-type-mapper';
+import { invalidateWexoeCoreCache, CUSTOMER_TYPE_PAGE_ENTITIES } from '@/lib/wexoe-cache';
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 
@@ -16,14 +19,14 @@ const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 // that point at the source record's owned children. The copy will re-link
 // to its own freshly-created children instead.
 //
-// LP family is migrated to Wexoe NY with snake_case keys. PA + Audience still
+// LP, PA och customer-type-pages är migrerade till Wexoe NY med snake_case-keys.
 // use legacy PascalCase keys until those tables migrate.
 const LP_FIELDS_TO_DROP = new Set(['tab_ids']);
 const TAB_FIELDS_TO_DROP = new Set(['landing_page_ids', 'download_ids']);
 const DOWNLOAD_FIELDS_TO_DROP = new Set(['tab_ids']);
 
 interface CopyRequest {
-  type: 'landing' | 'product-area' | 'audience';
+  type: 'landing' | 'product-area' | 'customer-type';
   sourceId: string;
   name?: string;
   slug?: string;
@@ -209,27 +212,38 @@ async function copyProductArea(
   });
 }
 
-// ─── Audience (flat copy — single record, no children) ────────────────────
+// ─── Customer-type page (flat copy — single record, case_ids skip:as) ─────
 //
-// Still on legacy Wexoe base — pass AUDIENCE_BASE_ID explicitly.
+// cms_customer_type_pages ligger i Wexoe NY. `case_ids`-länken kopieras INTE
+// — kopian börjar utan länkade case för att undvika oavsiktlig delning av
+// case-cards mellan källrecord och kopia.
 
-async function copyAudience(
+async function copyCustomerType(
   apiKey: string,
   sourceId: string,
   name: string | undefined,
   slug: string | undefined,
 ) {
-  const source = await getRecord(apiKey, AUDIENCE_TABLE_IDS.audienceHeroes, sourceId, AUDIENCE_BASE_ID);
-  const sourceSlug = (source.fields.Slug as string) || '';
+  const source = await getRecord(
+    apiKey,
+    CUSTOMER_TYPE_TABLE_IDS.customerTypePages,
+    sourceId,
+    CUSTOMER_TYPE_BASE_ID,
+  );
+  const sourceSlug = (source.fields.slug as string) || '';
 
-  // Audience records have no Name field — fall back to slug-based defaults.
   const newSlug = slug?.trim() || defaultCopySlug(sourceSlug);
-  // `name` is accepted from the dialog for parity with other types but
-  // there's nowhere to write it on the audience record; preserve it for
-  // the response only.
   const newName = name?.trim() || defaultCopyName(sourceSlug);
 
-  if (await isSlugTaken(apiKey, AUDIENCE_TABLE_IDS.audienceHeroes, newSlug, 'Slug', AUDIENCE_BASE_ID)) {
+  if (
+    await isSlugTaken(
+      apiKey,
+      CUSTOMER_TYPE_TABLE_IDS.customerTypePages,
+      newSlug,
+      'slug',
+      CUSTOMER_TYPE_BASE_ID,
+    )
+  ) {
     return NextResponse.json(
       { error: `Slug "${newSlug}" finns redan. Välj ett annat.` },
       { status: 409 },
@@ -237,18 +251,29 @@ async function copyAudience(
   }
 
   const fields: Record<string, unknown> = { ...source.fields };
-  fields.Slug = newSlug;
+  fields.slug = newSlug;
+  // Skriv alltid newName till fields.name — annars ärver kopian källans namn
+  // medan svaret/UI rapporterar default-copy-namnet, och list-vyn slutar
+  // visa två identiska "Installatör"-rader när användaren lämnar Name tomt.
+  fields.name = newName;
+  // case_ids ärvs inte — kopian börjar utan länkade cases.
+  delete fields.case_ids;
 
-  const created = await createRecord(apiKey, AUDIENCE_TABLE_IDS.audienceHeroes, fields, AUDIENCE_BASE_ID);
+  const created = await createRecord(
+    apiKey,
+    CUSTOMER_TYPE_TABLE_IDS.customerTypePages,
+    fields,
+    CUSTOMER_TYPE_BASE_ID,
+  );
 
-  await invalidateWexoeCoreCache(AUDIENCE_ENTITIES, 'audience:copy');
+  await invalidateWexoeCoreCache(CUSTOMER_TYPE_PAGE_ENTITIES, 'customer-type:copy');
 
   return NextResponse.json({
     success: true,
     id: created.id,
     name: newName,
     slug: newSlug,
-    type: 'audience' as const,
+    type: 'customer-type' as const,
   });
 }
 
@@ -271,8 +296,8 @@ export async function POST(request: Request) {
     if (body.type === 'product-area') {
       return await copyProductArea(AIRTABLE_API_KEY, body.sourceId, body.name, body.slug);
     }
-    if (body.type === 'audience') {
-      return await copyAudience(AIRTABLE_API_KEY, body.sourceId, body.name, body.slug);
+    if (body.type === 'customer-type') {
+      return await copyCustomerType(AIRTABLE_API_KEY, body.sourceId, body.name, body.slug);
     }
     return NextResponse.json({ error: 'Ogiltig typ.' }, { status: 400 });
   } catch (err) {

@@ -10,7 +10,7 @@
  *    `contact_form_eyebrow`, `contact_form_show_company`, etc.
  *
  * Schemat väljs via `schema`-parametern. `title_case` är default för
- * bakåtkompat med audience-mapper, men nya callsites (cms_*) ska skicka
+ * bakåtkompat med äldre callers, men nya callsites (cms_*) ska skicka
  * `snake_case`. Internt mappar funktionen mellan ContactFormState-fält och
  * Airtable-fältnamn för rätt schema.
  *

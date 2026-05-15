@@ -1,11 +1,11 @@
 import { ReactNode } from 'react';
-import { AudienceSectionId } from '@/lib/audience-types';
+import { CustomerTypePageSectionId } from '@/lib/customer-type-types';
 import { renderInlineMarkdown } from '@/lib/markdown';
 
 interface SectionProps {
-  id: AudienceSectionId;
-  active: AudienceSectionId | null;
-  onClick: (id: AudienceSectionId) => void;
+  id: CustomerTypePageSectionId;
+  active: CustomerTypePageSectionId | null;
+  onClick: (id: CustomerTypePageSectionId) => void;
   style?: React.CSSProperties;
   className?: string;
   children: ReactNode;
@@ -29,8 +29,8 @@ export function PreviewSection({ id, active, onClick, style, className = '', chi
 }
 
 /**
- * Render the audience title with *highlight* spans mapped to an orange
- * accent — mirrors the PHP plugin's `parse_title_formatting`.
+ * Render the customer-type-page title with *highlight* spans mapped to an
+ * orange accent — mirrors the PHP plugin's `parse_title_formatting`.
  */
 export function renderTitleHighlight(text: string): ReactNode {
   if (!text) return null;

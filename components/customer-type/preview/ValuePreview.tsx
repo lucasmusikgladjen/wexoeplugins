@@ -1,17 +1,13 @@
-import { AudienceState, AudienceSectionId } from '@/lib/audience-types';
+import { CustomerTypePageState, CustomerTypePageSectionId } from '@/lib/customer-type-types';
 import { PreviewSection, renderInlineMarkdown } from './shared';
 
 interface Props {
-  state: AudienceState;
-  active: AudienceSectionId | null;
-  onSelect: (id: AudienceSectionId) => void;
-  /** When true the case-card sits in the right column of this section; the
-   *  preview panel composes the two together to match the live page. */
-  showCase: boolean;
-  caseSlot?: React.ReactNode;
+  state: CustomerTypePageState;
+  active: CustomerTypePageSectionId | null;
+  onSelect: (id: CustomerTypePageSectionId) => void;
 }
 
-export default function ValuePreview({ state, active, onSelect, showCase, caseSlot }: Props) {
+export default function ValuePreview({ state, active, onSelect }: Props) {
   const hasH2 = !!state.valueH2.trim();
   const hasText1 = !!state.valueText1.trim();
   const hasText2 = !!state.valueText2.trim();
@@ -31,7 +27,7 @@ export default function ValuePreview({ state, active, onSelect, showCase, caseSl
           margin: '0 auto',
           padding: '80px 40px',
           display: 'grid',
-          gridTemplateColumns: showCase ? '1fr 1fr' : '1fr',
+          gridTemplateColumns: '1fr',
           gap: 60,
           alignItems: 'start',
         }}
@@ -129,7 +125,6 @@ export default function ValuePreview({ state, active, onSelect, showCase, caseSl
           </ul>
         </div>
 
-        {showCase && caseSlot}
       </div>
     </PreviewSection>
   );

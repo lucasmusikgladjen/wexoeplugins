@@ -541,8 +541,8 @@ function CopyPageDialog({
       const apiType =
         source.type === 'product'
           ? 'product-area'
-          : source.type === 'audience'
-          ? 'audience'
+          : source.type === 'customer-type'
+          ? 'customer-type'
           : 'landing';
       const res = await fetch('/api/copy', {
         method: 'POST',

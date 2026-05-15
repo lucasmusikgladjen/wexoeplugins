@@ -2,16 +2,12 @@
  * Airtable REST client.
  *
  * Default-basen är Wexoe NY (appokKSTaBdCa8YiW) för alla nya tabeller
- * (cms_landing_pages, cms_articles, core_*, etc.).
+ * (cms_landing_pages, cms_customer_type_pages, cms_case_pages, cms_articles,
+ * core_*, etc.).
  *
- * `LEGACY_BASE_ID` (Wexoe, appXoUcK68dQwASjF) är fortfarande tillgängligt
- * för tabeller som ännu inte migrerats — Product Areas, Audience Heroes,
- * och deras länkade leaves. Dessa anrop måste explicit passera
- * `baseId: LEGACY_BASE_ID` tills tabellerna byggs ut i Wexoe NY och datan
- * migreras. Mappers i `lib/product-area-mapper.ts` och `lib/audience-mapper.ts`
- * exporterar `PA_TABLE_IDS` resp. `AUDIENCE_TABLE_IDS` som fortfarande pekar
- * på legacy-tabeller — kallande kod måste därför pair:a dem med
- * `LEGACY_BASE_ID` i alla helper-anrop.
+ * `LEGACY_BASE_ID` (Wexoe, appXoUcK68dQwASjF) finns kvar för automation-
+ * pillar-plugins (offerings, product_navigation, team_rack) som ännu inte
+ * migrerats. Tabeller där: pass `baseId: LEGACY_BASE_ID` explicit.
  */
 
 export const BASE_ID = 'appokKSTaBdCa8YiW';

@@ -31,7 +31,7 @@
  */
 
 import {
-  AUDIENCE_ENTITIES,
+  CUSTOMER_TYPE_PAGE_ENTITIES,
   LP_ENTITIES,
   PA_ENTITIES,
   UNIQUE_PAGES_ENTITIES,
@@ -40,7 +40,7 @@ import {
 export type PageTypeId =
   | 'landing'
   | 'product'
-  | 'audience'
+  | 'customer-type'
   | 'unique';
 
 export interface PageRow {
@@ -144,21 +144,21 @@ export const PAGE_TYPES = definePageTypes([
       })),
   },
   {
-    id: 'audience',
+    id: 'customer-type',
     label: 'Kundtyp',
-    description: 'Kundtyp hero + värdeproposition',
+    description: 'Kundtyp hero + värdeproposition + länkade case',
     creatable: true,
-    listUrl: '/api/audience?action=list',
-    createPath: '/editor/audience',
-    editPath: (id) => `/editor/audience/${id}`,
-    cacheEntities: AUDIENCE_ENTITIES,
+    listUrl: '/api/customer-type?action=list',
+    createPath: '/editor/customer-type',
+    editPath: (id) => `/editor/customer-type/${id}`,
+    cacheEntities: CUSTOMER_TYPE_PAGE_ENTITIES,
     mapList: (data) =>
       (data.pages ?? []).map((p) => ({
         id: pickString(p, 'id'),
         name: pickString(p, 'name', 'slug'),
         slug: pickString(p, 'slug'),
         h1: pickString(p, 'h1'),
-        type: 'audience',
+        type: 'customer-type',
       })),
   },
   {

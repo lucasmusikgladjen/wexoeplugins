@@ -1,9 +1,9 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import PageTypeBuilder from '@/components/shared/builder/PageTypeBuilder';
-import { audienceUI } from '@/lib/page-types/audience.ui';
-import { loadAudienceState } from '@/lib/audience-loader';
-import { AudienceState } from '@/lib/audience-types';
+import { customerTypeUI } from '@/lib/page-types/customer-type.ui';
+import { loadCustomerTypePageState } from '@/lib/customer-type-loader';
+import { CustomerTypePageState } from '@/lib/customer-type-types';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +11,7 @@ interface Props {
   params: Promise<{ recordId: string }>;
 }
 
-export default async function EditAudiencePage({ params }: Props) {
+export default async function EditCustomerTypePage({ params }: Props) {
   const { recordId } = await params;
   const apiKey = process.env.AIRTABLE_API_KEY;
 
@@ -24,9 +24,9 @@ export default async function EditAudiencePage({ params }: Props) {
     );
   }
 
-  let state: AudienceState;
+  let state: CustomerTypePageState;
   try {
-    state = await loadAudienceState(apiKey, recordId);
+    state = await loadCustomerTypePageState(apiKey, recordId);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Okänt fel';
     if (/not found|404/i.test(message)) notFound();
@@ -35,12 +35,10 @@ export default async function EditAudiencePage({ params }: Props) {
 
   return (
     <PageTypeBuilder
-      uiDef={audienceUI}
+      uiDef={customerTypeUI}
       initialState={state}
       mode="edit"
       recordId={recordId}
-      apiPath="/api/audience"
-      editPath="/editor/audience/:recordId"
     />
   );
 }
