@@ -208,12 +208,12 @@ function wexoe_pa_test_map_product_area_to_legacy($row) {
         'Hero CTA URL' => $row['hero_cta_url'] ?? '',
         'Hero Benefits' => isset($row['hero_benefits']) && is_array($row['hero_benefits']) ? implode("
 ", $row['hero_benefits']) : '',
-        'Hero Image' => $row['hero_image'] ?? '',
+        'Hero Image' => $row['hero_image_url'] ?? '',
         'Hero BG' => $row['hero_bg'] ?? '',
         'Hero Accent' => $row['hero_accent'] ?? '',
         'NPI Title' => $row['npi_title'] ?? '',
         'NPI Description' => $row['npi_description'] ?? '',
-        'NPI Image' => $row['npi_image'] ?? '',
+        'NPI Image' => $row['npi_image_url'] ?? '',
         'NPI Link' => $row['npi_link'] ?? '',
         'Toggle BG' => $row['toggle_bg'] ?? '',
         'Toggle Header BG' => $row['toggle_header_bg'] ?? '',
@@ -225,7 +225,7 @@ function wexoe_pa_test_map_product_area_to_legacy($row) {
         'Contact Title' => $row['contact_title'] ?? '',
         'Contact Email' => $row['contact_email'] ?? '',
         'Contact Phone' => $row['contact_phone'] ?? '',
-        'Contact Image' => $row['contact_image'] ?? '',
+        'Contact Image' => $row['contact_image_url'] ?? '',
         'Contact Text' => $row['contact_text'] ?? '',
         'Contact BG' => $row['contact_bg'] ?? '',
         'Docs Title' => $row['docs_title'] ?? '',
@@ -237,14 +237,22 @@ function wexoe_pa_test_map_product_area_to_legacy($row) {
         'Solutions' => $row['solution_ids'] ?? [],
     ];
 
-    $sections = isset($row['sections']) && is_array($row['sections']) ? $row['sections'] : [];
+    // Sections — sub-records i cms_product_page_sections, hämtade via section_ids.
+    // Pseudo-array-fältet "sections" finns inte längre på PA-records efter migrationen;
+    // renderaren förlitar sig fortfarande på `Normal N`-prefixet så vi mappar
+    // de upp till 4 första sektionerna in i samma legacy-shape.
+    $sections = isset($row['__resolved_sections']) && is_array($row['__resolved_sections'])
+        ? $row['__resolved_sections']
+        : [];
     for ($n = 1; $n <= 4; $n++) {
         $sec = $sections[$n - 1] ?? [];
         $prefix = 'Normal ' . $n;
         $mapped[$prefix . ' H2'] = $sec['h2'] ?? '';
         $mapped[$prefix . ' Text'] = $sec['text'] ?? '';
-        $mapped[$prefix . ' Bullets'] = $sec['bullets'] ?? '';
-        $mapped[$prefix . ' Image'] = $sec['image'] ?? '';
+        $bullets = $sec['bullets'] ?? '';
+        if (is_array($bullets)) $bullets = implode("\n", $bullets);
+        $mapped[$prefix . ' Bullets'] = $bullets;
+        $mapped[$prefix . ' Image'] = $sec['image_url'] ?? '';
         $mapped[$prefix . ' Reversed'] = !empty($sec['reversed']);
         $mapped[$prefix . ' BG'] = $sec['bg'] ?? '';
         $mapped[$prefix . ' upp'] = !empty($sec['shown_top']);
@@ -261,7 +269,7 @@ function wexoe_pa_test_map_product_to_legacy($row) {
         'Description' => $row['description'] ?? '',
         'Bullets' => isset($row['bullets']) && is_array($row['bullets']) ? implode("
 ", $row['bullets']) : ($row['bullets'] ?? ''),
-        'Image' => $row['image'] ?? '',
+        'Image' => $row['image_url'] ?? '',
         'Button 1 Text' => $row['button_1_text'] ?? '',
         'Button 1 URL' => $row['button_1_url'] ?? '',
         'Button 2 Text' => $row['button_2_text'] ?? '',
@@ -270,7 +278,7 @@ function wexoe_pa_test_map_product_to_legacy($row) {
         'Header side menu' => $row['header_side_menu'] ?? '',
         'Articles' => $row['article_ids'] ?? [],
         'Order' => $row['order'] ?? null,
-        'Visa' => !empty($row['visa']),
+        'Visa' => !empty($row['is_active']),
     ];
 }
 
@@ -278,13 +286,13 @@ function wexoe_pa_test_map_solution_to_legacy($row) {
     return [
         '_record_id' => $row['_record_id'] ?? '',
         'Name' => $row['name'] ?? '',
-        'Image' => $row['image'] ?? '',
+        'Image' => $row['image_url'] ?? '',
         'URL' => $row['url'] ?? '',
         'Description' => $row['description'] ?? '',
         'CTA Text' => $row['cta_text'] ?? '',
         'Category' => $row['category'] ?? '',
         'Order' => $row['order'] ?? null,
-        'Visa' => !empty($row['visa']),
+        'Visa' => !empty($row['is_active']),
     ];
 }
 
@@ -293,9 +301,9 @@ function wexoe_pa_test_map_article_to_legacy($row) {
         '_record_id' => $row['_record_id'] ?? '',
         'Name' => $row['name'] ?? '',
         'Artikelnummer' => $row['article_number'] ?? '',
-        'Datablad' => $row['datasheet'] ?? '',
+        'Datablad' => $row['datasheet_url'] ?? '',
         'Länk till webshop' => $row['webshop_url'] ?? '',
-        'Bild' => $row['image'] ?? '',
+        'Bild' => $row['image_url'] ?? '',
         'Varianter' => $row['variants'] ?? '',
         'Description' => $row['description'] ?? '',
     ];
@@ -304,7 +312,26 @@ function wexoe_pa_test_map_article_to_legacy($row) {
 function wexoe_pa_test_fetch_product_area($slug) {
     $repo = wexoe_pa_test_get_repo('product_areas');
     if (!$repo) return null;
-    return wexoe_pa_test_map_product_area_to_legacy($repo->find($slug));
+    $row = $repo->find($slug);
+    if (!$row) return null;
+
+    // Resolva sektioner via section_ids → cms_product_page_sections, sortera på
+    // 'order'. Den legacy renderaren expekterar de fyra första sektionerna under
+    // `Normal N *`-prefixen — om fler finns trunkeras de (renderaren stödjer
+    // fortfarande bara fyra slots).
+    $section_ids = isset($row['section_ids']) && is_array($row['section_ids']) ? $row['section_ids'] : [];
+    if (!empty($section_ids)) {
+        $section_repo = wexoe_pa_test_get_repo('product_page_sections');
+        if ($section_repo) {
+            $sections = $section_repo->find_by_ids($section_ids);
+            usort($sections, function ($a, $b) {
+                return ($a['order'] ?? 999) - ($b['order'] ?? 999);
+            });
+            $row['__resolved_sections'] = $sections;
+        }
+    }
+
+    return wexoe_pa_test_map_product_area_to_legacy($row);
 }
 
 function wexoe_pa_test_fetch_linked_records($table, $record_ids, $cache_prefix) {
