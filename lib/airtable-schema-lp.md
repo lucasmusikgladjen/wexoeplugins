@@ -22,9 +22,9 @@ Airtable display-namn för LP-familjen.
 | **country_ids** | multipleRecordLinks | Länk till core_countries. **Hanteras av backend, inkludera ej.** |
 | **seo_title** | singleLineText | Valfri SEO-rubrik. |
 | **seo_description** | multilineText | Valfri meta-description (150-160 tecken). |
-| **og_image_url** | singleLineText | Open Graph-bild-URL. |
+| **og_image_url** | url | Open Graph-bild-URL. |
 | **hero_description** | multilineText | Brödtext under H1. |
-| **hero_image_url** | singleLineText | Bild-URL från WP Media. |
+| **hero_image_url** | url | Bild-URL från WP Media. |
 | **hero_cta_text** | singleLineText | Primär CTA-knapp. Default "Kontakta oss". |
 | **hero_cta_url** | singleLineText | Länk för primär CTA. |
 | **hero_cta2_text** | singleLineText | Sekundär CTA — visas bara om ifylld. |
@@ -35,7 +35,7 @@ Airtable display-namn för LP-familjen.
 | **sidebar_type** | singleSelect | Ett av: `case`, `event`, `leadmagnet`, `calculator`, eller tom sträng. |
 | **case_title** | singleLineText | Endast om `sidebar_type = case`. |
 | **case_description** | multilineText | Endast om `sidebar_type = case`. |
-| **case_image_url** | singleLineText | Endast om `sidebar_type = case`. |
+| **case_image_url** | url | Endast om `sidebar_type = case`. |
 | **case_outcomes** | multilineText | Endast om `sidebar_type = case`. En per rad. |
 | **case_cta_text** | singleLineText | Endast om `sidebar_type = case`. |
 | **case_cta_url** | url | Endast om `sidebar_type = case`. |
@@ -56,7 +56,7 @@ Airtable display-namn för LP-familjen.
 | **contact_title** | singleLineText | Titel. |
 | **contact_email** | email | |
 | **contact_phone** | phoneNumber | |
-| **contact_image_url** | singleLineText | Porträttbild från WP Media. |
+| **contact_image_url** | url | Porträttbild från WP Media. |
 | **contact_quote** | multilineText | Citat/text intill porträttet. |
 | **show_content** | checkbox | Ska ALLTID inkluderas (även när `false`). |
 | **show_sidebar** | checkbox | Ska ALLTID inkluderas. |
@@ -96,7 +96,7 @@ Inkludera **endast** de fält som hör till tabens `tab_type`.
 | `ti_h2` | singleLineText | |
 | `ti_text` | multilineText | |
 | `ti_benefits` | multilineText | En benefit per rad, `\n`-separerad. |
-| `ti_image_url` | singleLineText | |
+| `ti_image_url` | url | |
 | `ti_inverted` | checkbox | Alltid inkludera om tab är textimage. |
 
 **fullmedia:**
