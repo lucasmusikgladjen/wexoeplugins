@@ -9,6 +9,34 @@
 
 if (!defined('ABSPATH')) exit;
 
+/**
+ * Helpers — declarerade FÖRE `return function` eftersom `require` returnerar
+ * vid den statementen och allt nedanför aldrig körs.
+ */
+if (!function_exists('wxp_resolve_contact_person')) {
+    /**
+     * Slå upp första aktiva coworker baserat på sektion-scope. Returnerar null
+     * om Collections-helper saknas eller ingen match.
+     */
+    function wxp_resolve_contact_person($section, $ctx) {
+        if (!class_exists('\\Wexoe\\Core\\Helpers\\Collections')) return null;
+        $scope = wexoe_pages_resolve_scope($section, $ctx, [
+            'country'  => 'cf_contact_scope_country',
+            'division' => 'cf_contact_scope_division',
+        ]) + ['limit' => 1];
+        $matches = \Wexoe\Core\Helpers\Collections::coworkers_for_scope($scope);
+        if (empty($matches)) return null;
+        $c = $matches[0];
+        return [
+            'name'  => (string) ($c['full_name'] ?? ''),
+            'title' => (string) ($c['title'] ?? ''),
+            'email' => (string) ($c['email'] ?? ''),
+            'phone' => (string) ($c['phone'] ?? ''),
+            'image' => (string) ($c['image_url'] ?? ''),
+        ];
+    }
+}
+
 return function ($section, $page, $ctx) {
     $class = \Wexoe\Core\Core::renderer('contact-form');
     if ($class === '') {
@@ -45,27 +73,3 @@ return function ($section, $page, $ctx) {
     <?php
     return ob_get_clean();
 };
-
-if (!function_exists('wxp_resolve_contact_person')) {
-    /**
-     * Slå upp första aktiva coworker baserat på sektion-scope. Returnerar null
-     * om Collections-helper saknas eller ingen match.
-     */
-    function wxp_resolve_contact_person($section, $ctx) {
-        if (!class_exists('\\Wexoe\\Core\\Helpers\\Collections')) return null;
-        $scope = wexoe_pages_resolve_scope($section, $ctx, [
-            'country'  => 'cf_contact_scope_country',
-            'division' => 'cf_contact_scope_division',
-        ]) + ['limit' => 1];
-        $matches = \Wexoe\Core\Helpers\Collections::coworkers_for_scope($scope);
-        if (empty($matches)) return null;
-        $c = $matches[0];
-        return [
-            'name'  => (string) ($c['full_name'] ?? ''),
-            'title' => (string) ($c['title'] ?? ''),
-            'email' => (string) ($c['email'] ?? ''),
-            'phone' => (string) ($c['phone'] ?? ''),
-            'image' => (string) ($c['image_url'] ?? ''),
-        ];
-    }
-}

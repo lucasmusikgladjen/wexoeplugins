@@ -12,6 +12,24 @@
 
 if (!defined('ABSPATH')) exit;
 
+/**
+ * Helpers — declarerade FÖRE `return function`-statementen eftersom `require`
+ * returnerar vid statementen och allt nedanför aldrig körs. function_exists-
+ * guard så att flera require av samma fil inte krockar (loader cachar dock,
+ * så detta är belt-and-suspenders).
+ */
+if (!function_exists('wxp_initials')) {
+    function wxp_initials($name) {
+        $parts = preg_split('/\s+/', trim((string) $name));
+        $initials = '';
+        foreach ($parts as $p) {
+            if ($p !== '') $initials .= mb_substr($p, 0, 1);
+            if (mb_strlen($initials) >= 2) break;
+        }
+        return mb_strtoupper($initials);
+    }
+}
+
 return function ($section, $page, $ctx) {
     $eyebrow = (string) ($section['tg_eyebrow'] ?? '');
     $h2      = (string) ($section['tg_h2']      ?? '');
@@ -112,19 +130,3 @@ return function ($section, $page, $ctx) {
     <?php
     return ob_get_clean();
 };
-
-/**
- * Helpers — declarerade om de inte redan finns (team_grid kan instansieras
- * flera gånger, men require utförs bara en gång per anrop).
- */
-if (!function_exists('wxp_initials')) {
-    function wxp_initials($name) {
-        $parts = preg_split('/\s+/', trim((string) $name));
-        $initials = '';
-        foreach ($parts as $p) {
-            if ($p !== '') $initials .= mb_substr($p, 0, 1);
-            if (mb_strlen($initials) >= 2) break;
-        }
-        return mb_strtoupper($initials);
-    }
-}
