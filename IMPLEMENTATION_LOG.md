@@ -8,6 +8,21 @@ Detta dokument loggar varje konkret åtgärd som tas under implementationen av p
 
 ---
 
+## Wexoe NY: efter-migration link-rewiring (2026-05-16)
+
+**Branch:** `claude/migrate-airtable-wexoe-nv1T5`
+**Bakgrund:** Efter att data kopierats till Wexoe NY upptäcktes att flera linked-record-fält var tomma trots att källdatan i gamla `Wexoe`-basen hade kopplingar. Detta orsakade att Product Area-sidor (t.ex. PLC) renderade utan side-menu/produktlistor och att partner-filter per division gav 0 träffar. Audit-skript jämförde gamla och nya basen post-by-post.
+
+### Fas A — `cms_articles.product_ids` (62 länkar)
+
+**Symptom:** 100 % av nya `cms_articles` (59 records) hade tom `product_ids`. Gamla `Articles.Link to products` (fld7ZUaOseVqIuaZH) hade kopplingar på 16 fiber/koppar-produkter — varje artikel kopplad till 1-2 produkter.
+
+**Åtgärd:** Mappade old article ID → new article ID via primary-name (med 4 manuella overrides för records som omdöptes i nya basen — `Cat7 S/FTP` splittades till `Cat7 S/FTP` + `Cat7 S/FTP Siamese`, `Cat6 U/UTP` splittades till `Dca` + `Fca`). Mappade old product ID → new product ID via name (med 2 manuella overrides för dubbla `Installationskabel`-records — disambiguerade via owning PA: koppar-record → `recXmWh5FeiQ6zthM`, fiber-record → `recLPTNu7jOetSzBP`). Skrev `product_ids` på alla 59 nya artiklar via `update_records_for_table`. Airtable propagerade automatiskt symmetriska länkar till `cms_products.article_ids` — verifierat på 3 stickprov (ODF har nu 7 artiklar, Installationskabel/koppar har 8, Patchkablar SM har 3).
+
+**Resultat:** Sido-menu mode på Product Area (t.ex. Koppar, Fiber) kan nu rendera artikel-tabeller per produkt. Cache i `wexoe-core` måste rensas för att de nya länkarna ska slå igenom på frontend (24 h TTL + 6 h stale grace).
+
+---
+
 ## Wexoe → Wexoe NY-migration (2026-05-14)
 
 **Branch:** `claude/migrate-wexoe-database-7KILw` (båda repon)
