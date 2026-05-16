@@ -56,10 +56,10 @@ return function ($section, $page, $ctx) {
 #<?= esc_attr($wid) ?> .wxp-faq__list { list-style: none !important; padding: 0 !important; margin: 0 !important; display: flex !important; flex-direction: column !important; gap: 10px !important; }
 #<?= esc_attr($wid) ?> .wxp-faq__item { list-style: none !important; padding: 0 !important; margin: 0 !important; background: #fff !important; border: 1px solid rgba(17,50,93,0.10) !important; border-radius: 12px !important; box-shadow: 0 2px 8px rgba(10,26,46,0.04) !important; overflow: hidden !important; }
 #<?= esc_attr($wid) ?> .wxp-faq__item::before { content: none !important; display: none !important; background: none !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-faq__item { background: rgba(255,255,255,0.06) !important; border-color: rgba(255,255,255,0.12) !important; box-shadow: none !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-faq__item { background: rgba(255,255,255,0.06) !important; border-color: rgba(255,255,255,0.12) !important; box-shadow: none !important; }
 #<?= esc_attr($wid) ?> .wxp-faq__item details { padding: 0 !important; margin: 0 !important; background: none !important; }
 #<?= esc_attr($wid) ?> .wxp-faq__item summary { display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 16px !important; padding: 18px 22px !important; cursor: pointer !important; font-family: 'DM Sans', system-ui, sans-serif !important; font-size: 16px !important; font-weight: 600 !important; line-height: 1.4 !important; color: #11325D !important; background: none !important; list-style: none !important; user-select: none !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-faq__item summary { color: #fff !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-faq__item summary { color: #fff !important; }
 #<?= esc_attr($wid) ?> .wxp-faq__item summary::-webkit-details-marker { display: none !important; }
 #<?= esc_attr($wid) ?> .wxp-faq__item summary::marker { display: none !important; content: '' !important; }
 #<?= esc_attr($wid) ?> .wxp-faq__q-text { flex: 1 !important; color: inherit !important; }
@@ -70,9 +70,9 @@ return function ($section, $page, $ctx) {
 #<?= esc_attr($wid) ?> .wxp-faq__item details[open] .wxp-faq__icon::after { opacity: 0 !important; }
 #<?= esc_attr($wid) ?> .wxp-faq__item details[open] .wxp-faq__icon { transform: rotate(180deg) !important; }
 #<?= esc_attr($wid) ?> .wxp-faq__a { padding: 0 22px 20px !important; line-height: 1.7 !important; color: #4b5563 !important; font-size: 15px !important; background: none !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-faq__a { color: rgba(255,255,255,0.82) !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-faq__a { color: rgba(255,255,255,0.82) !important; }
 #<?= esc_attr($wid) ?> .wxp-faq__a a { color: #11325D !important; text-decoration: underline !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-faq__a a { color: #F28C28 !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-faq__a a { color: #F28C28 !important; }
 @media (max-width: 600px) {
     #<?= esc_attr($wid) ?> .wxp-faq__item summary { padding: 16px 18px !important; font-size: 15px !important; }
     #<?= esc_attr($wid) ?> .wxp-faq__a { padding: 0 18px 18px !important; }

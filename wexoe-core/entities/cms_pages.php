@@ -7,7 +7,7 @@
  * Renderas av wexoe-pages-pluginet via shortcoden [wexoe_page slug="..."].
  *
  * En sida består av:
- *   - Metadata (slug, h1, SEO, scope-länkar, page-theme)
+ *   - Metadata (slug, h1, SEO, scope-länkar)
  *   - En länkad lista section_ids → cms_page_sections (polymorfa sektioner)
  *
  * Sektionsordningen styrs av link-fältets ordning. Använd `order`-fältet på
@@ -36,7 +36,6 @@ return [
         'is_published' => ['source' => 'is_published', 'type' => 'bool'],
         'country_ids' => ['source' => 'country_ids', 'type' => 'link', 'entity' => 'core_countries'],
         'division_ids' => ['source' => 'division_ids', 'type' => 'link', 'entity' => 'core_divisions'],
-        'page_theme' => 'page_theme',
         'section_ids' => ['source' => 'section_ids', 'type' => 'link', 'entity' => 'cms_page_sections'],
     ],
 ];

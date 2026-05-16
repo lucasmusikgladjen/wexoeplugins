@@ -86,7 +86,7 @@ return function ($section, $page, $ctx) {
 #<?= esc_attr($wid) ?> .wxp-cds__h2 { margin: 0 0 28px !important; font-size: clamp(1.5rem, 2.8vw, 2rem) !important; }
 #<?= esc_attr($wid) ?> .wxp-cds__grid { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important; gap: 12px !important; margin: 0 !important; padding: 0 !important; }
 #<?= esc_attr($wid) ?> .wxp-cds__item { margin: 0 !important; padding: 22px 20px !important; border-radius: 14px !important; background: rgba(17,50,93,0.04) !important; border: 1px solid rgba(17,50,93,0.06) !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-cds__item { background: rgba(255,255,255,0.06) !important; border-color: rgba(255,255,255,0.08) !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-cds__item { background: rgba(255,255,255,0.06) !important; border-color: rgba(255,255,255,0.08) !important; }
 #<?= esc_attr($wid) ?> .wxp-cds__label { font-family: 'DM Sans', system-ui, sans-serif !important; font-size: 12px !important; text-transform: uppercase !important; letter-spacing: 0.08em !important; opacity: 0.72 !important; margin: 0 0 8px !important; padding: 0 !important; font-weight: 600 !important; color: inherit !important; background: none !important; }
 #<?= esc_attr($wid) ?> .wxp-cds__value { font-family: 'DM Sans', system-ui, sans-serif !important; font-size: clamp(1.5rem, 2.2vw, 1.85rem) !important; font-weight: 800 !important; margin: 0 !important; padding: 0 !important; line-height: 1.15 !important; color: #F28C28 !important; background: none !important; }
 #<?= esc_attr($wid) ?> .wxp-cds__suffix { font-size: 0.7em !important; font-weight: 600 !important; opacity: 0.85 !important; margin-left: 2px !important; }

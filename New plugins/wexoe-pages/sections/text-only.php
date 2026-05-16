@@ -35,7 +35,7 @@ return function ($section, $page, $ctx) {
 #<?= esc_attr($wid) ?> .wxp-to__body p { margin: 0 0 16px !important; color: inherit !important; }
 #<?= esc_attr($wid) ?> .wxp-to__body p:last-child { margin-bottom: 0 !important; }
 #<?= esc_attr($wid) ?> .wxp-to__body h3 { font-size: 1.25rem !important; font-weight: 700 !important; margin: 28px 0 12px !important; color: #11325D !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-to__body h3 { color: #fff !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-to__body h3 { color: #fff !important; }
 /* Bullets — nolla default disc/circle från child-tema och bygg egna med ::before */
 #<?= esc_attr($wid) ?> .wxp-to__body ul, #<?= esc_attr($wid) ?> .wxp-to__body ol { list-style: none !important; padding: 0 !important; margin: 18px 0 !important; display: inline-flex !important; flex-direction: column !important; gap: 8px !important; text-align: left !important; }
 #<?= esc_attr($wid) ?> .wxp-to--center .wxp-to__body ul, #<?= esc_attr($wid) ?> .wxp-to--center .wxp-to__body ol { margin-left: auto !important; margin-right: auto !important; }
@@ -45,7 +45,7 @@ return function ($section, $page, $ctx) {
 #<?= esc_attr($wid) ?> .wxp-to__body ol li { counter-increment: wxp-to-ol !important; }
 #<?= esc_attr($wid) ?> .wxp-to__body ol li::before { content: counter(wxp-to-ol) '.' !important; position: absolute !important; left: 0 !important; top: 0 !important; font-weight: 700 !important; color: #F28C28 !important; }
 #<?= esc_attr($wid) ?> .wxp-to__body a { color: #11325D !important; text-decoration: underline !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-to__body a { color: #F28C28 !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-to__body a { color: #F28C28 !important; }
     </style>
     <?php
     return ob_get_clean();

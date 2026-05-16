@@ -48,7 +48,9 @@ return function ($section, $page, $ctx) {
         'title'          => (string) ($section['cf_title'] ?? ''),
         'subtitle'       => (string) ($section['cf_subtitle'] ?? ''),
         'layout'         => (string) ($section['cf_layout'] ?? 'split'),
-        'theme'          => in_array(($section['theme'] ?? 'inherit'), ['light', 'dark'], true) ? $section['theme'] : $ctx['page_theme'],
+        // Contact-form rendererens egna 'theme'-flagga (light|dark) — separat
+        // från sektion-system. Default dark (mörk gradient matchar wexoe-contact-page).
+        'theme'          => 'dark',
         'show_company'   => isset($section['cf_show_company']) ? (bool) $section['cf_show_company'] : true,
         'show_phone'     => isset($section['cf_show_phone']) ? (bool) $section['cf_show_phone'] : true,
         'show_dropdown'  => isset($section['cf_show_dropdown']) ? (bool) $section['cf_show_dropdown'] : true,

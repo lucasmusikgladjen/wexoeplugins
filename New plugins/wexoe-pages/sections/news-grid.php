@@ -92,9 +92,9 @@ return function ($section, $page, $ctx) {
 #<?= esc_attr($wid) ?> .wxp-ng__item { display: flex !important; list-style: none !important; padding: 0 !important; margin: 0 !important; background: none !important; }
 #<?= esc_attr($wid) ?> .wxp-ng__item::before { content: none !important; display: none !important; }
 #<?= esc_attr($wid) ?> .wxp-ng__card { display: flex !important; flex-direction: column !important; background: #fff !important; border-radius: 14px !important; overflow: hidden !important; text-decoration: none !important; color: #1A1A1A !important; border: 1px solid rgba(17,50,93,0.08) !important; box-shadow: 0 4px 16px rgba(10,26,46,0.05) !important; transition: transform 0.2s ease, box-shadow 0.2s ease !important; width: 100% !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-ng__card { background: rgba(255,255,255,0.04) !important; color: #fff !important; border-color: rgba(255,255,255,0.1) !important; box-shadow: none !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-ng__card { background: rgba(255,255,255,0.04) !important; color: #fff !important; border-color: rgba(255,255,255,0.1) !important; box-shadow: none !important; }
 #<?= esc_attr($wid) ?> .wxp-ng__card:hover { transform: translateY(-3px) !important; box-shadow: 0 16px 36px rgba(10,26,46,0.10) !important; color: #1A1A1A !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-ng__card:hover { color: #fff !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-ng__card:hover { color: #fff !important; }
 #<?= esc_attr($wid) ?> .wxp-ng__image-wrap { aspect-ratio: 16 / 10 !important; overflow: hidden !important; background: #F5F6F8 !important; }
 #<?= esc_attr($wid) ?> .wxp-ng__image-wrap--placeholder { background: linear-gradient(135deg, #11325D, #2d6a9f) !important; }
 #<?= esc_attr($wid) ?> .wxp-ng__image { width: 100% !important; height: 100% !important; object-fit: cover !important; display: block !important; }
@@ -103,9 +103,9 @@ return function ($section, $page, $ctx) {
 #<?= esc_attr($wid) ?> .wxp-ng__cat { display: inline-block !important; padding: 4px 9px !important; border-radius: 4px !important; background: rgba(242,140,40,0.12) !important; color: #F28C28 !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: 0.04em !important; }
 #<?= esc_attr($wid) ?> .wxp-ng__date { opacity: 0.65 !important; font-weight: 500 !important; color: inherit !important; }
 #<?= esc_attr($wid) ?> .wxp-ng__title { font-family: 'DM Sans', system-ui, sans-serif !important; font-size: 17px !important; margin: 0 !important; padding: 0 !important; font-weight: 700 !important; line-height: 1.3 !important; color: #11325D !important; background: none !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-ng__title { color: #fff !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-ng__title { color: #fff !important; }
 #<?= esc_attr($wid) ?> .wxp-ng__desc { font-size: 14px !important; line-height: 1.55 !important; color: #4b5563 !important; margin: 0 !important; padding: 0 !important; background: none !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-ng__desc { color: rgba(255,255,255,0.75) !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-ng__desc { color: rgba(255,255,255,0.75) !important; }
 #<?= esc_attr($wid) ?> .wxp-ng__cta { font-size: 14px !important; font-weight: 600 !important; color: #F28C28 !important; margin-top: auto !important; padding-top: 4px !important; }
 @media (max-width: 900px) {
     #<?= esc_attr($wid) ?> .wxp-ng--cols-3 .wxp-ng__grid, #<?= esc_attr($wid) ?> .wxp-ng--cols-4 .wxp-ng__grid { grid-template-columns: repeat(2, 1fr) !important; }
