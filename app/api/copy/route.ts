@@ -20,10 +20,32 @@ const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 // to its own freshly-created children instead.
 //
 // LP, PA och customer-type-pages är migrerade till Wexoe NY med snake_case-keys.
-// use legacy PascalCase keys until those tables migrate.
 const LP_FIELDS_TO_DROP = new Set(['tab_ids']);
 const TAB_FIELDS_TO_DROP = new Set(['landing_page_ids', 'download_ids']);
 const DOWNLOAD_FIELDS_TO_DROP = new Set(['tab_ids']);
+
+const PA_FIELDS_TO_DROP = new Set([
+  // Owned section links are rebuilt from freshly copied section records below.
+  'section_ids',
+]);
+
+const PA_SECTION_FIELDS_TO_DROP = new Set([
+  // Managed backlink to cms_product_pages. Copying it would attach cloned
+  // sections to the source Product Area and mutate the original relation graph.
+  'product_page_ids',
+
+  // Defensive aliases for older experiments/renames; harmless when absent.
+  'product_area_ids',
+  'product_ids',
+  'page_ids',
+
+  // Airtable computed/audit fields must never be written back on create.
+  'created_at',
+  'updated_at',
+  'created_by',
+  'last_modified_at',
+  'last_modified_by',
+]);
 
 interface CopyRequest {
   type: 'landing' | 'product-area' | 'customer-type';
@@ -169,9 +191,10 @@ async function copyLandingPage(
   });
 }
 
-// ─── Product Area (shallow copy — share linked Products/Solutions) ─────────
+// ─── Product Area (copy owned sections; share Products/Solutions) ─────────
 //
-// Still on legacy Wexoe base — pass PA_BASE_ID explicitly to all helpers.
+// PA family lives in Wexoe NY with snake_case fields. Product/Solution
+// relations are shared by reference; owned section records are deep-copied.
 
 async function copyProductArea(
   apiKey: string,
@@ -180,26 +203,53 @@ async function copyProductArea(
   slug: string | undefined,
 ) {
   const source = await getRecord(apiKey, PA_TABLE_IDS.productAreas, sourceId, PA_BASE_ID);
-  const sourceName = (source.fields.Name as string) || '';
-  const sourceSlug = (source.fields.Slug as string) || '';
+  const sourceName = (source.fields.name as string) || '';
+  const sourceSlug = (source.fields.slug as string) || '';
 
   const newName = name?.trim() || defaultCopyName(sourceName);
   const newSlug = slug?.trim() || defaultCopySlug(sourceSlug);
 
-  if (await isSlugTaken(apiKey, PA_TABLE_IDS.productAreas, newSlug, 'Slug', PA_BASE_ID)) {
+  if (await isSlugTaken(apiKey, PA_TABLE_IDS.productAreas, newSlug, 'slug', PA_BASE_ID)) {
     return NextResponse.json(
       { error: `Slug "${newSlug}" finns redan. Välj ett annat.` },
       { status: 409 },
     );
   }
 
-  // PA copy is shallow: linked Products and Solutions are *shared* with
-  // the original. Editing one product still affects both pages — that's the
-  // expected behaviour for v1, since linked records in Airtable are always
-  // shared by reference.
-  const fields: Record<string, unknown> = { ...source.fields };
-  fields.Name = newName;
-  fields.Slug = newSlug;
+  const sourceSectionIds = (source.fields['section_ids'] as string[] | undefined) ?? [];
+  let sourceSections: AirtableRecord[] = [];
+  if (sourceSectionIds.length > 0) {
+    const formula = `OR(${sourceSectionIds.map((id) => `RECORD_ID()='${id}'`).join(',')})`;
+    sourceSections = await listRecords(apiKey, PA_TABLE_IDS.productPageSections, {
+      filterByFormula: formula,
+      baseId: PA_BASE_ID,
+    });
+  }
+
+  const sourceSectionsById = new Map(sourceSections.map((section) => [section.id, section]));
+  const newSectionIds: string[] = [];
+  for (const sectionId of sourceSectionIds) {
+    const section = sourceSectionsById.get(sectionId);
+    if (!section) continue;
+
+    const sectionFields = strip(section.fields, PA_SECTION_FIELDS_TO_DROP);
+
+    const createdSection = await createRecord(
+      apiKey,
+      PA_TABLE_IDS.productPageSections,
+      sectionFields,
+      PA_BASE_ID,
+    );
+    newSectionIds.push(createdSection.id);
+  }
+
+  // Linked Products and Solutions are intentionally shared with the original
+  // by reference for v1. Owned sections are rebuilt from the freshly-created
+  // section records above.
+  const fields = strip(source.fields, PA_FIELDS_TO_DROP);
+  fields.name = newName;
+  fields.slug = newSlug;
+  fields.section_ids = newSectionIds;
 
   const newPa = await createRecord(apiKey, PA_TABLE_IDS.productAreas, fields, PA_BASE_ID);
 
@@ -209,6 +259,7 @@ async function copyProductArea(
     name: newName,
     slug: newSlug,
     type: 'product-area' as const,
+    sectionsCopied: newSectionIds.length,
   });
 }
 

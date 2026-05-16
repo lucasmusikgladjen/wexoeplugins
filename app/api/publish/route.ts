@@ -23,6 +23,80 @@ import { getPageType } from '@/lib/page-types/registry';
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 
+
+function collectDownloadIdsFromTabs(tabs: AirtableRecord[]): string[] {
+  const ids = new Set<string>();
+
+  for (const tab of tabs) {
+    const downloadIds = (tab.fields['download_ids'] as string[] | undefined) ?? [];
+    downloadIds.forEach((id) => ids.add(id));
+  }
+
+  return [...ids];
+}
+
+async function deleteDownloadsForTabs(args: {
+  apiKey: string;
+  tabs: AirtableRecord[];
+}): Promise<number> {
+  const downloadIds = collectDownloadIdsFromTabs(args.tabs);
+  if (downloadIds.length === 0) return 0;
+
+  await deleteRecords(
+    args.apiKey,
+    TABLE_IDS.landingPageDownloads,
+    downloadIds,
+  );
+
+  return downloadIds.length;
+}
+
+function validateDownloadRefs(args: {
+  downloads: LpTransformDownload[];
+  tabIdByClientIndex: Record<number, string>;
+  recordId: string;
+  context: 'create' | 'update';
+}): NextResponse | null {
+  const invalidDownloads = args.downloads
+    .map((dl, index) => ({
+      index,
+      tabClientIndex: dl._tabClientIndex,
+      isValid:
+        Number.isInteger(dl._tabClientIndex) &&
+        Object.prototype.hasOwnProperty.call(
+          args.tabIdByClientIndex,
+          dl._tabClientIndex,
+        ),
+    }))
+    .filter((item) => !item.isValid)
+    .map(({ index, tabClientIndex }) => ({ index, tabClientIndex }));
+
+  if (invalidDownloads.length === 0) return null;
+
+  console.error(
+    `[publish] Download validation failed: invalid _tabClientIndex reference in ${args.context}`,
+    JSON.stringify({
+      recordId: args.recordId,
+      tabCount: Object.keys(args.tabIdByClientIndex).length,
+      downloadCount: args.downloads.length,
+      invalidDownloads,
+    }),
+  );
+
+  return NextResponse.json(
+    {
+      error:
+        'Ogiltig download-referens: _tabClientIndex måste peka på en existerande tab.',
+      validation: {
+        recordId: args.recordId,
+        validTabClientIndexes: Object.keys(args.tabIdByClientIndex).map(Number),
+        invalidDownloads,
+      },
+    },
+    { status: 400 },
+  );
+}
+
 // ─── Main publish handler ──────────────────────────────────────────────────
 
 export async function POST(request: Request) {
@@ -87,6 +161,23 @@ async function createNewPage(
   // 1. Claude transforms state → Airtable-ready fields
   const transformed = await transformLandingPage(anthropicKey, state, 'create');
 
+  // Preflight before the first Airtable write: malformed download → tab
+  // references must not leave behind a partially-created LP/tab graph.
+  const sortedTabs = [...transformed.tabs].sort(
+    (a, b) => (a._clientIndex ?? 0) - (b._clientIndex ?? 0),
+  );
+  const pendingTabIdByClientIndex: Record<number, string> = {};
+  for (const tab of sortedTabs) {
+    pendingTabIdByClientIndex[tab._clientIndex] = '__pending__';
+  }
+  const preflightDownloadRefError = validateDownloadRefs({
+    downloads: transformed.downloads,
+    tabIdByClientIndex: pendingTabIdByClientIndex,
+    recordId: 'pending',
+    context: 'create',
+  });
+  if (preflightDownloadRefError) return preflightDownloadRefError;
+
   // 2. CREATE the Landing Page record
   const lp = await createRecord(
     airtableKey,
@@ -96,9 +187,6 @@ async function createNewPage(
 
   // 3. CREATE tabs linked to the new LP. Preserve state order via
   //    _clientIndex — sort Claude's output defensively in case it reordered.
-  const sortedTabs = [...transformed.tabs].sort(
-    (a, b) => (a._clientIndex ?? 0) - (b._clientIndex ?? 0),
-  );
   const tabIdByClientIndex: Record<number, string> = {};
   if (sortedTabs.length > 0) {
     const tabPayloads = sortedTabs.map((tab) => ({
@@ -128,44 +216,13 @@ async function createNewPage(
   //    _tabClientIndex metadata).
   let downloadCount = 0;
   if (transformed.downloads.length > 0) {
-    const invalidDownloads = transformed.downloads
-      .map((dl, index) => ({
-        index,
-        tabClientIndex: dl._tabClientIndex,
-        isValid:
-          Number.isInteger(dl._tabClientIndex) &&
-          Object.prototype.hasOwnProperty.call(
-            tabIdByClientIndex,
-            dl._tabClientIndex,
-          ),
-      }))
-      .filter((item) => !item.isValid)
-      .map(({ index, tabClientIndex }) => ({ index, tabClientIndex }));
-
-    if (invalidDownloads.length > 0) {
-      console.error(
-        '[publish] Download validation failed: invalid _tabClientIndex reference',
-        JSON.stringify({
-          recordId: lp.id,
-          tabCount: sortedTabs.length,
-          downloadCount: transformed.downloads.length,
-          invalidDownloads,
-        }),
-      );
-      return NextResponse.json(
-        {
-          error:
-            'Ogiltig download-referens: _tabClientIndex måste peka på en existerande tab.',
-          validation: {
-            recordId: lp.id,
-            tabCount: sortedTabs.length,
-            validTabClientIndexes: Object.keys(tabIdByClientIndex).map(Number),
-            invalidDownloads,
-          },
-        },
-        { status: 400 },
-      );
-    }
+    const downloadRefError = validateDownloadRefs({
+      downloads: transformed.downloads,
+      tabIdByClientIndex,
+      recordId: lp.id,
+      context: 'create',
+    });
+    if (downloadRefError) return downloadRefError;
 
     const sortedDownloads = [...transformed.downloads].sort((a, b) => {
       if (a._tabClientIndex !== b._tabClientIndex) {
@@ -286,11 +343,24 @@ async function updateExistingPage(
     }
   }
 
+  let downloadsCreated = 0;
+  let downloadsUpdated = 0;
+  let downloadsDeleted = 0;
+
   const tabIdsToDelete = existingTabIds.filter((id) => !stateTabRecordIds.has(id));
 
-  // DELETE first to free up the linked-record slots (Airtable allows this
-  // order freely — it's more about keeping a clean narrative in logs).
+  // Downloads must be removed before their parent tabs so Airtable cleanup
+  // cannot strand child records, and so downloadsDeleted includes this case.
   if (tabIdsToDelete.length > 0) {
+    const tabsBeingDeleted = tabIdsToDelete
+      .map((id) => existingTabsById.get(id))
+      .filter((tab): tab is AirtableRecord => !!tab);
+
+    downloadsDeleted += await deleteDownloadsForTabs({
+      apiKey: airtableKey,
+      tabs: tabsBeingDeleted,
+    });
+
     await deleteRecords(airtableKey, TABLE_IDS.landingPageTabs, tabIdsToDelete);
   }
 
@@ -323,48 +393,14 @@ async function updateExistingPage(
   //    against the final tab ID map first — a malformed reference means
   //    Claude's output is inconsistent and we'd otherwise silently drop
   //    the download when grouping by parent.
-  let downloadsCreated = 0;
-  let downloadsUpdated = 0;
-  let downloadsDeleted = 0;
-
   if (transformed.downloads.length > 0) {
-    const invalidDownloads = transformed.downloads
-      .map((dl, index) => ({
-        index,
-        tabClientIndex: dl._tabClientIndex,
-        isValid:
-          Number.isInteger(dl._tabClientIndex) &&
-          Object.prototype.hasOwnProperty.call(
-            tabIdByClientIndex,
-            dl._tabClientIndex,
-          ),
-      }))
-      .filter((item) => !item.isValid)
-      .map(({ index, tabClientIndex }) => ({ index, tabClientIndex }));
-
-    if (invalidDownloads.length > 0) {
-      console.error(
-        '[publish] Download validation failed: invalid _tabClientIndex reference in update',
-        JSON.stringify({
-          recordId: state.recordId,
-          tabCount: Object.keys(tabIdByClientIndex).length,
-          downloadCount: transformed.downloads.length,
-          invalidDownloads,
-        }),
-      );
-      return NextResponse.json(
-        {
-          error:
-            'Ogiltig download-referens: _tabClientIndex måste peka på en existerande tab.',
-          validation: {
-            recordId: state.recordId,
-            validTabClientIndexes: Object.keys(tabIdByClientIndex).map(Number),
-            invalidDownloads,
-          },
-        },
-        { status: 400 },
-      );
-    }
+    const downloadRefError = validateDownloadRefs({
+      downloads: transformed.downloads,
+      tabIdByClientIndex,
+      recordId: state.recordId,
+      context: 'update',
+    });
+    if (downloadRefError) return downloadRefError;
   }
 
   // Group Claude's download output by parent tab clientIndex
@@ -375,6 +411,8 @@ async function updateExistingPage(
     downloadsByTabIndex.set(dl._tabClientIndex, list);
   }
 
+  // Downloads belonging to tabs deleted above were already removed and counted.
+  // Only diff downloads for surviving tabs here.
   for (let i = 0; i < state.tabs.length; i++) {
     const stateTab = state.tabs[i];
     const tabAirtableId = tabIdByClientIndex[i];
