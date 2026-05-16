@@ -1,16 +1,20 @@
 <?php
 /**
- * Entity schema: cms_unique_pages
+ * Entity schema: cms_unique_pages — @deprecated 2026-05
  *
- * CMS-tabell för Tier 2-sidor (one-off meta-sidor: om-oss, karriär, pillar-sidor).
- * Renderas av wexoe-pages-pluginen via shortcoden `[wexoe_page slug="..."]`.
+ * UTFASAS. Ersatts av `cms_pages` + `cms_page_sections` (se motsv. filer i
+ * denna mapp). Den nya wexoe-pages-pluginen (v1.0.0+) läser ENBART från
+ * `cms_pages` — denna entitet finns kvar för att inte bryta:
+ *   - wexoe-core/src/EntityRestApi.php whitelist (om någon builder-route
+ *     fortfarande POST/PATCH:ar mot cms_unique_pages)
+ *   - wexoe-core/write-entities/cms_unique_pages.php
+ *   - Eventuella admin/cache-tools som listar entitetsnamn
  *
- * Airtable-tabell: cms_unique_pages (tblpAM1wZWDbrpeai) i Wexoe NY.
+ * Migrationsväg: bygg om sidor i wexoebuilder mot cms_pages och radera när
+ * den gamla tabellen är tom. Airtable-tabellen `cms_unique_pages`
+ * (tblpAM1wZWDbrpeai) lever kvar tills migrationen är klar.
  *
- * Data-driven: varje sektion har en `show_<x>` checkbox och tillhörande fält.
- * Sektion-ordning är fast (definierad i wexoe-pages.php), inte redaktör-styrd.
- *
- * Konvention: snake_case överallt — passthrough mellan Airtable och kod.
+ * INGA NYA SIDOR ska skrivas mot denna tabell.
  */
 
 if (!defined('ABSPATH')) exit;

@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Wexoe Pages
  * Plugin URI:  https://wexoe.se
- * Description: Tier 2-sidor (one-off meta-sidor: om-oss, karriär etc.). Renderar via [wexoe_page slug="..."]-shortcoden. Data lagras i cms_unique_pages-tabellen i Wexoe NY-basen. Beroende: wexoe-core ≥ 0.9.0.
- * Version:     0.1.0
+ * Description: One-off informational pages (start, about, pillar). Composes polymorphic sections from cms_page_sections. Use [wexoe_page slug="..."]. Beroende: wexoe-core ≥ 0.9.0.
+ * Version:     1.0.0
  * Author:      Wexoe Industry AB
  * Requires PHP: 7.4
  * Requires at least: 6.0
@@ -11,7 +11,8 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('WEXOE_PAGES_VERSION', '0.1.0');
+define('WEXOE_PAGES_VERSION', '1.0.0');
+define('WEXOE_PAGES_DIR', plugin_dir_path(__FILE__));
 
 /* ============================================================
    CORE DEPENDENCY CHECK
@@ -25,6 +26,34 @@ if (!function_exists('wexoe_pages_core_ready')) {
 }
 
 /* ============================================================
+   SECTION TYPE → RENDERER FILE MAP
+   ============================================================ */
+
+/**
+ * Map section_type singleSelect-värden till filer under sections/.
+ * En typ utan entry här renderas inte (felmeddelande loggas via debug-kommentar).
+ */
+function wexoe_pages_section_renderers() {
+    return [
+        'hero'               => 'hero.php',
+        'text_image'         => 'text-image.php',
+        'text_only'          => 'text-only.php',
+        'company_data_strip' => 'company-data-strip.php',
+        'news_text_split'    => 'news-text-split.php',
+        'case_grid'          => 'case-grid.php',
+        'news_grid'          => 'news-grid.php',
+        'catalog'            => 'catalog.php',
+        'tabs'               => 'tabs.php',
+        'team_grid'          => 'team-grid.php',
+        'partner_list'       => 'partner-list.php',
+        'faq'                => 'faq.php',
+        'testimonial'        => 'testimonial.php',
+        'cta_banner'         => 'cta-banner.php',
+        'contact_form'       => 'contact-form.php',
+    ];
+}
+
+/* ============================================================
    SHORTCODE
    ============================================================ */
 
@@ -32,7 +61,8 @@ add_shortcode('wexoe_page', 'wexoe_pages_shortcode');
 
 function wexoe_pages_shortcode($atts) {
     $atts = shortcode_atts([
-        'slug' => '',
+        'slug'  => '',
+        'debug' => 'false',
     ], $atts, 'wexoe_page');
 
     $slug = trim((string) $atts['slug']);
@@ -44,538 +74,446 @@ function wexoe_pages_shortcode($atts) {
         return wexoe_pages_debug_comment('wexoe-pages: wexoe-core är inte aktivt');
     }
 
+    if ($atts['debug'] === 'true') {
+        return wexoe_pages_render_debug($slug);
+    }
+
     return wexoe_pages_render($slug);
 }
 
+/* ============================================================
+   MAIN RENDER (also called directly by wexoe-alb-blocks)
+   ============================================================ */
+
 /**
- * Render a Tier 2-sida från cms_unique_pages.
+ * Public — renderar en hel cms_pages-record till HTML.
  *
- * Returnerar tom sträng om sidan inte finns eller inte är publicerad.
- * Sektioner renderas i fast ordning baserat på `show_<x>`-flaggor.
+ * Anropas av shortcoden men också direkt av wexoe-alb-blocks via
+ * wexoe_alb_render_unique_page() — håll signaturen stabil (string $slug → string).
+ *
+ * Tom sträng returneras om sidan inte finns eller inte är publicerad.
+ *
+ * @param string $slug
+ * @return string
  */
 function wexoe_pages_render($slug) {
-    $repo = \Wexoe\Core\Core::entity('cms_unique_pages');
-    if ($repo === null) {
-        return wexoe_pages_debug_comment('wexoe-pages: cms_unique_pages-schema saknas');
-    }
-
-    $page = $repo->find_by('slug', $slug);
+    $page = wexoe_pages_load_page($slug);
     if ($page === null) {
         return wexoe_pages_debug_comment('wexoe-pages: hittade inte slug=' . esc_html($slug));
     }
 
-    if (empty($page['is_published'])) {
-        return wexoe_pages_debug_comment('wexoe-pages: sidan finns men är inte publicerad');
-    }
+    $sections = wexoe_pages_load_sections($page);
+    $ctx = wexoe_pages_build_context($page);
+
+    $wrapper_id = 'wxp-' . substr(preg_replace('/[^a-z0-9-]/', '', strtolower($slug)), 0, 12) . '-' . wp_generate_password(6, false, false);
 
     ob_start();
-    echo '<article class="wxp-page">';
+    echo '<article id="' . esc_attr($wrapper_id) . '" class="wxp wxp--' . esc_attr($ctx['page_theme']) . '">';
 
-    // Top-level H1 visas bara om Hero-sektionen är AV. Hero-sektionen renderar sin egen H1.
-    if (empty($page['show_hero']) && !empty($page['h1'])) {
-        echo '<h1 class="wxp-page__h1">' . esc_html($page['h1']) . '</h1>';
+    // Topp-H1 visas bara om INGEN hero-sektion finns. Hero äger sin egen H1.
+    $has_hero = false;
+    foreach ($sections as $s) {
+        if (($s['section_type'] ?? '') === 'hero') { $has_hero = true; break; }
+    }
+    if (!$has_hero && !empty($page['h1'])) {
+        echo '<h1 class="wxp__h1">' . esc_html($page['h1']) . '</h1>';
     }
 
-    // Sektioner i FAST ordning. Detta är designval — inte redigerbart.
-    if (!empty($page['show_hero'])) {
-        wexoe_pages_render_hero($page);
+    foreach ($sections as $section) {
+        $type = (string) ($section['section_type'] ?? '');
+        $renderer = wexoe_pages_load_renderer($type);
+        if ($renderer === null) {
+            echo wexoe_pages_debug_comment('wexoe-pages: saknar renderer för section_type=' . esc_html($type));
+            continue;
+        }
+        $html = (string) $renderer($section, $page, $ctx);
+        if ($html !== '') {
+            echo $html;
+        }
     }
 
-    if (!empty($page['show_text_image_a'])) {
-        wexoe_pages_render_text_image([
-            'h2'        => $page['text_image_a_h2'] ?? '',
-            'body'      => $page['text_image_a_body'] ?? '',
-            'image_url' => (string) ($page['text_image_a_image_url'] ?? ''),
-            'reversed'  => !empty($page['text_image_a_reversed']),
-            'theme'     => $page['text_image_a_theme'] ?? 'light',
-        ]);
-    }
-
-    if (!empty($page['show_text_image_b'])) {
-        wexoe_pages_render_text_image([
-            'h2'        => $page['text_image_b_h2'] ?? '',
-            'body'      => $page['text_image_b_body'] ?? '',
-            'image_url' => (string) ($page['text_image_b_image_url'] ?? ''),
-            'reversed'  => !empty($page['text_image_b_reversed']),
-            'theme'     => $page['text_image_b_theme'] ?? 'light',
-        ]);
-    }
-
-    if (!empty($page['show_text_only'])) {
-        wexoe_pages_render_text_only($page);
-    }
-
-    if (!empty($page['show_faq'])) {
-        wexoe_pages_render_faq($page);
-    }
-
-    if (!empty($page['show_team_grid'])) {
-        wexoe_pages_render_team_grid($page);
-    }
-
-    if (!empty($page['show_partners_marquee'])) {
-        wexoe_pages_render_partners_marquee($page);
-    }
-
-    if (!empty($page['show_testimonial_card'])) {
-        wexoe_pages_render_testimonial_card($page);
-    }
-
-    if (!empty($page['show_cta_banner'])) {
-        wexoe_pages_render_cta_banner($page);
-    }
-
-    // Contact form-sektionen.
-    if (!empty($page['show_contact_form']) && class_exists('\\Wexoe\\Core\\Renderers\\ContactForm')) {
-        echo '<section id="kontakt">';
-        echo \Wexoe\Core\Renderers\ContactForm::render(wexoe_pages_build_contact_form_config($page));
-        echo '</section>';
-    }
-
-    // Tredjepartsutökning.
-    do_action('wexoe_pages_render_sections', $page);
+    // Tredjepart kan haka in extra sektioner (för testning eller add-on plugins).
+    do_action('wexoe_pages_after_sections', $page, $sections, $ctx);
 
     echo '</article>';
     return ob_get_clean();
 }
 
+/**
+ * Lazy-load + cache renderer-closure för en section_type.
+ *
+ * Returnerar null om typen saknar mapping eller filen inte returnerar callable.
+ * Renderer-filen require:as max en gång per request — säkert att deklarera
+ * top-level-funktioner inuti med `if (!function_exists(...))`-guard.
+ *
+ * @param string $type section_type-värde
+ * @return callable|null
+ */
+function wexoe_pages_load_renderer($type) {
+    static $cache = [];
+    if (array_key_exists($type, $cache)) {
+        return $cache[$type];
+    }
+    $renderers = wexoe_pages_section_renderers();
+    if (!isset($renderers[$type])) {
+        $cache[$type] = null;
+        return null;
+    }
+    $file = WEXOE_PAGES_DIR . 'sections/' . $renderers[$type];
+    if (!is_file($file)) {
+        $cache[$type] = null;
+        return null;
+    }
+    $renderer = require $file;
+    $cache[$type] = is_callable($renderer) ? $renderer : null;
+    return $cache[$type];
+}
+
 /* ============================================================
-   SECTION RENDERERS (inbäddad HTML — egen för wexoe-pages)
+   DEBUG DUMP
    ============================================================ */
 
-function wexoe_pages_render_hero($page) {
-    $title = trim((string) (!empty($page['hero_h1_override']) ? $page['hero_h1_override'] : ($page['h1'] ?? '')));
-    if ($title === '') return;
-
-    $eyebrow = (string) ($page['hero_eyebrow'] ?? '');
-    $subtitle = (string) ($page['hero_subtitle'] ?? '');
-    $image_url = (string) ($page['hero_image_url'] ?? '');
-    $cta_text = (string) ($page['hero_cta_text'] ?? '');
-    $cta_url = (string) ($page['hero_cta_url'] ?? '');
-    $theme = (($page['hero_theme'] ?? 'dark') === 'light') ? 'light' : 'dark';
-
-    $bg_style = $image_url !== ''
-        ? "background-image: url('" . esc_url($image_url) . "'); background-size: cover; background-position: center;"
-        : '';
-    ?>
-    <section class="wxp-hero wxp-hero--<?= esc_attr($theme) ?>" style="<?= esc_attr($bg_style) ?>">
-        <div class="wxp-hero__inner">
-            <?php if ($eyebrow !== ''): ?>
-                <p class="wxp-hero__eyebrow"><?= esc_html($eyebrow) ?></p>
-            <?php endif; ?>
-            <h1 class="wxp-hero__title"><?= esc_html($title) ?></h1>
-            <?php if ($subtitle !== ''): ?>
-                <p class="wxp-hero__subtitle"><?= nl2br(esc_html($subtitle)) ?></p>
-            <?php endif; ?>
-            <?php if ($cta_text !== '' && $cta_url !== ''): ?>
-                <a class="wxp-hero__cta" href="<?= esc_url($cta_url) ?>"><?= esc_html($cta_text) ?></a>
-            <?php endif; ?>
-        </div>
-    </section>
-    <style>
-        .wxp-hero { padding: 80px 24px; color: #fff; background-color: #11325D; }
-        .wxp-hero--light { background-color: #F5F6F8; color: #1A1A1A; }
-        .wxp-hero__inner { max-width: 960px; margin: 0 auto; }
-        .wxp-hero__eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 12px; opacity: 0.8; margin: 0 0 12px; }
-        .wxp-hero__title { font-size: clamp(2rem, 4vw, 3rem); line-height: 1.15; margin: 0 0 12px; font-weight: 600; }
-        .wxp-hero__subtitle { font-size: 18px; line-height: 1.5; opacity: 0.85; margin: 0 0 24px; max-width: 60ch; }
-        .wxp-hero__cta { display: inline-block; padding: 12px 24px; border-radius: 8px; background: #F28C28; color: #fff; text-decoration: none; font-weight: 500; }
-        .wxp-hero--light .wxp-hero__cta { background: #11325D; }
-    </style>
-    <?php
-}
-
-function wexoe_pages_render_text_image(array $config) {
-    $h2 = (string) ($config['h2'] ?? '');
-    $body = (string) ($config['body'] ?? '');
-    $image_url = (string) ($config['image_url'] ?? '');
-    $reversed = !empty($config['reversed']);
-    $theme = (($config['theme'] ?? 'light') === 'dark') ? 'dark' : 'light';
-
-    if ($h2 === '' && $body === '' && $image_url === '') return;
-
-    $body_html = $body !== '' && class_exists('\\Wexoe\\Core\\Helpers\\Markdown')
-        ? \Wexoe\Core\Helpers\Markdown::to_html($body)
-        : nl2br(esc_html($body));
-    ?>
-    <section class="wxp-ti wxp-ti--<?= esc_attr($theme) ?> <?= $reversed ? 'wxp-ti--reversed' : '' ?>">
-        <div class="wxp-ti__inner">
-            <div class="wxp-ti__text">
-                <?php if ($h2 !== ''): ?><h2 class="wxp-ti__h2"><?= esc_html($h2) ?></h2><?php endif; ?>
-                <?php if ($body_html !== ''): ?><div class="wxp-ti__body"><?= $body_html ?></div><?php endif; ?>
-            </div>
-            <?php if ($image_url !== ''): ?>
-                <div class="wxp-ti__image-wrap">
-                    <img class="wxp-ti__image" src="<?= esc_url($image_url) ?>" alt="" loading="lazy" />
-                </div>
-            <?php endif; ?>
-        </div>
-    </section>
-    <style>
-        .wxp-ti { padding: 64px 24px; }
-        .wxp-ti--dark { background: #0A1A2E; color: #fff; }
-        .wxp-ti--light { background: #fff; color: #1A1A1A; }
-        .wxp-ti__inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
-        .wxp-ti--reversed .wxp-ti__inner { grid-template-columns: 1fr 1fr; }
-        .wxp-ti--reversed .wxp-ti__text { order: 2; }
-        .wxp-ti__h2 { font-size: clamp(1.5rem, 3vw, 2rem); margin: 0 0 16px; font-weight: 600; }
-        .wxp-ti__body { font-size: 16px; line-height: 1.65; }
-        .wxp-ti__image { width: 100%; height: auto; border-radius: 8px; display: block; }
-        @media (max-width: 720px) { .wxp-ti__inner { grid-template-columns: 1fr; } .wxp-ti--reversed .wxp-ti__text { order: 0; } }
-    </style>
-    <?php
-}
-
-function wexoe_pages_render_text_only($page) {
-    $h2 = (string) ($page['text_only_h2'] ?? '');
-    $body = (string) ($page['text_only_body'] ?? '');
-    $align = (($page['text_only_align'] ?? 'left') === 'center') ? 'center' : 'left';
-
-    if ($h2 === '' && $body === '') return;
-
-    $body_html = $body !== '' && class_exists('\\Wexoe\\Core\\Helpers\\Markdown')
-        ? \Wexoe\Core\Helpers\Markdown::to_html($body)
-        : nl2br(esc_html($body));
-    ?>
-    <section class="wxp-text wxp-text--<?= esc_attr($align) ?>">
-        <div class="wxp-text__inner">
-            <?php if ($h2 !== ''): ?><h2 class="wxp-text__h2"><?= esc_html($h2) ?></h2><?php endif; ?>
-            <?php if ($body_html !== ''): ?><div class="wxp-text__body"><?= $body_html ?></div><?php endif; ?>
-        </div>
-    </section>
-    <style>
-        .wxp-text { padding: 64px 24px; background: #fff; color: #1A1A1A; }
-        .wxp-text__inner { max-width: 800px; margin: 0 auto; }
-        .wxp-text--center .wxp-text__inner { text-align: center; }
-        .wxp-text__h2 { font-size: clamp(1.5rem, 3vw, 2rem); margin: 0 0 16px; font-weight: 600; }
-        .wxp-text__body { font-size: 16px; line-height: 1.65; }
-    </style>
-    <?php
-}
-
-function wexoe_pages_render_faq($page) {
-    $h2 = (string) ($page['faq_h2'] ?? '');
-    $items_raw = $page['faq_items'] ?? '';
-
-    $lines = is_array($items_raw)
-        ? $items_raw
-        : array_values(array_filter(array_map('trim', explode("\n", (string) $items_raw)), function ($l) {
-            return $l !== '';
-        }));
-
-    $parsed = [];
-    foreach ($lines as $line) {
-        if (preg_match('/^\s*\*\*(.+?)\*\*\s*\|\s*(.+)$/u', $line, $m)) {
-            $parsed[] = ['q' => trim($m[1]), 'a' => trim($m[2])];
-        }
+function wexoe_pages_render_debug($slug) {
+    $page = wexoe_pages_load_page($slug);
+    if ($page === null) {
+        return '<pre>wexoe-pages: hittade inte slug=' . esc_html($slug) . '</pre>';
     }
-
-    if (empty($parsed)) return;
-    ?>
-    <section class="wxp-faq">
-        <div class="wxp-faq__inner">
-            <?php if ($h2 !== ''): ?><h2 class="wxp-faq__h2"><?= esc_html($h2) ?></h2><?php endif; ?>
-            <ul class="wxp-faq__list">
-                <?php foreach ($parsed as $i => $item): ?>
-                    <li class="wxp-faq__item">
-                        <details<?= $i === 0 ? ' open' : '' ?>>
-                            <summary class="wxp-faq__q"><?= esc_html($item['q']) ?></summary>
-                            <div class="wxp-faq__a"><?= nl2br(esc_html($item['a'])) ?></div>
-                        </details>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    </section>
-    <style>
-        .wxp-faq { padding: 64px 24px; background: #F5F6F8; color: #1A1A1A; }
-        .wxp-faq__inner { max-width: 800px; margin: 0 auto; }
-        .wxp-faq__h2 { font-size: clamp(1.5rem, 3vw, 2rem); margin: 0 0 24px; font-weight: 600; }
-        .wxp-faq__list { list-style: none; padding: 0; margin: 0; }
-        .wxp-faq__item { background: #fff; margin-bottom: 8px; border-radius: 8px; padding: 16px 20px; }
-        .wxp-faq__q { font-weight: 500; cursor: pointer; outline: none; }
-        .wxp-faq__a { margin-top: 8px; line-height: 1.6; color: #555; }
-    </style>
-    <?php
+    $sections = wexoe_pages_load_sections($page);
+    $ctx = wexoe_pages_build_context($page);
+    return '<pre style="overflow:auto;max-height:600px;background:#f4f4f4;padding:16px;">'
+        . esc_html(print_r(['page' => $page, 'sections' => $sections, 'context' => $ctx], true))
+        . '</pre>';
 }
 
-function wexoe_pages_render_team_grid($page) {
-    if (!class_exists('\\Wexoe\\Core\\Helpers\\Collections')) return;
+/* ============================================================
+   PAGE + SECTIONS LOADING
+   ============================================================ */
 
-    $h2 = (string) ($page['team_grid_h2'] ?? '');
-    $scope = wexoe_pages_resolve_scope($page, [
-        'country'  => 'team_grid_scope_country',
-        'division' => 'team_grid_scope_division',
-        'limit'    => 'team_grid_limit',
-    ]);
+/**
+ * @return array|null Normalized page record or null
+ */
+function wexoe_pages_load_page($slug) {
+    $repo = \Wexoe\Core\Core::entity('cms_pages');
+    if ($repo === null) return null;
 
-    $coworkers = \Wexoe\Core\Helpers\Collections::coworkers_for_scope($scope);
-    if (empty($coworkers)) return;
-    ?>
-    <section class="wxp-tg">
-        <div class="wxp-tg__inner">
-            <?php if ($h2 !== ''): ?><h2 class="wxp-tg__h2"><?= esc_html($h2) ?></h2><?php endif; ?>
-            <div class="wxp-tg__list">
-                <?php foreach ($coworkers as $c):
-                    $img_url = (string) ($c['image'] ?? '');
-                ?>
-                    <div class="wxp-tg__card">
-                        <?php if ($img_url !== ''): ?>
-                            <img class="wxp-tg__image" src="<?= esc_url($img_url) ?>" alt="" loading="lazy" />
-                        <?php else: ?>
-                            <div class="wxp-tg__image-placeholder"><?= esc_html(wexoe_pages_initials($c['full_name'] ?? '')) ?></div>
-                        <?php endif; ?>
-                        <h3 class="wxp-tg__name"><?= esc_html($c['full_name'] ?? '') ?></h3>
-                        <?php if (!empty($c['title'])): ?>
-                            <p class="wxp-tg__title"><?= esc_html($c['title']) ?></p>
-                        <?php endif; ?>
-                        <?php if (!empty($c['email']) || !empty($c['phone'])): ?>
-                            <p class="wxp-tg__contact">
-                                <?php if (!empty($c['email'])): ?>
-                                    <a href="mailto:<?= esc_attr($c['email']) ?>"><?= esc_html($c['email']) ?></a>
-                                <?php endif; ?>
-                                <?php if (!empty($c['phone'])): ?>
-                                    <a href="tel:<?= esc_attr(preg_replace('/\s+/', '', $c['phone'])) ?>"><?= esc_html($c['phone']) ?></a>
-                                <?php endif; ?>
-                            </p>
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </section>
-    <style>
-        .wxp-tg { padding: 64px 24px; background: #fff; }
-        .wxp-tg__inner { max-width: 1100px; margin: 0 auto; }
-        .wxp-tg__h2 { font-size: clamp(1.5rem, 3vw, 2rem); margin: 0 0 32px; font-weight: 600; }
-        .wxp-tg__list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 24px; }
-        .wxp-tg__card { text-align: center; }
-        .wxp-tg__image, .wxp-tg__image-placeholder { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; margin: 0 auto 12px; display: block; background: #F5F6F8; }
-        .wxp-tg__image-placeholder { display: flex; align-items: center; justify-content: center; font-size: 36px; color: #999; font-weight: 500; }
-        .wxp-tg__name { font-size: 16px; margin: 0 0 4px; font-weight: 500; }
-        .wxp-tg__title { font-size: 13px; color: #777; margin: 0 0 8px; }
-        .wxp-tg__contact a { display: block; font-size: 13px; color: #11325D; text-decoration: none; margin: 2px 0; }
-    </style>
-    <?php
-}
-
-function wexoe_pages_render_partners_marquee($page) {
-    if (!class_exists('\\Wexoe\\Core\\Helpers\\Collections')) return;
-
-    $h2 = (string) ($page['partners_marquee_h2'] ?? '');
-    $scope = wexoe_pages_resolve_scope($page, [
-        'country'  => 'partners_marquee_scope_country',
-        'division' => 'partners_marquee_scope_division',
-    ]);
-
-    $partners = \Wexoe\Core\Helpers\Collections::partners_for_scope($scope);
-    if (empty($partners)) return;
-    ?>
-    <section class="wxp-pm">
-        <div class="wxp-pm__inner">
-            <?php if ($h2 !== ''): ?><h2 class="wxp-pm__h2"><?= esc_html($h2) ?></h2><?php endif; ?>
-            <div class="wxp-pm__row">
-                <?php foreach ($partners as $p):
-                    $logo_url = (string) ($p['logo'] ?? '');
-                    if ($logo_url === '') continue;
-                    $name = (string) ($p['name'] ?? '');
-                    $url = (string) ($p['url'] ?? '');
-                ?>
-                    <?php if ($url !== ''): ?>
-                        <a class="wxp-pm__item" href="<?= esc_url($url) ?>" rel="noopener" target="_blank">
-                            <img src="<?= esc_url($logo_url) ?>" alt="<?= esc_attr($name) ?>" loading="lazy" />
-                        </a>
-                    <?php else: ?>
-                        <span class="wxp-pm__item">
-                            <img src="<?= esc_url($logo_url) ?>" alt="<?= esc_attr($name) ?>" loading="lazy" />
-                        </span>
-                    <?php endif; ?>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </section>
-    <style>
-        .wxp-pm { padding: 48px 24px; background: #F5F6F8; }
-        .wxp-pm__inner { max-width: 1200px; margin: 0 auto; text-align: center; }
-        .wxp-pm__h2 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); margin: 0 0 24px; font-weight: 600; opacity: 0.75; }
-        .wxp-pm__row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 32px; }
-        .wxp-pm__item img { max-height: 48px; width: auto; opacity: 0.7; filter: grayscale(0.5); transition: opacity 0.2s, filter 0.2s; }
-        .wxp-pm__item:hover img { opacity: 1; filter: none; }
-    </style>
-    <?php
-}
-
-function wexoe_pages_render_testimonial_card($page) {
-    if (!class_exists('\\Wexoe\\Core\\Helpers\\Collections')) return;
-
-    $scope = wexoe_pages_resolve_scope($page, [
-        'country'       => 'testimonial_scope_country',
-        'division'      => 'testimonial_scope_division',
-        'customer_type' => 'testimonial_scope_customer_type',
-    ]);
-    $scope_with_limit = $scope + ['limit' => 1];
-
-    $testimonials = \Wexoe\Core\Helpers\Collections::testimonials_for_scope($scope_with_limit + ['featured_only' => true]);
-    if (empty($testimonials)) {
-        $testimonials = \Wexoe\Core\Helpers\Collections::testimonials_for_scope($scope_with_limit);
-    }
-    if (empty($testimonials)) return;
-
-    $t = $testimonials[0];
-    $quote = (string) ($t['quote'] ?? '');
-    if ($quote === '') return;
-
-    $author_image_url = (string) ($t['author_image'] ?? '');
-    ?>
-    <section class="wxp-tc">
-        <div class="wxp-tc__inner">
-            <blockquote class="wxp-tc__quote">"<?= esc_html($quote) ?>"</blockquote>
-            <div class="wxp-tc__author">
-                <?php if ($author_image_url !== ''): ?>
-                    <img class="wxp-tc__img" src="<?= esc_url($author_image_url) ?>" alt="" loading="lazy" />
-                <?php endif; ?>
-                <div class="wxp-tc__byline">
-                    <?php if (!empty($t['author_name'])): ?>
-                        <strong><?= esc_html($t['author_name']) ?></strong>
-                    <?php endif; ?>
-                    <?php if (!empty($t['author_title'])): ?>
-                        <span><?= esc_html($t['author_title']) ?></span>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </section>
-    <style>
-        .wxp-tc { padding: 64px 24px; background: #11325D; color: #fff; }
-        .wxp-tc__inner { max-width: 720px; margin: 0 auto; text-align: center; }
-        .wxp-tc__quote { font-size: clamp(1.125rem, 2vw, 1.5rem); line-height: 1.5; font-style: italic; margin: 0 0 24px; }
-        .wxp-tc__author { display: inline-flex; align-items: center; gap: 12px; }
-        .wxp-tc__img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
-        .wxp-tc__byline { text-align: left; display: flex; flex-direction: column; }
-        .wxp-tc__byline strong { font-weight: 500; }
-        .wxp-tc__byline span { font-size: 13px; opacity: 0.75; }
-    </style>
-    <?php
-}
-
-function wexoe_pages_render_cta_banner($page) {
-    $h2 = (string) ($page['cta_banner_h2'] ?? '');
-    $body = (string) ($page['cta_banner_body'] ?? '');
-    $cta_text = (string) ($page['cta_banner_cta_text'] ?? '');
-    $cta_url = (string) ($page['cta_banner_cta_url'] ?? '');
-    $theme = (($page['cta_banner_theme'] ?? 'dark') === 'light') ? 'light' : 'dark';
-
-    if ($h2 === '' && $body === '') return;
-    ?>
-    <section class="wxp-cta wxp-cta--<?= esc_attr($theme) ?>">
-        <div class="wxp-cta__inner">
-            <?php if ($h2 !== ''): ?><h2 class="wxp-cta__h2"><?= esc_html($h2) ?></h2><?php endif; ?>
-            <?php if ($body !== ''): ?><p class="wxp-cta__body"><?= nl2br(esc_html($body)) ?></p><?php endif; ?>
-            <?php if ($cta_text !== '' && $cta_url !== ''): ?>
-                <a class="wxp-cta__button" href="<?= esc_url($cta_url) ?>"><?= esc_html($cta_text) ?></a>
-            <?php endif; ?>
-        </div>
-    </section>
-    <style>
-        .wxp-cta { padding: 64px 24px; }
-        .wxp-cta--dark { background: #11325D; color: #fff; }
-        .wxp-cta--light { background: #F5F6F8; color: #1A1A1A; }
-        .wxp-cta__inner { max-width: 800px; margin: 0 auto; text-align: center; }
-        .wxp-cta__h2 { font-size: clamp(1.5rem, 3vw, 2.25rem); margin: 0 0 16px; font-weight: 600; }
-        .wxp-cta__body { font-size: 16px; line-height: 1.5; margin: 0 0 24px; opacity: 0.85; }
-        .wxp-cta__button { display: inline-block; padding: 12px 28px; border-radius: 8px; background: #F28C28; color: #fff; text-decoration: none; font-weight: 500; }
-        .wxp-cta--light .wxp-cta__button { background: #11325D; }
-    </style>
-    <?php
-}
-
-function wexoe_pages_initials($name) {
-    $parts = preg_split('/\s+/', trim((string) $name));
-    $initials = '';
-    foreach ($parts as $p) {
-        if ($p !== '') $initials .= mb_substr($p, 0, 1);
-        if (mb_strlen($initials) >= 2) break;
-    }
-    return mb_strtoupper($initials);
+    $page = $repo->find($slug);
+    if ($page === null) return null;
+    if (empty($page['is_published'])) return null;
+    return $page;
 }
 
 /**
- * Sätt scope-array från sid-fält. Tomma scope-fält faller tillbaka på sidans
- * Country/Division-länkar.
+ * Returnerar sektion-records i ordningen de är länkade på sidan, filtrerade
+ * på is_active=true. Saknad länk eller raderad section hoppas tyst över
+ * (find_by_ids() städar bort dem).
  */
-function wexoe_pages_resolve_scope($page, $field_map) {
-    $scope = [];
-    foreach ($field_map as $scope_key => $page_field) {
-        $value = $page[$page_field] ?? '';
-        if ($value !== '' && $value !== null) {
-            $scope[$scope_key] = $value;
-        }
-    }
-    // Fall tillbaka på sidans Country (via record-ID → kod).
-    if (!isset($scope['country']) && !empty($page['country_ids'])) {
+function wexoe_pages_load_sections($page) {
+    $section_ids = isset($page['section_ids']) && is_array($page['section_ids']) ? $page['section_ids'] : [];
+    if (empty($section_ids)) return [];
+
+    $repo = \Wexoe\Core\Core::entity('cms_page_sections');
+    if ($repo === null) return [];
+
+    $all = $repo->find_by_ids($section_ids);
+    return array_values(array_filter($all, function ($s) {
+        return !empty($s['is_active']);
+    }));
+}
+
+/* ============================================================
+   PAGE CONTEXT (för scope-fallback från section till sida)
+   ============================================================ */
+
+/**
+ * Bygg ett context-objekt med sidans country/division/theme. Sektioner
+ * använder detta som fallback när deras egna scope-fält är tomma.
+ *
+ * Returnerar:
+ *   page_country_code  string|null  — kortkod (SE, NO, ...) eller null
+ *   page_division_slug string|null
+ *   page_theme         string       — 'light' (default) eller 'dark'
+ *   page_max_width     string       — 'narrow'|'normal'|'wide'|'full'
+ */
+function wexoe_pages_build_context($page) {
+    $ctx = [
+        'page_country_code'  => null,
+        'page_division_slug' => null,
+        'page_theme'         => (($page['page_theme'] ?? 'light') === 'dark') ? 'dark' : 'light',
+        'page_max_width'     => in_array(($page['max_width'] ?? 'normal'), ['narrow', 'normal', 'wide', 'full'], true)
+            ? $page['max_width']
+            : 'normal',
+    ];
+
+    if (!empty($page['country_ids'])) {
         $country_repo = \Wexoe\Core\Core::entity('core_countries');
         if ($country_repo !== null) {
             $records = $country_repo->find_by_ids($page['country_ids']);
             if (!empty($records) && !empty($records[0]['code'])) {
-                $scope['country'] = $records[0]['code'];
+                $ctx['page_country_code'] = strtoupper((string) $records[0]['code']);
             }
         }
     }
-    // Fall tillbaka på sidans Division (via record-ID → slug).
-    if (!isset($scope['division']) && !empty($page['division_ids'])) {
+
+    if (!empty($page['division_ids'])) {
         $division_repo = \Wexoe\Core\Core::entity('core_divisions');
         if ($division_repo !== null) {
             $records = $division_repo->find_by_ids($page['division_ids']);
             if (!empty($records) && !empty($records[0]['slug'])) {
-                $scope['division'] = $records[0]['slug'];
+                $ctx['page_division_slug'] = (string) $records[0]['slug'];
             }
         }
+    }
+
+    return $ctx;
+}
+
+/* ============================================================
+   SHARED HELPERS (för sektioner)
+   ============================================================ */
+
+/**
+ * Bygg en scope-array som ärver från sidan när sektionens scope-fält är tomt.
+ * Passar in i \Wexoe\Core\Helpers\Collections::*_for_scope().
+ *
+ * @param array       $section
+ * @param array       $ctx        sidans context
+ * @param array<string,string> $field_map  ['country' => 'pl_scope_country', ...]
+ * @return array
+ */
+function wexoe_pages_resolve_scope($section, $ctx, $field_map) {
+    $scope = [];
+    foreach ($field_map as $scope_key => $section_field) {
+        $value = $section[$section_field] ?? '';
+        if ($value !== '' && $value !== null) {
+            $scope[$scope_key] = $value;
+        }
+    }
+    if (!isset($scope['country']) && !empty($ctx['page_country_code'])) {
+        $scope['country'] = $ctx['page_country_code'];
+    }
+    if (!isset($scope['division']) && !empty($ctx['page_division_slug'])) {
+        $scope['division'] = $ctx['page_division_slug'];
     }
     return $scope;
 }
 
 /**
- * Bygg ContactForm-renderer-config från cms_unique_pages-fält.
+ * Pin-then-scope: returnerar manuellt valda records först, sen scope-resultat
+ * upp till `$limit` totalt. Duplikater (record-id matchar) tas bort.
+ *
+ * @param string[]     $manual_ids    Airtable record IDs (rec...) från ett link-fält
+ * @param string       $entity_name   Entity för manuell-resolution (samma entitet som scope-resultatet)
+ * @param callable     $scope_fetcher Callable som returnerar scoped records (call_user_func)
+ * @param int          $limit         0 = obegränsat
+ * @return array
  */
-function wexoe_pages_build_contact_form_config($page) {
-    return [
-        'eyebrow'        => $page['contact_form_eyebrow'] ?? '',
-        'title'          => $page['contact_form_title'] ?? '',
-        'subtitle'       => $page['contact_form_subtitle'] ?? '',
-        'layout'         => $page['contact_form_layout'] ?? 'split',
-        'theme'          => $page['contact_form_theme'] ?? 'dark',
-        'show_company'   => $page['contact_form_show_company'] ?? true,
-        'show_phone'     => $page['contact_form_show_phone'] ?? true,
-        'show_dropdown'  => $page['contact_form_show_dropdown'] ?? true,
-        'dropdown_label' => $page['contact_form_dropdown_label'] ?? '',
-        'options'        => $page['contact_form_options'] ?? null,
-        'cta_text'       => $page['contact_form_cta_text'] ?? '',
-        'message_label'  => $page['contact_form_message_label'] ?? '',
-        'trust_signals'  => $page['contact_form_trust_signals'] ?? null,
-        'source_plugin'  => 'wexoe-pages',
-        'page_slug'      => $page['slug'] ?? '',
-        'contact_person' => !empty($page['contact_form_show_contact_person'])
-            ? wexoe_pages_resolve_contact_person($page)
-            : null,
-    ];
+function wexoe_pages_pin_then_scope(array $manual_ids, $entity_name, callable $scope_fetcher, $limit = 0) {
+    $result = [];
+    $seen = [];
+
+    if (!empty($manual_ids)) {
+        $repo = \Wexoe\Core\Core::entity($entity_name);
+        if ($repo !== null) {
+            foreach ($repo->find_by_ids($manual_ids) as $rec) {
+                $id = isset($rec['_record_id']) ? $rec['_record_id'] : null;
+                if ($id === null || isset($seen[$id])) continue;
+                if (isset($rec['is_active']) && $rec['is_active'] === false) continue;
+                $result[] = $rec;
+                $seen[$id] = true;
+                if ($limit > 0 && count($result) >= $limit) {
+                    return $result;
+                }
+            }
+        }
+    }
+
+    $scoped = call_user_func($scope_fetcher);
+    if (is_array($scoped)) {
+        foreach ($scoped as $rec) {
+            $id = isset($rec['_record_id']) ? $rec['_record_id'] : null;
+            if ($id === null || isset($seen[$id])) continue;
+            $result[] = $rec;
+            $seen[$id] = true;
+            if ($limit > 0 && count($result) >= $limit) break;
+        }
+    }
+
+    return $result;
 }
 
 /**
- * Slå upp första aktiva coworker baserat på sidans scope.
+ * Compute section-wrapping HTML attributes (class + id) from common fields.
+ *
+ * Returnerar string som ska gå in i <section ...>:
+ *   class="wxp-section wxp-section--<type> wxp-section--theme-<theme> wxp-section--top-<pad> wxp-section--bot-<pad>"
+ *   id="<anchor_id>" (om satt)
  */
-function wexoe_pages_resolve_contact_person($page) {
-    if (!class_exists('\\Wexoe\\Core\\Helpers\\Collections')) return null;
-    $scope = wexoe_pages_resolve_scope($page, []) + ['limit' => 1];
-    $matches = \Wexoe\Core\Helpers\Collections::coworkers_for_scope($scope);
-    if (empty($matches)) return null;
-    $c = $matches[0];
-    return [
-        'name'  => $c['full_name'] ?? '',
-        'title' => $c['title'] ?? '',
-        'email' => $c['email'] ?? '',
-        'phone' => $c['phone'] ?? '',
-        'image' => (string) ($c['image'] ?? ''),
+function wexoe_pages_section_attrs($section, $ctx, $extra_class = '') {
+    $type = preg_replace('/[^a-z_]/', '', (string) ($section['section_type'] ?? ''));
+    $theme = ($section['theme'] ?? 'inherit');
+    if ($theme === 'inherit' || !in_array($theme, ['light', 'dark'], true)) {
+        $theme = $ctx['page_theme'];
+    }
+    $top = in_array(($section['top_padding'] ?? ''), ['none', 'sm', 'md', 'lg'], true) ? $section['top_padding'] : 'md';
+    $bot = in_array(($section['bottom_padding'] ?? ''), ['none', 'sm', 'md', 'lg'], true) ? $section['bottom_padding'] : 'md';
+    $layout = in_array(($section['layout'] ?? ''), ['contained', 'full_bleed', 'narrow'], true) ? $section['layout'] : 'contained';
+
+    $classes = [
+        'wxp-section',
+        'wxp-section--' . $type,
+        'wxp-section--theme-' . $theme,
+        'wxp-section--top-' . $top,
+        'wxp-section--bot-' . $bot,
+        'wxp-section--layout-' . $layout,
     ];
+    if ($extra_class !== '') $classes[] = $extra_class;
+
+    $attrs = 'class="' . esc_attr(implode(' ', $classes)) . '"';
+    if (!empty($section['anchor_id'])) {
+        $attrs .= ' id="' . esc_attr($section['anchor_id']) . '"';
+    }
+    return $attrs;
+}
+
+/**
+ * Resolva ett scope-värde (slug, country-code, eller record ID) till
+ * Airtable record-ID för att kunna jämföra mot linked-record-fält.
+ *
+ * Returnerar null om scope-nyckeln är osatt eller inte går att resolva.
+ * Stödda nycklar: 'country', 'division', 'customer_type'.
+ */
+function wexoe_pages_resolve_link_id_for_scope($scope, $key) {
+    if (!isset($scope[$key]) || $scope[$key] === '' || $scope[$key] === null) return null;
+    $v = (string) $scope[$key];
+
+    // Redan ett record-ID (rec + 14 chars).
+    if (strpos($v, 'rec') === 0 && strlen($v) === 17) return $v;
+
+    $entity_map = [
+        'country'       => ['entity' => 'core_countries',      'lookup' => 'code',  'transform' => 'strtoupper'],
+        'division'      => ['entity' => 'core_divisions',      'lookup' => 'slug',  'transform' => 'strtolower'],
+        'customer_type' => ['entity' => 'core_customer_types', 'lookup' => 'slug',  'transform' => 'strtolower'],
+    ];
+    if (!isset($entity_map[$key])) return null;
+
+    $cfg = $entity_map[$key];
+    $repo = \Wexoe\Core\Core::entity($cfg['entity']);
+    if ($repo === null) return null;
+    $lookup_value = call_user_func($cfg['transform'], $v);
+    $rec = $repo->find_by($cfg['lookup'], $lookup_value);
+    return ($rec !== null && isset($rec['_record_id'])) ? $rec['_record_id'] : null;
+}
+
+/**
+ * Bestäm om en record matchar ett scope-target via ett linked-record-fält.
+ *
+ * Mirror av Collections::scope_link_matches: matchar om
+ *   - target är null (filter avstängt), ELLER
+ *   - record's link-array är tom (globalt synlig), ELLER
+ *   - record's link-array innehåller target.
+ */
+function wexoe_pages_link_matches($record, $field, $target_record_id) {
+    if ($target_record_id === null) return true;
+    $ids = isset($record[$field]) && is_array($record[$field]) ? $record[$field] : [];
+    if (empty($ids)) return true;
+    return in_array($target_record_id, $ids, true);
+}
+
+/**
+ * Markdown helpers — passa genom Core om tillgänglig, annars fallback till
+ * nl2br(esc_html()) så att rendering aldrig kraschar i edge cases.
+ */
+function wexoe_pages_md($text) {
+    $text = (string) $text;
+    if ($text === '') return '';
+    if (class_exists('\\Wexoe\\Core\\Helpers\\Markdown')) {
+        return \Wexoe\Core\Helpers\Markdown::to_html($text);
+    }
+    return '<p>' . nl2br(esc_html($text)) . '</p>';
+}
+
+function wexoe_pages_md_inline($text) {
+    $text = (string) $text;
+    if ($text === '') return '';
+    if (class_exists('\\Wexoe\\Core\\Helpers\\Markdown')) {
+        return \Wexoe\Core\Helpers\Markdown::to_inline($text);
+    }
+    return esc_html($text);
+}
+
+/**
+ * I WP_DEBUG-läge: returnera HTML-kommentar. Production: tom sträng.
+ */
+function wexoe_pages_debug_comment($msg) {
+    if (defined('WP_DEBUG') && WP_DEBUG) {
+        return '<!-- ' . esc_html($msg) . ' -->';
+    }
+    return '';
+}
+
+/* ============================================================
+   GLOBAL CSS — emit once per page-render
+   ============================================================
+   Single inline stylesheet med basklasser som alla sektioner delar:
+   layout-container, theme-färger, padding-skalor, basic typography.
+   Sektion-specifik CSS bor i respektive sections/<type>.php.
+*/
+
+// Print BEFORE body så att section-inline-styles (i body) override:ar baset
+// vid lika specificitet (source-order wins).
+add_action('wp_head', 'wexoe_pages_print_base_styles', 8);
+
+function wexoe_pages_print_base_styles() {
+    static $printed = false;
+    if ($printed) return;
+    // Heuristik: bara printa om vi rendererat minst en wexoe_page på sidan.
+    // Vi kan inte veta säkert utan att hooka in render-flödet — för
+    // enkelhetens skull skickar vi alltid när shortcode finns någonstans.
+    // Cost: ~2kB extra CSS som ignoreras om inte använt.
+    if (!wexoe_pages_should_print_base_styles()) return;
+    $printed = true;
+    ?>
+<style id="wxp-base">
+.wxp { color: #1A1A1A; font-family: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
+.wxp--dark { color: #fff; background: #0A1A2E; }
+.wxp__h1 { font-size: clamp(2rem, 4vw, 2.75rem); margin: 0 0 24px; padding: 24px 24px 0; }
+.wxp-section { box-sizing: border-box; width: 100%; }
+.wxp-section *, .wxp-section *::before, .wxp-section *::after { box-sizing: border-box; }
+.wxp-section__inner { max-width: 1100px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+.wxp-section--layout-narrow .wxp-section__inner { max-width: 760px; }
+.wxp-section--layout-full_bleed .wxp-section__inner { max-width: none; padding-left: 0; padding-right: 0; }
+.wxp-section--top-none { padding-top: 0; }
+.wxp-section--top-sm { padding-top: 24px; }
+.wxp-section--top-md { padding-top: 64px; }
+.wxp-section--top-lg { padding-top: 96px; }
+.wxp-section--bot-none { padding-bottom: 0; }
+.wxp-section--bot-sm { padding-bottom: 24px; }
+.wxp-section--bot-md { padding-bottom: 64px; }
+.wxp-section--bot-lg { padding-bottom: 96px; }
+.wxp-section--theme-light { background: #fff; color: #1A1A1A; }
+.wxp-section--theme-dark { background: #0A1A2E; color: #fff; }
+.wxp-eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 12px; opacity: 0.75; margin: 0 0 12px; font-weight: 500; }
+.wxp-h2 { font-size: clamp(1.5rem, 3vw, 2rem); margin: 0 0 16px; font-weight: 600; line-height: 1.2; }
+.wxp-body { font-size: 16px; line-height: 1.65; }
+.wxp-body p:last-child { margin-bottom: 0; }
+.wxp-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500; transition: transform 0.15s; line-height: 1.2; }
+.wxp-btn:hover { transform: translateY(-1px); }
+.wxp-btn--primary { background: #F28C28; color: #fff; }
+.wxp-btn--primary:hover { background: #e07d1f; color: #fff; }
+.wxp-btn--secondary { background: transparent; color: inherit; border: 2px solid currentColor; }
+.wxp-section--theme-light .wxp-btn--secondary { color: #11325D; border-color: rgba(17,50,93,0.3); }
+.wxp-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+@media (max-width: 720px) { .wxp-section--top-md { padding-top: 40px; } .wxp-section--bot-md { padding-bottom: 40px; } .wxp-section--top-lg { padding-top: 56px; } .wxp-section--bot-lg { padding-bottom: 56px; } }
+</style>
+    <?php
+}
+
+function wexoe_pages_should_print_base_styles() {
+    if (!is_singular()) return false;
+    global $post;
+    if (!$post || !is_object($post)) return false;
+    return strpos($post->post_content, '[wexoe_page') !== false
+        || strpos($post->post_content, '[wexoe_content') !== false; // alb-blocks-wrapper
 }
 
 /* ============================================================
@@ -595,14 +533,12 @@ function wexoe_pages_seo_meta() {
     $slug = $m[1];
 
     if (!wexoe_pages_core_ready()) return;
-    $repo = \Wexoe\Core\Core::entity('cms_unique_pages');
-    if ($repo === null) return;
-    $page = $repo->find_by('slug', $slug);
-    if ($page === null || empty($page['is_published'])) return;
+    $page = wexoe_pages_load_page($slug);
+    if ($page === null) return;
 
     $title = !empty($page['seo_title']) ? $page['seo_title'] : ($page['h1'] ?? '');
-    $description = !empty($page['seo_description']) ? $page['seo_description'] : '';
-    $og_image = !empty($page['og_image_url']) ? $page['og_image_url'] : '';
+    $description = (string) ($page['seo_description'] ?? '');
+    $og_image = (string) ($page['og_image_url'] ?? '');
 
     if ($title !== '') {
         echo '<meta property="og:title" content="' . esc_attr($title) . '" />' . "\n";
@@ -614,19 +550,4 @@ function wexoe_pages_seo_meta() {
     if ($og_image !== '') {
         echo '<meta property="og:image" content="' . esc_url($og_image) . '" />' . "\n";
     }
-}
-
-/* ============================================================
-   HELPERS
-   ============================================================ */
-
-/**
- * I WP_DEBUG-läge: returnera HTML-kommentar för debugging.
- * I production: tom sträng.
- */
-function wexoe_pages_debug_comment($msg) {
-    if (defined('WP_DEBUG') && WP_DEBUG) {
-        return '<!-- ' . esc_html($msg) . ' -->';
-    }
-    return '';
 }

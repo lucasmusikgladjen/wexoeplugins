@@ -12,9 +12,9 @@ if (!defined('ABSPATH')) {
 class Constants {
 
     /**
-     * Slugs som inte får användas för cms_unique_pages eftersom de redan
-     * är hanterade av dedikerade plugins (wexoe-contact-page etc.) eller
-     * reserverade för framtida bruk.
+     * Slugs som inte får användas för cms_pages eftersom de redan är hanterade
+     * av dedikerade plugins (wexoe-contact-page etc.) eller reserverade för
+     * framtida bruk.
      */
     const RESERVED_SLUGS = [
         'kontakt',
