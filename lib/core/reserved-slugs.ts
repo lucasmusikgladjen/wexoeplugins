@@ -1,5 +1,5 @@
 /**
- * Reserverade slugs som inte får användas för cms_unique_pages.
+ * Reserverade slugs som inte får användas för cms_pages.
  *
  * Speglar PHP-konstanten `Wexoe\Core\Constants::RESERVED_SLUGS`.
  * Måste hållas i synk manuellt.

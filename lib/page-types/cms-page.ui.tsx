@@ -4,9 +4,8 @@
  * 2 fasta editor-paneler (metadata + sections). Sektioner är polymorfa och
  * hanteras dynamiskt inom "sections"-panelen via SectionsEditor.
  *
- * Publicerad-toggle ligger i toolbarExtras (samma som unique-page) så
- * marknadsföraren ser publiceringsstatus i toolbaren oberoende av vilken
- * panel som är öppen.
+ * Publicerad-toggle ligger i toolbarExtras så marknadsföraren ser
+ * publiceringsstatus i toolbaren oberoende av vilken panel som är öppen.
  */
 
 import { CmsPageState } from '../cms-page-types';

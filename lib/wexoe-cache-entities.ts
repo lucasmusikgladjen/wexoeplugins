@@ -18,7 +18,6 @@ export const SSOT_ENTITIES = [
   'core_partners',
   'core_testimonials',
 ] as const;
-export const UNIQUE_PAGES_ENTITIES = ['cms_unique_pages'] as const;
 // CMS-pages-familjen — informationssidor (start, om-oss, pillar) byggda av
 // polymorfa cms_page_sections. Tabs-sektionstypen har egna sub-records i
 // cms_section_tabs som invalideras tillsammans.

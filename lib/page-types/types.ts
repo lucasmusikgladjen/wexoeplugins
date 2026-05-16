@@ -43,7 +43,7 @@
  *
  *   Lager 3 — Full override: skriv egen `create`/`update`/`delete` som
  *     anropar Claude-transform. Det här är standardvalet — alla nuvarande
- *     sidtyper (customer-type, unique-page, product-area, landing-page)
+ *     sidtyper (customer-type, cms-page, product-area, landing-page)
  *     använder det. Ger ett enhetligt sätt att transformera state →
  *     Airtable-fält via en schema-MD som matas in i Claude.
  *

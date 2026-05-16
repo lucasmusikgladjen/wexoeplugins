@@ -19,7 +19,6 @@ import { join } from 'path';
 import { PageState } from './types';
 import { ProductAreaState } from './product-area-types';
 import { CustomerTypePageState } from './customer-type-types';
-import { UniquePageState } from './unique-page-types';
 import { CmsPageState, PageSection, TabsSection } from './cms-page-types';
 
 // ─── Schemas loaded once at module boot ────────────────────────────────────
@@ -33,10 +32,6 @@ const SCHEMA_PA = readFileSync(
 );
 const SCHEMA_CUSTOMER_TYPE = readFileSync(
   join(process.cwd(), 'lib', 'airtable-schema-customer-type.md'),
-  'utf-8',
-);
-const SCHEMA_UNIQUE_PAGE = readFileSync(
-  join(process.cwd(), 'lib', 'airtable-schema-unique-page.md'),
   'utf-8',
 );
 const SCHEMA_CMS_PAGE = readFileSync(
@@ -85,10 +80,6 @@ export interface PaTransformResult {
 
 export interface CustomerTypeTransformResult {
   customerTypePage: Record<string, unknown>;
-}
-
-export interface UniquePageTransformResult {
-  uniquePage: Record<string, unknown>;
 }
 
 export interface CmsPageTransformSection {
@@ -757,167 +748,6 @@ export async function transformCustomerType(
   return parsed;
 }
 
-// ─── Unique Page payload builder ───────────────────────────────────────────
-
-function buildUniquePagePayload(
-  state: UniquePageState,
-  mode: TransformMode,
-): string {
-  const data: Record<string, unknown> = {
-    _mode: mode,
-    _recordId: state.recordId || null,
-
-    slug: state.slug,
-    h1: state.h1,
-    seo_title: state.seoTitle,
-    seo_description: state.seoDescription,
-    og_image_url: state.ogImageUrl,
-    is_published: state.published,
-    country_ids: state.countryIds,
-    division_ids: state.divisionIds,
-
-    show_hero: state.showHero,
-    hero_eyebrow: state.hero.eyebrow,
-    hero_h1_override: state.hero.h1Override,
-    hero_subtitle: state.hero.subtitle,
-    hero_image_url: state.hero.imageUrl,
-    hero_cta_text: state.hero.ctaText,
-    hero_cta_url: state.hero.ctaUrl,
-    hero_theme: state.hero.theme,
-
-    show_text_image_a: state.showTextImageA,
-    text_image_a_h2: state.textImageA.h2,
-    text_image_a_body: state.textImageA.body,
-    text_image_a_image_url: state.textImageA.imageUrl,
-    text_image_a_reversed: state.textImageA.reversed,
-    text_image_a_theme: state.textImageA.theme,
-
-    show_text_image_b: state.showTextImageB,
-    text_image_b_h2: state.textImageB.h2,
-    text_image_b_body: state.textImageB.body,
-    text_image_b_image_url: state.textImageB.imageUrl,
-    text_image_b_reversed: state.textImageB.reversed,
-    text_image_b_theme: state.textImageB.theme,
-
-    show_text_only: state.showTextOnly,
-    text_only_h2: state.textOnly.h2,
-    text_only_body: state.textOnly.body,
-    text_only_align: state.textOnly.align,
-
-    show_faq: state.showFaq,
-    faq_h2: state.faq.h2,
-    faq_items: state.faq.items,
-
-    show_team_grid: state.showTeamGrid,
-    team_grid_h2: state.teamGrid.h2,
-    team_grid_scope_division: state.teamGrid.scope.division,
-    team_grid_scope_country: state.teamGrid.scope.country,
-    team_grid_limit: state.teamGrid.scope.limit ?? 0,
-
-    show_partners_marquee: state.showPartnersMarquee,
-    partners_marquee_h2: state.partnersMarquee.h2,
-    partners_marquee_scope_division: state.partnersMarquee.scope.division,
-    partners_marquee_scope_country: state.partnersMarquee.scope.country,
-
-    show_testimonial_card: state.showTestimonialCard,
-    testimonial_scope_customer_type: state.testimonialCard.scope.customerType ?? '',
-    testimonial_scope_division: state.testimonialCard.scope.division,
-    testimonial_scope_country: state.testimonialCard.scope.country,
-
-    show_cta_banner: state.showCtaBanner,
-    cta_banner_h2: state.ctaBanner.h2,
-    cta_banner_body: state.ctaBanner.body,
-    cta_banner_cta_text: state.ctaBanner.ctaText,
-    cta_banner_cta_url: state.ctaBanner.ctaUrl,
-    cta_banner_theme: state.ctaBanner.theme,
-
-    // Contact form (15 fält)
-    show_contact_form: state.showContactForm,
-    contact_form_eyebrow: state.contactForm.eyebrow,
-    contact_form_title: state.contactForm.title,
-    contact_form_subtitle: state.contactForm.subtitle,
-    contact_form_layout: state.contactForm.layout,
-    contact_form_theme: state.contactForm.theme,
-    contact_form_show_company: state.contactForm.showCompany,
-    contact_form_show_phone: state.contactForm.showPhone,
-    contact_form_show_dropdown: state.contactForm.showDropdown,
-    contact_form_dropdown_label: state.contactForm.dropdownLabel,
-    contact_form_options: state.contactForm.options,
-    contact_form_cta_text: state.contactForm.ctaText,
-    contact_form_message_label: state.contactForm.messageLabel,
-    contact_form_trust_signals: state.contactForm.trustSignals,
-    contact_form_show_contact_person: state.contactForm.showContactPerson,
-  };
-
-  return JSON.stringify(data, null, 2);
-}
-
-function buildUniquePageSystemPrompt(mode: TransformMode): string {
-  const common = `Du är en datatransformerare. Du tar emot egen-sida-data i JSON-format och konverterar den till Airtable-redo JSON enligt schemat nedan.
-
-${SCHEMA_UNIQUE_PAGE}
-
-Svara med ENBART valid JSON (ingen markdown, ingen förklaring).
-
-Output-format:
-{
-  "uniquePage": { <Airtable-fältnamn>: <värde>, ... }
-}
-
-KRITISKT:
-- Använd exakta Airtable-fältnamn från schemat (snake_case).
-- Inkludera ALDRIG "internal_notes" i outputen.
-- Inkludera ALLTID boolean-fält (is_published, alla show_*-toggles, text_image_a_reversed, text_image_b_reversed, show_contact_form, alla contact_form_show_*-checkboxes).
-- Inkludera ALLTID singleSelect-värden (hero_theme, text_image_a_theme, text_image_b_theme, text_only_align, cta_banner_theme, contact_form_layout, contact_form_theme).
-- country_ids och division_ids: skicka som array av string-IDs precis som input. Inkludera ALLTID (även tom array vid UPDATE).
-- Inkludera ALLTID alla 15 contact_form_*-fält vid UPDATE (även tomma/false).
-- team_grid_limit: skicka som number om > 0. Vid CREATE: utelämna när 0/tom. Vid UPDATE: skicka null när 0/tom.
-- Applicera faq_items-formateringsregeln (Q: / A: prefix, blank rad mellan QA-par).`;
-
-  if (mode === 'create') {
-    return `${common}
-
-MODE: CREATE
-- Utelämna textfält med tomt värde (tomma strängar, null), MEN inkludera ALLTID boolean-fält, alla singleSelect-fält, country_ids/division_ids, och alla 15 contact_form_*-fält.`;
-  }
-
-  return `${common}
-
-MODE: UPDATE
-- Inkludera ALLA fält från input (även tomma) så Airtable rensar dem som tömts. Tomma textfält som "".
-- Inkludera ALLTID alla 15 contact_form_*-fält i uniquePage även om värdena är tomma eller false.
-- Inkludera ALLTID country_ids och division_ids — om arrayen tömts, skicka [].`;
-}
-
-export async function transformUniquePage(
-  apiKey: string,
-  state: UniquePageState,
-  mode: TransformMode,
-): Promise<UniquePageTransformResult> {
-  const userPayload = buildUniquePagePayload(state, mode);
-  const systemPrompt = buildUniquePageSystemPrompt(mode);
-  const userPrompt = `Transformera denna data till Airtable-format:\n\n${userPayload}`;
-
-  const responseText = await callClaude(apiKey, systemPrompt, userPrompt);
-  const parsed = parseJsonOrThrow<UniquePageTransformResult>(responseText);
-
-  if (!parsed || typeof parsed !== 'object') {
-    throw new Error('Claude returnerade oväntat format.');
-  }
-  if (!parsed.uniquePage || typeof parsed.uniquePage !== 'object') {
-    throw new Error('Claude utelämnade uniquePage-objektet.');
-  }
-
-  // country_ids/division_ids är ren passthrough — backfilla från state oavsett
-  // vad Claude returnerade. Annars riskerar en utelämnad/non-array-output i
-  // update-läget att lämna gamla länkar i Airtable när användaren tömt fältet
-  // (PATCH med utelämnad nyckel rör inte fältet). I create-läget är det också
-  // korrekt att echo:a state direkt — Claude har inget att tillföra här.
-  parsed.uniquePage.country_ids = state.countryIds;
-  parsed.uniquePage.division_ids = state.divisionIds;
-
-  return parsed;
-}
 
 // ─── CMS Page payload builder ─────────────────────────────────────────────
 
@@ -1178,8 +1008,8 @@ export async function transformCmsPage(
     parsed.sectionTabs = [];
   }
 
-  // country_ids/division_ids: backfilla från state (samma som unique-page —
-  // skydd mot Claude som glömmer eller returnerar non-array).
+  // country_ids/division_ids: backfilla från state (skydd mot Claude som
+  // glömmer eller returnerar non-array).
   parsed.page.country_ids = state.countryIds;
   parsed.page.division_ids = state.divisionIds;
 

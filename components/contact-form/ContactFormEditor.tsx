@@ -10,9 +10,10 @@ interface Props {
 /**
  * Delad ContactFormEditor — neutral mot page-typ.
  *
- * Används direkt av UniquePageBuilder (Fas 7) och via tunna wrappers från
- * LP/PA/Audience-editorerna (Fas 9). Renderar inga sektion-headers — det är
- * upp till föräldern att wrappa i CollapsibleSection eller motsvarande.
+ * Används av LP/PA/Audience-editorerna via tunna wrappers, och kan
+ * paras med CmsPage:s contact_form-sektionstyp. Renderar inga sektion-
+ * headers — det är upp till föräldern att wrappa i CollapsibleSection
+ * eller motsvarande.
  */
 export default function ContactFormEditor({ state, onChange }: Props) {
   const set = <K extends keyof ContactFormState>(k: K, v: ContactFormState[K]) =>

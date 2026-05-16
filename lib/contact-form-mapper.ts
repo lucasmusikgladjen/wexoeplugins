@@ -2,7 +2,7 @@
  * Bidirektional mappning för contact-form-fält i sidtyps-records.
  *
  * Contact-form-blocket återanvänds av flera sidtyper (audience, product-area,
- * unique-page, ...). Sidtyperna ligger i olika baser och olika naming-eror:
+ * landing-page, ...). Sidtyperna ligger i olika baser och olika naming-eror:
  *
  *  - Legacy-basen (audience, m.fl.) — Title Case-fält:
  *    `Contact Form Eyebrow`, `Contact Form Show Company`, etc.
@@ -126,8 +126,8 @@ export function contactFormFromFields(
 
 export interface ContactFormToFieldsOptions {
   schema?: ContactFormSchema;
-  /** Konvertera tomma textfält till `null` (Airtable-konvention som
-   *  unique-page-mapper använder för att rensa fält). Booleans påverkas inte. */
+  /** Konvertera tomma textfält till `null` (Airtable-konvention för att
+   *  rensa fält på UPDATE). Booleans påverkas inte. */
   nullForEmpty?: boolean;
 }
 

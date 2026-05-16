@@ -34,7 +34,6 @@ import {
   CUSTOMER_TYPE_PAGE_ENTITIES,
   LP_ENTITIES,
   PA_ENTITIES,
-  UNIQUE_PAGES_ENTITIES,
   CMS_PAGES_ENTITIES,
 } from '../wexoe-cache-entities';
 
@@ -42,7 +41,6 @@ export type PageTypeId =
   | 'landing'
   | 'product'
   | 'customer-type'
-  | 'unique'
   | 'page';
 
 export interface PageRow {
@@ -161,26 +159,6 @@ export const PAGE_TYPES = definePageTypes([
         slug: pickString(p, 'slug'),
         h1: pickString(p, 'h1'),
         type: 'customer-type',
-      })),
-  },
-  {
-    id: 'unique',
-    label: 'Egen',
-    description: 'Tier 2-sida (om-oss, karriär osv.) med fast sektion-struktur',
-    creatable: true,
-    listUrl: '/api/unique-page?action=list',
-    createPath: '/editor/unique',
-    editPath: (id) => `/editor/unique/${id}`,
-    cacheEntities: UNIQUE_PAGES_ENTITIES,
-    mapList: (data) =>
-      (data.pages ?? []).map((p) => ({
-        id: pickString(p, 'id'),
-        name: pickString(p, 'h1', 'slug'),
-        slug: pickString(p, 'slug'),
-        h1: pickString(p, 'h1'),
-        type: 'unique',
-        divisionIds: pickStringArray(p, 'divisionIds'),
-        countryIds: pickStringArray(p, 'countryIds'),
       })),
   },
   {

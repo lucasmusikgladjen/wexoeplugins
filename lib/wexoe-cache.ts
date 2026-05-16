@@ -21,7 +21,6 @@ export {
   LP_ENTITIES,
   PA_ENTITIES,
   SSOT_ENTITIES,
-  UNIQUE_PAGES_ENTITIES,
   CMS_PAGES_ENTITIES,
 } from './wexoe-cache-entities';
 

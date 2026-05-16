@@ -1,7 +1,8 @@
 /**
  * Delade typer för ContactForm-editor.
  *
- * Används av UniquePageBuilder (Fas 7) och LP/PA/Audience-editorerna (Fas 9).
+ * Används av LP/PA/Audience-editorerna och kan paras med CmsPage:s
+ * contact_form-sektionstyp.
  */
 
 export type ContactFormLayout = 'split' | 'centered';

@@ -33,7 +33,7 @@ Stack: Next.js (App Router) + TypeScript + Tailwind. Värd på Vercel. Läs frå
 ```
 
 - **SSOT-entiteter** (`core_*` i Airtable) — referensdata och singletons: företag, divisioner, partners, coworkers, grafisk profil. Globalt redigerbara via buildern under `/globals`.
-- **CMS-entiteter** (`cms_*` i Airtable) — sidor: landing pages, audience heroes, product pages, unique pages. Redigerbara per record under `/editor/<type>/[recordId]`.
+- **CMS-entiteter** (`cms_*` i Airtable) — sidor: landing pages, audience heroes, product pages, CMS pages (informationssidor). Redigerbara per record under `/editor/<type>/[recordId]`.
 - **Cache** — när buildern sparar invalideras motsvarande WP-transients via `/api/cache/clear`. Page-plugins läser nästa gång och hämtar fresh data från Core.
 
 Allt går genom **wexoe-core** på WP-sidan — page-plugins pratar aldrig med Airtable direkt. Se `wexoeplugins/UTVECKLINGSGUIDE.md` för Core-API och plugin-konventioner.
@@ -49,7 +49,7 @@ app/
   api/
     audience/           # CRUD-route för audience-sidor
     product-area/       # CRUD-route för produktsidor
-    unique-page/        # CRUD-route för unique pages
+    page/               # CRUD-route för CMS pages (informationssidor)
     read/               # Läs-route för landing pages (legacy)
     publish/            # Cache-invalidering mot WP
     core/               # SSOT-CRUD-routes
@@ -57,7 +57,7 @@ app/
 components/
   audience/             # Editor-fält + preview-komponenter per sidtyp
   product-area/
-  unique-page/
+  cms-page/
   editors/              # Legacy LP-editor (migreras till page-types)
   preview/              # Legacy LP-preview
   shared/               # Återanvändbara form-primitives
@@ -110,7 +110,7 @@ Splittringen finns för att React-komponenter inte kan korsa Next:s server/clien
 
 - **Lager 1** — vanlig CRUD. Bara `primary` (tableId + fromRecord + stateToFields). Ramverket stöder modellen men det är inte produktionsvalet — alla sidtyper går via Claude-transform i Lager 3. Lager 1 finns kvar som en implementation-detalj.
 - **Lager 2** — primary + `relations[]`. Ramverket diffar och synkar varje relation (parent-link-array eller child-backlink-modell). För framtida case-sidor med content-blocks i separat tabell.
-- **Lager 3** — full override (`create`/`update`/`delete`) som anropar Claude-transform. Detta är **standardvalet** för alla sidtyper — Customer Type, Unique Page, Product Area och Landing Page använder alla detta idag.
+- **Lager 3** — full override (`create`/`update`/`delete`) som anropar Claude-transform. Detta är **standardvalet** för alla sidtyper — Customer Type, CMS Page, Product Area och Landing Page använder alla detta idag.
 
 **Airtable saknar transaktioner.** Ramverket lovar inte atomär rollback. Vid fel: primary skrivs först (eller stoppas hela operationen om primary failar); därefter en relation i taget; fel ackumuleras i `RelationSyncResult.errors`. Klienten visar fel tydligt och låter användaren retrya.
 
@@ -133,7 +133,7 @@ Filosofiskt det viktigaste mönstret i hela buildern.
 
 **Trade-off:** Claude måste vara igång, sparet kostar ~1-3 sek + några öre i tokens, och vi har defensiva guards i `transform*` mot tomma arrayer i UPDATE-läget (annars skulle Claude oavsiktligt kunna unlinka allt). Värt det för utvecklingsekvansen.
 
-**Alla sidtyper använder Claude transform.** Även sidtyper vars schema är 1-till-1 mellan state och Airtable (Customer Type, Unique Page) går via Claude — en minimal payload-builder + en schema-MD räcker. Det ger enhetlig kod, gör schemaändringar trivialа att rulla ut (uppdatera MD-filen), och håller all skriv-logik på samma ställe.
+**Alla sidtyper använder Claude transform.** Även sidtyper vars schema är 1-till-1 mellan state och Airtable (Customer Type, CMS Page) går via Claude — en minimal payload-builder + en schema-MD räcker. Det ger enhetlig kod, gör schemaändringar trivialа att rulla ut (uppdatera MD-filen), och håller all skriv-logik på samma ställe.
 
 Exempel på fall där Claude-transform är *särskilt* värdefullt:
 - Polymorfa items (en tab kan vara textimage/faq/compare/...) som ska radas till olika fält

@@ -267,9 +267,9 @@ export default function PageManager() {
                   {/* Three-dots menu — sibling of the Link, appears on hover.
                       Provides "Kopiera" today; designed to host future actions
                       (Radera, Duplicera till annan typ, ...) without redesigning
-                      the row. Unique-sidor saknar copy-path i /api/copy så
+                      the row. CMS-page-sidor saknar copy-path i /api/copy så
                       menyn döljs där tills fler alternativ tillkommer. */}
-                  {page.type !== 'unique' && (
+                  {page.type !== 'page' && (
                     <RowActionsMenu
                       onCopy={() => setCopyTarget(page)}
                     />

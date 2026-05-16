@@ -90,7 +90,7 @@ export interface PageRouteConfig<TState, TListItem> {
 
   /** Vilka core-entiteter som ska cache-invalideras efter mutation. */
   cacheEntities?: readonly string[];
-  /** Prefix för cache-context-loggning, t.ex. 'unique-page' → 'unique-page/create'. */
+  /** Prefix för cache-context-loggning, t.ex. 'cms-page' → 'cms-page/create'. */
   cacheContext: string;
 
   /** Hämta full state för en record (för ?action=get). Om utelämnad

@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import PageTypeBuilder from '@/components/shared/builder/PageTypeBuilder';
-import { cmsPageUI } from '@/lib/page-types/cms-page.ui';
+import CmsPageBuilder from '@/components/cms-page/CmsPageBuilder';
 import { loadCmsPageState } from '@/lib/cms-page-loader';
 import { CmsPageState } from '@/lib/cms-page-types';
 
@@ -33,16 +32,7 @@ export default async function EditCmsPage({ params }: Props) {
     return <ErrorScreen title="Kunde inte hämta sidan" message={message} />;
   }
 
-  return (
-    <PageTypeBuilder
-      uiDef={cmsPageUI}
-      initialState={state}
-      mode="edit"
-      recordId={recordId}
-      apiPath="/api/page"
-      editPath="/editor/page/:recordId"
-    />
-  );
+  return <CmsPageBuilder initialState={state} mode="edit" recordId={recordId} />;
 }
 
 function ErrorScreen({ title, message }: { title: string; message: string }) {
