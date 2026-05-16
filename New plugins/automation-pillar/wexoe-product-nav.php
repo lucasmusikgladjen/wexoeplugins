@@ -2,8 +2,20 @@
 /**
  * Plugin Name:       Wexoe Product Navigation
  * Plugin URI:        https://wexoe.se
- * Description:       Modulär produktnavigation migrerad till Wexoe Core. Migrerad produktionsversion.
+ * Description:       Modulär produktnavigation migrerad till Wexoe Core. [LEGACY: cms_product_navigation inte migrerad ännu — shortcoden renderar tom mega-meny tills tabellen finns i Wexoe NY.]
  * Version:           2.1.1
+ *
+ * ============================================================================
+ * !!! LEGACY — PENDING MIGRATION !!!
+ * ============================================================================
+ * Detta plugin förlitar sig på `Core::entity('automation_product_navigation')`
+ * som pekar mot `cms_product_navigation` i Wexoe NY. Den tabellen finns INTE
+ * ännu — entitetens `table_id` är null. Tills datan är migrerad kommer
+ * `[wexoe_product_nav]`-shortcoden att rendera en tom mega-meny.
+ *
+ * Plan: skapa tabellen + migrera 20 records från gamla `Product navigation`
+ * (`tblJa2Kd6QHjFXPJZ`). Se
+ * `wexoe-core/entities/automation_product_navigation.php` för exakta steg.
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Wexoe

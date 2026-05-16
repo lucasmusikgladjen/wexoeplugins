@@ -45,6 +45,27 @@ Detta dokument loggar varje konkret åtgärd som tas under implementationen av p
 
 **Manuell TODO för användaren:** Om Arteche, Hager, eller Steinel ska visas i partner-marquees/listor som filtrerar per division måste de få en division manuellt i Airtable UI.
 
+### Fas D — Legacy-flaggning av offerings + product_navigation
+
+**Bakgrund:** Audit hittade att två entiteter pekar på tabeller som inte finns i Wexoe NY:
+
+- `wexoe-core/entities/automation_offerings.php` → `cms_offerings` (saknas)
+- `wexoe-core/entities/automation_product_navigation.php` → `cms_product_navigation` (saknas)
+
+Båda har `table_id => null` med kommentaren "Sätts efter MCP-skapande". Konsekvens: `[wexoe_offerings]` och `[wexoe_product_nav]` shortcodes renderar tomma sektioner utan synligt fel (returnerar `[]` från `Core::entity(...)->all()`).
+
+**Användarens beslut:** Lämnas som legacy. Migreras senare (inte i denna omgång).
+
+**Åtgärd:** Lagt prominent `!!! LEGACY — PENDING MIGRATION !!!`-block i:
+- `wexoe-core/entities/automation_offerings.php` (top-of-file docblock)
+- `wexoe-core/entities/automation_product_navigation.php` (samma)
+- `New plugins/automation-pillar/wexoe-offerings-tabs.php` (plugin header + docblock)
+- `New plugins/automation-pillar/wexoe-product-nav.php` (samma)
+
+Varje notis pekar på rätt steg för att avsluta migrationen när det blir aktuellt (skapa tabell via MCP enligt `MIGRATION-PLAN.md`, kopiera N records från specifik gammal tabell-ID, fyll i `table_id`).
+
+**Också `automation_team_members`:** Pekar fortfarande på gamla `Coworkers` (`tblldarIcIpxlZ9GV`) i Wexoe-basen. Redan flaggad `@deprecated` i sin entity-fil. Lämnas oförändrad — migration till `core_coworkers` är dokumenterad där.
+
 ---
 
 ## Wexoe → Wexoe NY-migration (2026-05-14)

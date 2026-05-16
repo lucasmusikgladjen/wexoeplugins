@@ -1,9 +1,21 @@
 <?php
 /**
  * Plugin Name: Wexoe Offerings Tabs
- * Description: Tabbad sektion för kundtyper (OEM, Integratörer, Slutkunder) migrerad till Wexoe Core.
+ * Description: Tabbad sektion för kundtyper (OEM, Integratörer, Slutkunder) migrerad till Wexoe Core. [LEGACY: cms_offerings inte migrerad ännu — shortcoden renderar tom sektion tills tabellen finns i Wexoe NY.]
  * Version: 2.0.1
  * Author: Wexoe
+ *
+ * ============================================================================
+ * !!! LEGACY — PENDING MIGRATION !!!
+ * ============================================================================
+ * Detta plugin förlitar sig på `Core::entity('automation_offerings')` som
+ * pekar mot `cms_offerings` i Wexoe NY. Den tabellen finns INTE ännu —
+ * entitetens `table_id` är null. Tills datan är migrerad kommer
+ * `[wexoe_offerings]`-shortcoden att rendera en tom sektion.
+ *
+ * Plan: skapa tabellen + migrera 7 records från gamla `Offerings`
+ * (`tbldQZJu3NHHP5dUh`). Se `wexoe-core/entities/automation_offerings.php`
+ * för exakta steg.
  */
 
 if (!defined('ABSPATH')) exit;
