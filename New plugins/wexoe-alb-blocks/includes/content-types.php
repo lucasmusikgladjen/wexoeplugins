@@ -21,9 +21,9 @@ if (!defined('ABSPATH')) exit;
 
 function wexoe_alb_content_types() {
     return apply_filters('wexoe_alb_content_types', [
-        'cms_unique_pages' => [
-            'label'  => __('Wexoe Page (meta-sida)', 'wexoe'),
-            'entity' => 'cms_unique_pages',
+        'cms_pages' => [
+            'label'  => __('Wexoe Page (one-off)', 'wexoe'),
+            'entity' => 'cms_pages',
             'pk'     => 'slug',
             'list'   => 'wexoe_alb_list_by_slug',
             'render' => 'wexoe_alb_render_unique_page',

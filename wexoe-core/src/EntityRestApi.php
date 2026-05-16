@@ -40,7 +40,10 @@ class EntityRestApi {
         'core_coworkers',
         'core_partners',
         'core_testimonials',
-        'cms_unique_pages',
+        'cms_unique_pages',   // @deprecated — utfasas till förmån för cms_pages
+        'cms_pages',
+        'cms_page_sections',
+        'cms_section_tabs',
     ];
 
     /**

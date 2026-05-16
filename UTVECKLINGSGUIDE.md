@@ -454,7 +454,10 @@ wexoe-core/
     landing_pages.php        # (cms_-prefix kommer vid migration)
     lp_tabs.php
     audience_heroes.php
-    cms_unique_pages.php
+    cms_pages.php            # One-off-sidor (start, om-oss, pillar)
+    cms_page_sections.php    # Polymorfa sektioner för cms_pages
+    cms_section_tabs.php     # Sub-records för tabs-sektionen
+    cms_unique_pages.php     # @deprecated — utfasas till cms_pages
     core_partners.php
     ...
   write-entities/          # SKRIV-scheman, en fil per write-target
@@ -469,11 +472,39 @@ New plugins/
     wexoe-audience-hero.php
   wexoe-product-area/
     wexoe-product-area.php
-  wexoe-pages/             # Tier-2-sidor (om-oss, karriär, ...)
+  wexoe-pages/             # One-off-sidor — dispatcher + sections/
+    wexoe-pages.php          # Bootstrap, shortcode, dispatcher, SEO
+    sections/                # En fil per section_type-renderer
+      hero.php  text-image.php  text-only.php  faq.php  ...
   wexoe-alb-blocks/        # Avia Layout Builder-integrering
   wexoe-contact-page/
-  automation-pillar/
+  automation-pillar/       # @deprecated — utfasas till wexoe-pages-sektioner
 ```
+
+### Plugin med många sektion-typer (wexoe-pages-mönstret)
+
+Standard-plugin-mönstret (§6) räcker för sidor med 1–5 sektioner. För
+informationssidor med 10+ heterogena sektioner använder vi en
+**dispatcher**-variant:
+
+- Sidan är en `cms_pages`-record med en länkad lista `section_ids` →
+  `cms_page_sections` (polymorfa records med `section_type`-fält som
+  diskriminerar vilka prefixade fält som är meningsfulla — samma mönster som
+  `lp_tabs`).
+- Plugin-pluginfilen är en tunn dispatcher: läser sidan + sektionerna, loopar
+  och delegerar till `sections/<type>.php` per record. Varje section-fil
+  returnerar en closure `function ($section, $page, $ctx): string`.
+- Section-filer require:as lazy via en cachad loader-helper (en gång per
+  request, oavsett hur många instanser av samma typ).
+- Buildern rensar fält vid `section_type`-byte (samma stale-clearing-mönster
+  som `lp_tabs`).
+
+Lägga till en ny sektionstyp:
+1. Lägg fält `<prefix>_*` på `cms_page_sections` i Airtable (snake_case).
+2. Lägg fältmappningar i `entities/cms_page_sections.php`.
+3. Lägg ett val i `section_type`-singleSelect.
+4. Skapa `sections/<type>.php` som returnerar en closure.
+5. Mappa typ → fil i `wexoe_pages_section_renderers()` i huvudfilen.
 
 ---
 
