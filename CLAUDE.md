@@ -1,6 +1,6 @@
 # CLAUDE.md — orientering för en ny LLM-session
 
-Du är i `wexoeplugins`. Den här filen är *bara* ingången — den ger kontext nog att inte göra dumheter, sen pekar den vidare. Läs hela innan du börjar.
+Du är i `wexoeplugins`. Den här filen är *bara* ingången — den ger bred kontext och pekar vidare.
 
 ---
 
@@ -140,4 +140,4 @@ Full anatomi av ett plugin: `UTVECKLINGSGUIDE.md` § 6. Dispatcher-mönstret fö
 
 ## 10. Git
 
-Du jobbar på branchen som user/harness anger (typiskt `claude/<task>-XXXX`). Commit-meddelanden på svenska eller engelska följer existerande stil: `feat(wexoe-pages): …`, `fix(airtable): …`, `chore: …`, `docs: …`, `refactor(...)`. Pusha till samma branch. Skapa **inte** PR om inte användaren ber om det.
+Du jobbar på branchen som user/harness anger (typiskt `claude/<task>-XXXX`). Commit-meddelanden på svenska eller engelska följer existerande stil: `feat(wexoe-pages): …`, `fix(airtable): …`, `chore: …`, `docs: …`, `refactor(...)`.
