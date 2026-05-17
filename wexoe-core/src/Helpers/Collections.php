@@ -52,7 +52,7 @@ class Collections {
         $featured_only = !empty($scope['featured_only']);
         $limit = isset($scope['limit']) ? max(0, (int) $scope['limit']) : 0;
 
-        $all = $repo->all(['active' => true]);
+        $all = $repo->all(['is_active' => true]);
         $matches = [];
         foreach ($all as $rec) {
             if ($featured_only && empty($rec['featured'])) continue;

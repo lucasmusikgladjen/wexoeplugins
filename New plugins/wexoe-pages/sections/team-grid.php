@@ -113,32 +113,32 @@ return function ($section, $page, $ctx) {
 #<?= esc_attr($wid) ?> .wxp-tg__photo--initials { display: flex !important; align-items: center !important; justify-content: center !important; letter-spacing: 0.04em !important; }
 #<?= esc_attr($wid) ?> .wxp-tg__meta { min-width: 0 !important; }
 #<?= esc_attr($wid) ?> .wxp-tg__name { font-family: 'DM Sans', system-ui, sans-serif !important; font-weight: 700 !important; font-size: 16px !important; margin: 0 !important; padding: 0 !important; color: #11325D !important; line-height: 1.3 !important; background: none !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-tg__name { color: #fff !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-tg__name { color: #fff !important; }
 #<?= esc_attr($wid) ?> .wxp-tg__title { font-size: 13px !important; opacity: 0.72 !important; margin: 4px 0 0 !important; padding: 0 !important; color: inherit !important; background: none !important; }
 #<?= esc_attr($wid) ?> .wxp-tg__contact { margin: 10px 0 0 !important; padding: 0 !important; display: flex !important; flex-direction: column !important; gap: 4px !important; }
 #<?= esc_attr($wid) ?> .wxp-tg__contact a { color: #11325D !important; text-decoration: none !important; font-size: 13px !important; padding: 0 !important; background: none !important; }
 #<?= esc_attr($wid) ?> .wxp-tg__contact a:hover { color: #F28C28 !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-tg__contact a { color: rgba(255,255,255,0.85) !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-tg__contact a:hover { color: #F28C28 !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-tg__contact a { color: rgba(255,255,255,0.85) !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-tg__contact a:hover { color: #F28C28 !important; }
 
 /* variant: cards */
 #<?= esc_attr($wid) ?> .wxp-tg--cards .wxp-tg__grid { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important; gap: 24px !important; }
 #<?= esc_attr($wid) ?> .wxp-tg--cards .wxp-tg__item { display: flex !important; flex-direction: column !important; text-align: center !important; align-items: center !important; background: #fff !important; border: 1px solid rgba(17,50,93,0.08) !important; border-radius: 16px !important; padding: 28px 20px !important; box-shadow: 0 6px 18px rgba(10,26,46,0.05) !important; transition: transform 0.2s ease, box-shadow 0.2s ease !important; }
 #<?= esc_attr($wid) ?> .wxp-tg--cards .wxp-tg__item:hover { transform: translateY(-3px) !important; box-shadow: 0 16px 36px rgba(10,26,46,0.10) !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-tg--cards .wxp-tg__item { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.10) !important; box-shadow: none !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-tg--cards .wxp-tg__item { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.10) !important; box-shadow: none !important; }
 #<?= esc_attr($wid) ?> .wxp-tg--cards .wxp-tg__photo { width: 110px !important; height: 110px !important; border-radius: 50% !important; margin: 0 0 16px !important; font-size: 30px !important; }
 
 /* variant: rack */
 #<?= esc_attr($wid) ?> .wxp-tg--rack .wxp-tg__grid { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important; gap: 14px !important; }
 #<?= esc_attr($wid) ?> .wxp-tg--rack .wxp-tg__item { display: flex !important; flex-direction: row !important; gap: 16px !important; align-items: center !important; padding: 16px !important; background: #fff !important; border: 1px solid rgba(17,50,93,0.08) !important; border-radius: 12px !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-tg--rack .wxp-tg__item { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.10) !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-tg--rack .wxp-tg__item { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.10) !important; }
 #<?= esc_attr($wid) ?> .wxp-tg--rack .wxp-tg__photo { width: 64px !important; height: 64px !important; border-radius: 50% !important; font-size: 20px !important; flex-shrink: 0 !important; }
 #<?= esc_attr($wid) ?> .wxp-tg--rack .wxp-tg__meta { flex: 1 !important; }
 
 /* variant: compact */
 #<?= esc_attr($wid) ?> .wxp-tg--compact .wxp-tg__grid { display: flex !important; flex-wrap: wrap !important; gap: 8px !important; }
 #<?= esc_attr($wid) ?> .wxp-tg--compact .wxp-tg__item { display: flex !important; flex-direction: row !important; gap: 8px !important; align-items: center !important; padding: 4px 14px 4px 4px !important; background: rgba(17,50,93,0.06) !important; border-radius: 999px !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-tg--compact .wxp-tg__item { background: rgba(255,255,255,0.08) !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-tg--compact .wxp-tg__item { background: rgba(255,255,255,0.08) !important; }
 #<?= esc_attr($wid) ?> .wxp-tg--compact .wxp-tg__photo { width: 32px !important; height: 32px !important; border-radius: 50% !important; font-size: 11px !important; flex-shrink: 0 !important; }
 #<?= esc_attr($wid) ?> .wxp-tg--compact .wxp-tg__name { font-size: 13px !important; }
 #<?= esc_attr($wid) ?> .wxp-tg--compact .wxp-tg__title { display: none !important; }

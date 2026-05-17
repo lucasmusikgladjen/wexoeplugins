@@ -22,11 +22,13 @@ return function ($section, $page, $ctx) {
     $cta2_t   = (string) ($section['hero_cta2_text'] ?? '');
     $cta2_u   = (string) ($section['hero_cta2_url']  ?? '');
 
-    // Hero is ALWAYS dark theme + full-bleed — overrides section-level theme/layout.
+    // Hero har alltid full-bleed contained inner. Mörk gradient + vit text är
+    // hard-coded i sektionens egen CSS (.wxp-hero) och beror inte på
+    // background_color-fältet på cms_page_sections.
     $wid = (string) ($ctx['wrapper_id'] ?? '');
     $extra_class = 'wxp-hero wxp-fullbleed';
     if ($image !== '') $extra_class .= ' wxp-hero--has-image';
-    $attrs = wexoe_pages_section_attrs(array_merge($section, ['theme' => 'dark', 'layout' => 'contained']), $ctx, $extra_class);
+    $attrs = wexoe_pages_section_attrs(array_merge($section, ['layout' => 'contained']), $ctx, $extra_class);
 
     ob_start();
     ?>

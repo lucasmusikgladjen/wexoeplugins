@@ -81,8 +81,10 @@ return function ($section, $page, $ctx) {
         </div>
     </section>
     <style>
-#<?= esc_attr($wid) ?> .wxp-t.wxp-section--theme-dark { background: linear-gradient(135deg, #0A1A2E 0%, #11325D 100%) !important; }
-#<?= esc_attr($wid) ?> .wxp-t.wxp-section--theme-light { background: #F5F6F8 !important; }
+/* Default-bg: ljusgrå. Användaren kan sätta background_color på sektionen i
+   Airtable för att t.ex. få en mörk gradient — då övertar inline-style. */
+#<?= esc_attr($wid) ?> .wxp-t { background: #F5F6F8 !important; color: #1A1A1A !important; }
+#<?= esc_attr($wid) ?> .wxp-t.wxp-section--custom-bg { background: none !important; color: inherit !important; }
 #<?= esc_attr($wid) ?> .wxp-t__inner { max-width: 860px !important; text-align: center !important; position: relative !important; }
 #<?= esc_attr($wid) ?> .wxp-t__eyebrow { justify-content: center !important; }
 #<?= esc_attr($wid) ?> .wxp-t__mark { display: block !important; font-family: Georgia, 'Times New Roman', serif !important; font-size: 6rem !important; line-height: 0.6 !important; color: #F28C28 !important; opacity: 0.55 !important; margin: 0 0 12px !important; padding: 0 !important; background: none !important; }

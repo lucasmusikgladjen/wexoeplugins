@@ -60,8 +60,6 @@ return function ($section, $page, $ctx) {
 #<?= esc_attr($wid) ?> .wxp-cta__card .wxp-btn--secondary { color: #fff !important; border-color: rgba(255,255,255,0.5) !important; }
 #<?= esc_attr($wid) ?> .wxp-cta__card .wxp-btn--secondary:hover { background: rgba(255,255,255,0.1) !important; border-color: #fff !important; color: #fff !important; }
 
-#<?= esc_attr($wid) ?> .wxp-cta.wxp-section--theme-light { background: #fff !important; }
-#<?= esc_attr($wid) ?> .wxp-cta.wxp-section--theme-dark { background: #0A1A2E !important; }
 @media (max-width: 700px) {
     #<?= esc_attr($wid) ?> .wxp-cta__card { padding: 40px 24px !important; border-radius: 16px !important; }
     #<?= esc_attr($wid) ?> .wxp-cta__actions { flex-direction: column !important; align-items: stretch !important; }

@@ -110,19 +110,37 @@ return function ($section, $page, $ctx) {
     </section>
     <style>
 #<?= esc_attr($wid) ?> .wxp-tabs__intro { margin-bottom: 28px !important; max-width: 60ch !important; }
-#<?= esc_attr($wid) ?> .wxp-tabs__bar { display: inline-flex !important; flex-wrap: wrap !important; gap: 4px !important; padding: 5px !important; margin: 0 0 36px !important; background: rgba(17,50,93,0.06) !important; border-radius: 999px !important; max-width: 100% !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-tabs__bar { background: rgba(255,255,255,0.08) !important; }
-#<?= esc_attr($wid) ?> .wxp-tabs__pill { padding: 10px 22px !important; border-radius: 999px !important; border: none !important; background: transparent !important; color: inherit !important; cursor: pointer !important; font-family: 'DM Sans', system-ui, sans-serif !important; font-size: 14px !important; font-weight: 600 !important; line-height: 1.3 !important; transition: background 0.2s ease, color 0.2s ease !important; white-space: nowrap !important; text-shadow: none !important; box-shadow: none !important; }
-#<?= esc_attr($wid) ?> .wxp-tabs__pill:hover { background: rgba(17,50,93,0.08) !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-tabs__pill:hover { background: rgba(255,255,255,0.10) !important; }
-#<?= esc_attr($wid) ?> .wxp-tabs__pill.is-active { background: #fff !important; color: #11325D !important; box-shadow: 0 2px 6px rgba(10,26,46,0.10) !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-tabs__pill.is-active { background: #F28C28 !important; color: #fff !important; box-shadow: 0 2px 8px rgba(242,140,40,0.30) !important; }
+/* Pills: outlined navy → fylld navy när active. Aggressiv specificity för att slå Enfold/avada/etc. */
+#<?= esc_attr($wid) ?> .wxp-tabs__bar,
+body #top #<?= esc_attr($wid) ?> .wxp-tabs__bar { display: flex !important; flex-wrap: wrap !important; gap: 10px !important; padding: 0 !important; margin: 0 0 36px !important; background: transparent !important; border-radius: 0 !important; box-shadow: none !important; border: 0 !important; }
+#<?= esc_attr($wid) ?> .wxp-tabs__pill,
+#<?= esc_attr($wid) ?> button.wxp-tabs__pill,
+body #top #<?= esc_attr($wid) ?> .wxp-tabs__pill,
+body #top #<?= esc_attr($wid) ?> button.wxp-tabs__pill,
+html body #top #<?= esc_attr($wid) ?> button.wxp-tabs__pill,
+.avia_codeblock #<?= esc_attr($wid) ?> button.wxp-tabs__pill { padding: 9px 18px !important; border: 2px solid #11325D !important; background: transparent !important; background-color: transparent !important; background-image: none !important; color: #11325D !important; font-family: 'DM Sans', system-ui, sans-serif !important; font-size: 14px !important; font-weight: 600 !important; line-height: 1.3 !important; border-radius: 999px !important; cursor: pointer !important; transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease !important; text-align: center !important; white-space: nowrap !important; min-width: 0 !important; width: auto !important; max-width: none !important; opacity: 1 !important; text-shadow: none !important; box-shadow: none !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-tabs__pill,
+body #top #<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-tabs__pill { border-color: rgba(255,255,255,0.6) !important; color: #fff !important; }
+#<?= esc_attr($wid) ?> .wxp-tabs__pill:hover,
+#<?= esc_attr($wid) ?> button.wxp-tabs__pill:hover,
+body #top #<?= esc_attr($wid) ?> .wxp-tabs__pill:hover,
+body #top #<?= esc_attr($wid) ?> button.wxp-tabs__pill:hover,
+html body #top #<?= esc_attr($wid) ?> button.wxp-tabs__pill:hover,
+.avia_codeblock #<?= esc_attr($wid) ?> button.wxp-tabs__pill:hover { background: #11325D !important; background-color: #11325D !important; background-image: none !important; color: #fff !important; border-color: #11325D !important; opacity: 1 !important; }
+#<?= esc_attr($wid) ?> .wxp-tabs__pill.is-active,
+#<?= esc_attr($wid) ?> button.wxp-tabs__pill.is-active,
+body #top #<?= esc_attr($wid) ?> .wxp-tabs__pill.is-active,
+body #top #<?= esc_attr($wid) ?> button.wxp-tabs__pill.is-active,
+html body #top #<?= esc_attr($wid) ?> button.wxp-tabs__pill.is-active,
+.avia_codeblock #<?= esc_attr($wid) ?> button.wxp-tabs__pill.is-active { background: #11325D !important; background-color: #11325D !important; background-image: none !important; color: #fff !important; border-color: #11325D !important; opacity: 1 !important; box-shadow: 0 2px 8px rgba(17,50,93,0.18) !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-tabs__pill.is-active,
+body #top #<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-tabs__pill.is-active { background: #F28C28 !important; background-color: #F28C28 !important; color: #fff !important; border-color: #F28C28 !important; }
 #<?= esc_attr($wid) ?> .wxp-tabs__panel { display: none !important; }
 #<?= esc_attr($wid) ?> .wxp-tabs__panel.is-active { display: block !important; }
 #<?= esc_attr($wid) ?> .wxp-tabs__panel-grid { display: grid !important; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) !important; gap: 56px !important; align-items: center !important; }
 #<?= esc_attr($wid) ?> .wxp-tabs__panel-text > *:first-child { margin-top: 0 !important; }
 #<?= esc_attr($wid) ?> .wxp-tabs__h3 { font-family: 'DM Sans', system-ui, sans-serif !important; font-size: clamp(1.4rem, 2.5vw, 1.85rem) !important; margin: 0 0 14px !important; padding: 0 !important; font-weight: 700 !important; line-height: 1.25 !important; color: #11325D !important; background: none !important; }
-#<?= esc_attr($wid) ?> .wxp-section--theme-dark .wxp-tabs__h3 { color: #fff !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-tabs__h3 { color: #fff !important; }
 #<?= esc_attr($wid) ?> .wxp-tabs__bullets { list-style: none !important; padding: 0 !important; margin: 20px 0 24px !important; display: flex !important; flex-direction: column !important; gap: 10px !important; }
 #<?= esc_attr($wid) ?> .wxp-tabs__bullets li { list-style: none !important; padding: 0 !important; margin: 0 !important; display: flex !important; gap: 12px !important; align-items: flex-start !important; line-height: 1.55 !important; color: inherit !important; background: none !important; }
 #<?= esc_attr($wid) ?> .wxp-tabs__bullets li::before { content: none !important; display: none !important; }

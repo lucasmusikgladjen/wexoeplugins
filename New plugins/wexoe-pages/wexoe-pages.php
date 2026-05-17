@@ -109,13 +109,13 @@ function wexoe_pages_render($slug) {
     $ctx['wrapper_id'] = $wrapper_id;
 
     ob_start();
-    echo '<article id="' . esc_attr($wrapper_id) . '" class="wxp wxp--' . esc_attr($ctx['page_theme']) . '">';
+    echo '<article id="' . esc_attr($wrapper_id) . '" class="wxp">';
 
-    // Scoped base styles + theme resets — emitted INSIDE the wrapper so they
-    // come after the theme stylesheet in source order and win at equal
-    // specificity. The `#wrapper_id` prefix gives them a higher specificity
-    // than bare class selectors in the theme.
-    echo wexoe_pages_scoped_base_styles($wrapper_id, $ctx['page_theme']);
+    // Scoped base styles — emitted INSIDE the wrapper so they come after the
+    // WP-themes stylesheet in source order and win at equal specificity. The
+    // `#wrapper_id` prefix gives them a higher specificity than bare class
+    // selectors in the WP theme.
+    echo wexoe_pages_scoped_base_styles($wrapper_id);
 
     // Topp-H1 visas bara om INGEN hero-sektion finns. Hero äger sin egen H1.
     $has_hero = false;
@@ -232,23 +232,17 @@ function wexoe_pages_load_sections($page) {
    ============================================================ */
 
 /**
- * Bygg ett context-objekt med sidans country/division/theme. Sektioner
- * använder detta som fallback när deras egna scope-fält är tomma.
+ * Bygg ett context-objekt med sidans country/division. Sektioner använder
+ * detta som fallback när deras egna scope-fält är tomma.
  *
  * Returnerar:
  *   page_country_code  string|null  — kortkod (SE, NO, ...) eller null
  *   page_division_slug string|null
- *   page_theme         string       — 'light' (default) eller 'dark'
- *   page_max_width     string       — 'narrow'|'normal'|'wide'|'full'
  */
 function wexoe_pages_build_context($page) {
     $ctx = [
         'page_country_code'  => null,
         'page_division_slug' => null,
-        'page_theme'         => (($page['page_theme'] ?? 'light') === 'dark') ? 'dark' : 'light',
-        'page_max_width'     => in_array(($page['max_width'] ?? 'normal'), ['narrow', 'normal', 'wide', 'full'], true)
-            ? $page['max_width']
-            : 'normal',
     ];
 
     if (!empty($page['country_ids'])) {
@@ -349,33 +343,53 @@ function wexoe_pages_pin_then_scope(array $manual_ids, $entity_name, callable $s
 }
 
 /**
- * Compute section-wrapping HTML attributes (class + id) from common fields.
+ * Compute section-wrapping HTML attributes (class + id) från common fields.
  *
  * Returnerar string som ska gå in i <section ...>:
- *   class="wxp-section wxp-section--<type> wxp-section--theme-<theme> wxp-section--top-<pad> wxp-section--bot-<pad>"
+ *   class="wxp-section wxp-section--<type> wxp-section--top-<pad> wxp-section--bot-<pad>
+ *          wxp-section--layout-<layout> [wxp-section--custom-bg wxp-section--on-dark|--on-light]"
+ *   style="background-color: <hex>; color: <fg>;" (om background_color satt)
  *   id="<anchor_id>" (om satt)
  */
 function wexoe_pages_section_attrs($section, $ctx, $extra_class = '') {
     $type = preg_replace('/[^a-z_]/', '', (string) ($section['section_type'] ?? ''));
-    $theme = ($section['theme'] ?? 'inherit');
-    if ($theme === 'inherit' || !in_array($theme, ['light', 'dark'], true)) {
-        $theme = $ctx['page_theme'];
-    }
     $top = in_array(($section['top_padding'] ?? ''), ['none', 'sm', 'md', 'lg'], true) ? $section['top_padding'] : 'md';
     $bot = in_array(($section['bottom_padding'] ?? ''), ['none', 'sm', 'md', 'lg'], true) ? $section['bottom_padding'] : 'md';
     $layout = in_array(($section['layout'] ?? ''), ['contained', 'full_bleed', 'narrow'], true) ? $section['layout'] : 'contained';
 
+    // background_color: inline-style på sektionen. Vi sätter samtidigt text-färg
+    // (svart eller vit) baserat på luminance så body-text och eyebrows blir
+    // läsbara, och vi lägger på .wxp-section--on-dark när bakgrunden är mörk
+    // — sub-element (kort, listor, etc) kan reagera på den klassen för att
+    // få "ljusa-på-mörk"-styling.
+    $bg_color = null;
+    $on_dark = false;
+    $bg_raw = trim((string) ($section['background_color'] ?? ''));
+    if ($bg_raw !== '' && class_exists('\\Wexoe\\Core\\Helpers\\Color')) {
+        $bg_color = \Wexoe\Core\Helpers\Color::normalize_hex($bg_raw);
+        if ($bg_color !== null) {
+            $on_dark = \Wexoe\Core\Helpers\Color::is_dark($bg_color);
+        }
+    }
+
     $classes = [
         'wxp-section',
         'wxp-section--' . $type,
-        'wxp-section--theme-' . $theme,
         'wxp-section--top-' . $top,
         'wxp-section--bot-' . $bot,
         'wxp-section--layout-' . $layout,
     ];
+    if ($bg_color !== null) {
+        $classes[] = 'wxp-section--custom-bg';
+        $classes[] = $on_dark ? 'wxp-section--on-dark' : 'wxp-section--on-light';
+    }
     if ($extra_class !== '') $classes[] = $extra_class;
 
     $attrs = 'class="' . esc_attr(implode(' ', $classes)) . '"';
+    if ($bg_color !== null) {
+        $text_color = $on_dark ? '#fff' : '#1A1A1A';
+        $attrs .= ' style="background-color: ' . esc_attr($bg_color) . '; color: ' . esc_attr($text_color) . ';"';
+    }
     if (!empty($section['anchor_id'])) {
         $attrs .= ' id="' . esc_attr($section['anchor_id']) . '"';
     }
@@ -491,16 +505,14 @@ function wexoe_pages_should_print_base_styles() {
    The wrapper id is unique per render so this stays self-contained even
    if multiple wexoe_page shortcodes appear on the same WP page.
 */
-function wexoe_pages_scoped_base_styles($id, $page_theme) {
+function wexoe_pages_scoped_base_styles($id) {
     $w = '#' . $id;
-    $page_bg = $page_theme === 'dark' ? '#0A1A2E' : '#fff';
-    $page_fg = $page_theme === 'dark' ? '#fff' : '#1A1A1A';
 
     ob_start();
     ?>
 <style id="<?= esc_attr($id) ?>-base">
 /* ============ RESET ============ */
-<?= $w ?> { font-family: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important; color: <?= $page_fg ?> !important; background: <?= $page_bg ?>; line-height: 1.6 !important; box-sizing: border-box !important; }
+<?= $w ?> { font-family: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important; color: #1A1A1A !important; background: #fff; line-height: 1.6 !important; box-sizing: border-box !important; }
 <?= $w ?> *, <?= $w ?> *::before, <?= $w ?> *::after { box-sizing: border-box !important; }
 /* Kill the theme's `li::before` markers (which were bleeding through as ✓ on FAQ/bullet lists).
    Do NOT touch list-style/padding/margin at this level — Markdown body copy renders <ul>/<ol>
@@ -515,15 +527,13 @@ function wexoe_pages_scoped_base_styles($id, $page_theme) {
 <?= $w ?> .wxp__h1 { font-size: clamp(2rem, 4vw, 2.75rem) !important; font-weight: 700 !important; line-height: 1.15 !important; color: inherit !important; margin: 0 0 24px !important; padding: 24px 24px 0 !important; }
 <?= $w ?> .wxp-eyebrow { display: inline-flex !important; align-items: center !important; gap: 10px !important; text-transform: uppercase !important; letter-spacing: 0.12em !important; font-size: 12px !important; font-weight: 700 !important; color: #F28C28 !important; margin: 0 0 16px !important; padding: 0 !important; background: none !important; }
 <?= $w ?> .wxp-eyebrow::before { content: '' !important; display: inline-block !important; width: 22px !important; height: 2px !important; background: #F28C28 !important; flex-shrink: 0 !important; }
-<?= $w ?> .wxp-section--theme-dark .wxp-eyebrow { color: #F28C28 !important; }
-<?= $w ?> .wxp-h2 { font-size: clamp(1.75rem, 3.5vw, 2.4rem) !important; font-weight: 700 !important; line-height: 1.18 !important; color: inherit !important; margin: 0 0 18px !important; padding: 0 !important; letter-spacing: -0.01em !important; background: none !important; }
-<?= $w ?> .wxp-section--theme-light .wxp-h2 { color: #11325D !important; }
-<?= $w ?> .wxp-section--theme-dark .wxp-h2 { color: #fff !important; }
+<?= $w ?> .wxp-h2 { font-size: clamp(1.75rem, 3.5vw, 2.4rem) !important; font-weight: 700 !important; line-height: 1.18 !important; color: #11325D !important; margin: 0 0 18px !important; padding: 0 !important; letter-spacing: -0.01em !important; background: none !important; }
+<?= $w ?> .wxp-section--on-dark .wxp-h2, <?= $w ?> .wxp-section--on-dark.wxp-h2 { color: #fff !important; }
 <?= $w ?> .wxp-body { font-size: 16px !important; line-height: 1.7 !important; color: inherit; }
 <?= $w ?> .wxp-body p { margin: 0 0 14px !important; color: inherit; }
 <?= $w ?> .wxp-body p:last-child { margin-bottom: 0 !important; }
 <?= $w ?> .wxp-body a { color: #11325D !important; text-decoration: underline !important; }
-<?= $w ?> .wxp-section--theme-dark .wxp-body a { color: #F28C28 !important; }
+<?= $w ?> .wxp-section--on-dark .wxp-body a { color: #F28C28 !important; }
 /* Markdown body lists — restore native markers since the reset above is intentionally narrow. */
 <?= $w ?> .wxp-body ul, <?= $w ?> .wxp-body ol { list-style: revert !important; padding-left: 1.4em !important; margin: 0 0 16px !important; }
 <?= $w ?> .wxp-body ul li, <?= $w ?> .wxp-body ol li { list-style: inherit !important; padding-left: 0 !important; margin: 0 0 6px !important; background: none !important; }
@@ -542,10 +552,8 @@ function wexoe_pages_scoped_base_styles($id, $page_theme) {
 <?= $w ?> .wxp-section--bot-sm { padding-bottom: 32px !important; }
 <?= $w ?> .wxp-section--bot-md { padding-bottom: 72px !important; }
 <?= $w ?> .wxp-section--bot-lg { padding-bottom: 112px !important; }
-<?= $w ?> .wxp-section--theme-light { background: #fff !important; color: #1A1A1A !important; }
-<?= $w ?> .wxp-section--theme-dark { background: #0A1A2E !important; color: #fff !important; }
 
-/* Full-bleed helper — break out of theme containers like the other plugins do. */
+/* Full-bleed helper — break out of WP-themes containers like the other plugins do. */
 <?= $w ?> .wxp-fullbleed { width: 100vw !important; margin-left: calc(-50vw + 50%) !important; margin-right: calc(-50vw + 50%) !important; }
 
 /* ============ BUTTONS ============ */
@@ -555,8 +563,8 @@ function wexoe_pages_scoped_base_styles($id, $page_theme) {
 <?= $w ?> .wxp-btn--primary:hover { background: #e07b1a !important; border-color: #e07b1a !important; color: #fff !important; transform: translateY(-1px) !important; box-shadow: 0 6px 16px rgba(242,140,40,0.28) !important; }
 <?= $w ?> .wxp-btn--secondary { background: transparent !important; color: #11325D !important; border-color: rgba(17,50,93,0.28) !important; }
 <?= $w ?> .wxp-btn--secondary:hover { border-color: #11325D !important; color: #11325D !important; transform: translateY(-1px) !important; }
-<?= $w ?> .wxp-section--theme-dark .wxp-btn--secondary { color: #fff !important; border-color: rgba(255,255,255,0.5) !important; }
-<?= $w ?> .wxp-section--theme-dark .wxp-btn--secondary:hover { border-color: #fff !important; background: rgba(255,255,255,0.08) !important; color: #fff !important; }
+<?= $w ?> .wxp-section--on-dark .wxp-btn--secondary { color: #fff !important; border-color: rgba(255,255,255,0.5) !important; }
+<?= $w ?> .wxp-section--on-dark .wxp-btn--secondary:hover { border-color: #fff !important; background: rgba(255,255,255,0.08) !important; color: #fff !important; }
 
 /* ============ RESPONSIVE ============ */
 @media (max-width: 900px) {
