@@ -60,6 +60,8 @@ return [
         'hero_h1' => 'hero_h1',
         'hero_subtitle' => 'hero_subtitle',
         'hero_image_url' => 'hero_image_url',
+        'hero_variant' => 'hero_variant',
+        'hero_bg_image_url' => 'hero_bg_image_url',
         'hero_cta_text' => 'hero_cta_text',
         'hero_cta_url' => 'hero_cta_url',
         'hero_cta2_text' => 'hero_cta2_text',
