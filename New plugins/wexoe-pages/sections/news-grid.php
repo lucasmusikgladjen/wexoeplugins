@@ -51,6 +51,10 @@ return function ($section, $page, $ctx) {
                         $link  = get_permalink($post);
                         $image = get_the_post_thumbnail_url($post, 'medium_large') ?: '';
                         $excerpt = wexoe_pages_post_excerpt($post, 22);
+                        if ($excerpt === '') {
+                            $raw_content = wp_strip_all_tags((string) get_post_field('post_content', $post->ID));
+                            $excerpt = wp_trim_words(preg_replace('/\s+/', ' ', trim($raw_content)), 22);
+                        }
                         $date = get_the_date('j M Y', $post);
                         $cats = get_the_category($post->ID);
                         $cat_name = (!empty($cats) && isset($cats[0])) ? $cats[0]->name : '';

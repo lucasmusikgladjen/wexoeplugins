@@ -19,6 +19,8 @@ return function ($section, $page, $ctx) {
     $body    = (string) ($section['nts_body']     ?? '');
     $cta_t   = (string) ($section['nts_cta_text'] ?? '');
     $cta_u   = (string) ($section['nts_cta_url']  ?? '');
+    $widget_col = (string) ($section['nts_widget_column'] ?? 'right');
+    if (!in_array($widget_col, ['right', 'left'], true)) $widget_col = 'right';
     $limit = max(0, (int) ($section['nts_limit'] ?? 3));
     if ($limit === 0) $limit = 3;
 
@@ -38,7 +40,7 @@ return function ($section, $page, $ctx) {
     ob_start();
     ?>
     <section <?= $attrs ?>>
-        <div class="wxp-section__inner wxp-nts__grid">
+        <div class="wxp-section__inner wxp-nts__grid wxp-nts__grid--widget-<?= esc_attr($widget_col) ?>">
             <div class="wxp-nts__text">
                 <?php if ($eyebrow !== ''): ?><p class="wxp-eyebrow"><?= esc_html($eyebrow) ?></p><?php endif; ?>
                 <?php if ($h2 !== ''): ?><h2 class="wxp-h2"><?= esc_html($h2) ?></h2><?php endif; ?>
@@ -86,7 +88,8 @@ return function ($section, $page, $ctx) {
 #<?= esc_attr($wid) ?> .wxp-nts__item-link:hover { color: #F28C28 !important; }
 #<?= esc_attr($wid) ?> .wxp-nts__item-date { font-size: 12px !important; line-height: 1 !important; opacity: 0.6 !important; margin: 5px 0 0 !important; padding: 0 !important; color: inherit !important; background: none !important; font-weight: 500 !important; }
 #<?= esc_attr($wid) ?> .wxp-nts__item-excerpt { font-size: 13px !important; line-height: 1.55 !important; margin: 6px 0 0 !important; padding: 0 !important; opacity: 0.72 !important; color: inherit !important; background: none !important; }
-@media (max-width: 900px) { #<?= esc_attr($wid) ?> .wxp-nts__grid { grid-template-columns: 1fr !important; gap: 32px !important; } }
+#<?= esc_attr($wid) ?> .wxp-nts__grid--widget-left .wxp-nts__widget { order: -1 !important; }
+@media (max-width: 900px) { #<?= esc_attr($wid) ?> .wxp-nts__grid { grid-template-columns: 1fr !important; gap: 32px !important; } #<?= esc_attr($wid) ?> .wxp-nts__grid--widget-left .wxp-nts__widget { order: initial !important; } }
     </style>
     <?php
     return ob_get_clean();

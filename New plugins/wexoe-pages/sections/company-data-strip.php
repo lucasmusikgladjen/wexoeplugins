@@ -122,9 +122,9 @@ return function ($section, $page, $ctx) {
 #<?= esc_attr($wid) ?> .wxp-cds__body p:last-child { margin-bottom: 0 !important; }
 #<?= esc_attr($wid) ?> .wxp-cds__divider { width: 1px !important; height: 96px !important; background: rgba(255,255,255,0.22) !important; justify-self: center !important; align-self: center !important; }
 #<?= esc_attr($wid) ?> .wxp-cds__grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 32px !important; margin: 0 !important; padding: 0 !important; }
-#<?= esc_attr($wid) ?> .wxp-cds__item { margin: 0 !important; padding: 0 !important; background: none !important; border: none !important; display: flex !important; flex-direction: column !important; gap: 8px !important; text-align: left !important; }
+#<?= esc_attr($wid) ?> .wxp-cds__item { margin: 0 !important; padding: 0 !important; background: none !important; border: none !important; display: flex !important; flex-direction: column !important; gap: 8px !important; text-align: center !important; }
 #<?= esc_attr($wid) ?> .wxp-cds__value { font-family: 'DM Sans', system-ui, sans-serif !important; font-size: clamp(2rem, 3.4vw, 2.75rem) !important; font-weight: 700 !important; line-height: 1 !important; letter-spacing: -0.025em !important; color: inherit !important; font-variant-numeric: tabular-nums !important; margin: 0 !important; padding: 0 !important; background: none !important; }
-#<?= esc_attr($wid) ?> .wxp-cds__suffix { font-weight: 500 !important; color: #F28C28 !important; font-size: 0.6em !important; margin-left: 0.06em !important; letter-spacing: 0 !important; }
+#<?= esc_attr($wid) ?> .wxp-cds__suffix { font-weight: 500 !important; color: inherit !important; font-size: 0.6em !important; margin-left: 0.06em !important; letter-spacing: 0 !important; }
 #<?= esc_attr($wid) ?> .wxp-cds__label { font-family: 'DM Sans', system-ui, sans-serif !important; font-size: 14px !important; font-weight: 400 !important; text-transform: none !important; letter-spacing: -0.003em !important; opacity: 0.74 !important; margin: 0 !important; padding: 0 !important; color: inherit !important; background: none !important; line-height: 1.35 !important; }
 
 /* On-light override (när användaren satt custom ljus bakgrund) */

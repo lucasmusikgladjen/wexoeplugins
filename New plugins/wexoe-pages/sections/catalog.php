@@ -27,14 +27,13 @@ return function ($section, $page, $ctx) {
     $eyebrow = (string) ($section['cat_eyebrow'] ?? '');
     $h2      = (string) ($section['cat_h2']      ?? '');
     $intro   = (string) ($section['cat_intro_body'] ?? '');
-    $include_products = !empty($section['cat_include_products']);
-    $include_articles = !empty($section['cat_include_articles']);
+    $include_products = true;
+    $include_articles = false;
     $facet_names = is_array($section['cat_facet_fields'] ?? null) ? $section['cat_facet_fields'] : [];
     $placeholder = (string) ($section['cat_placeholder'] ?? 'Sök i katalogen…');
     $empty_text = (string) ($section['cat_empty_text'] ?? 'Inga träffar.');
 
-    if (!$include_products && !$include_articles) return '';
-
+    
     // --- Resolva partner-namn för supplier-facet (en gång) ---
     $partner_name_by_id = [];
     if (in_array('supplier', $facet_names, true)) {
@@ -95,41 +94,6 @@ return function ($section, $page, $ctx) {
         }
     }
 
-    if ($include_articles) {
-        $repo = \Wexoe\Core\Core::entity('articles');
-        if ($repo !== null) {
-            foreach ($repo->all(['is_active' => true]) as $a) {
-                $name = (string) ($a['name'] ?? '');
-                if ($name === '') continue;
-                $desc = (string) ($a['description'] ?? '');
-                $article_num = (string) ($a['article_number'] ?? '');
-                $facets = [];
-                if (in_array('supplier', $facet_names, true)) {
-                    $supplier_ids = is_array($a['supplier_ids'] ?? null) ? $a['supplier_ids'] : [];
-                    $names = [];
-                    foreach ($supplier_ids as $sid) {
-                        if (isset($partner_name_by_id[$sid])) {
-                            $names[] = $partner_name_by_id[$sid];
-                            $add_facet_value('supplier', $partner_name_by_id[$sid]);
-                        }
-                    }
-                    if (!empty($names)) $facets['supplier'] = $names;
-                }
-                $items[] = [
-                    'id'    => (string) ($a['_record_id'] ?? ''),
-                    'kind'  => 'article',
-                    'kind_label' => 'Artikel',
-                    'name'  => $name,
-                    'desc'  => $article_num !== '' ? ($article_num . ' — ' . wp_trim_words(strip_tags($desc), 22)) : wp_trim_words(strip_tags($desc), 26),
-                    'image' => (string) ($a['image_url'] ?? ''),
-                    'link'  => (string) ($a['webshop_url'] ?? $a['datasheet_url'] ?? ''),
-                    'link_label' => !empty($a['webshop_url']) ? 'Webbshop' : (!empty($a['datasheet_url']) ? 'Datablad' : ''),
-                    'search' => mb_strtolower($name . ' ' . $article_num . ' ' . strip_tags($desc) . ' ' . implode(' ', array_values($facets['supplier'] ?? []))),
-                    'facets' => $facets,
-                ];
-            }
-        }
-    }
 
     if (empty($items)) return wexoe_pages_debug_comment('wexoe-pages: catalog har inga items');
 

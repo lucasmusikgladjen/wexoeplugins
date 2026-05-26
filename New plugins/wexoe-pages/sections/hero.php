@@ -32,6 +32,8 @@ return function ($section, $page, $ctx) {
     $cta1_u   = (string) ($section['hero_cta_url']   ?? '');
     $cta2_t   = (string) ($section['hero_cta2_text'] ?? '');
     $cta2_u   = (string) ($section['hero_cta2_url']  ?? '');
+    $show_news_widget = !empty($section['hero_show_news_widget']);
+    $news_limit = max(1, (int) ($section['hero_news_limit'] ?? 3));
 
     $variant = (string) ($section['hero_variant'] ?? 'gradient');
     if (!in_array($variant, ['gradient', 'image_overlay', 'diagonal_split'], true)) {
@@ -46,9 +48,24 @@ return function ($section, $page, $ctx) {
     // Hero har alltid full-bleed contained inner. Mörk bg + vit text är
     // hard-coded i sektionens egen CSS (.wxp-hero) och beror inte på
     // background_color-fältet på cms_page_sections.
+
+    $news_posts = [];
+    if ($show_news_widget) {
+        $news_posts = get_posts([
+            'post_type' => 'post',
+            'post_status' => 'publish',
+            'numberposts' => $news_limit,
+            'orderby' => 'date',
+            'order' => 'DESC',
+            'suppress_filters' => false,
+        ]);
+    }
+    $has_news_widget = $show_news_widget && !empty($news_posts);
+
     $wid = (string) ($ctx['wrapper_id'] ?? '');
     $extra_class = 'wxp-hero wxp-fullbleed wxp-hero--' . $variant;
     if ($image !== '') $extra_class .= ' wxp-hero--has-image';
+    if ($has_news_widget) $extra_class .= ' wxp-hero--has-news-widget';
     $attrs = wexoe_pages_section_attrs(array_merge($section, ['layout' => 'contained']), $ctx, $extra_class);
 
     ob_start();
@@ -90,9 +107,30 @@ return function ($section, $page, $ctx) {
                     </div>
                 <?php endif; ?>
             </div>
-            <?php if ($image !== '' && $variant !== 'diagonal_split'): ?>
-                <div class="wxp-hero__media">
-                    <img src="<?= esc_url($image) ?>" alt="" loading="eager" decoding="async" />
+            <?php if ($variant !== 'diagonal_split' && ($image !== '' || $has_news_widget)): ?>
+                <div class="wxp-hero__media-col">
+                    <?php if ($has_news_widget): ?>
+                        <aside class="wxp-hero__news" aria-label="Senaste nytt">
+                            <h3 class="wxp-hero__news-title">Senaste nytt</h3>
+                            <ul class="wxp-hero__news-list">
+                                <?php foreach ($news_posts as $post):
+                                    $title = get_the_title($post);
+                                    if ($title === '') continue;
+                                    $link = get_permalink($post);
+                                    $date = get_the_date('j M Y', $post);
+                                ?>
+                                    <li class="wxp-hero__news-item">
+                                        <a href="<?= esc_url($link) ?>" class="wxp-hero__news-link"><?= esc_html($title) ?></a>
+                                        <p class="wxp-hero__news-date"><?= esc_html($date) ?></p>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </aside>
+                    <?php elseif ($image !== ''): ?>
+                        <div class="wxp-hero__media">
+                            <img src="<?= esc_url($image) ?>" alt="" loading="eager" decoding="async" />
+                        </div>
+                    <?php endif; ?>
                 </div>
             <?php endif; ?>
         </div>
@@ -101,7 +139,7 @@ return function ($section, $page, $ctx) {
 /* ============ Base (alla varianter) ============ */
 #<?= esc_attr($wid) ?> .wxp-hero { position: relative !important; color: #fff !important; overflow: hidden !important; padding: 0 !important; min-height: 480px !important; display: flex !important; align-items: center !important; background: linear-gradient(135deg, #11325D 0%, #1a4a7a 55%, #2d6a9f 100%) !important; }
 #<?= esc_attr($wid) ?> .wxp-hero__inner { position: relative !important; z-index: 5 !important; padding-top: 88px !important; padding-bottom: 88px !important; display: grid !important; grid-template-columns: 1fr !important; gap: 48px !important; align-items: center !important; }
-#<?= esc_attr($wid) ?> .wxp-hero--has-image .wxp-hero__inner { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) !important; }
+#<?= esc_attr($wid) ?> .wxp-hero--has-image .wxp-hero__inner, #<?= esc_attr($wid) ?> .wxp-hero--has-news-widget .wxp-hero__inner { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) !important; }
 #<?= esc_attr($wid) ?> .wxp-hero__text { max-width: 640px !important; position: relative !important; z-index: 5 !important; }
 /* Eyebrow ärver muted-vit från .wxp-section--on-dark .wxp-eyebrow (basstil).
    Hero har dock dark bg utan att vara på-dark-flaggad via section_attrs, så
@@ -111,7 +149,16 @@ return function ($section, $page, $ctx) {
 #<?= esc_attr($wid) ?> .wxp-hero__h1 { font-family: 'DM Sans', system-ui, sans-serif !important; font-size: clamp(2.25rem, 5vw, 3.5rem) !important; font-weight: 700 !important; line-height: 1.08 !important; letter-spacing: -0.02em !important; color: #fff !important; margin: 0 0 18px !important; padding: 0 !important; background: none !important; text-shadow: none !important; }
 #<?= esc_attr($wid) ?> .wxp-hero__subtitle { font-family: 'DM Sans', system-ui, sans-serif !important; font-size: clamp(1.05rem, 1.4vw, 1.2rem) !important; line-height: 1.6 !important; color: rgba(255,255,255,0.86) !important; max-width: 560px !important; margin: 0 0 30px !important; padding: 0 !important; background: none !important; }
 #<?= esc_attr($wid) ?> .wxp-hero__actions { margin: 0 !important; }
+#<?= esc_attr($wid) ?> .wxp-hero__media-col { position: relative !important; z-index: 5 !important; }
 #<?= esc_attr($wid) ?> .wxp-hero__media { position: relative !important; z-index: 5 !important; border-radius: 2px !important; overflow: hidden !important; box-shadow: 0 28px 60px rgba(0,0,0,0.35) !important; aspect-ratio: 4 / 3 !important; }
+#<?= esc_attr($wid) ?> .wxp-hero__news { padding: 24px 24px 20px !important; border-radius: 2px !important; background: rgba(255,255,255,0.08) !important; border: 1px solid rgba(255,255,255,0.2) !important; }
+#<?= esc_attr($wid) ?> .wxp-hero__news-title { margin: 0 0 14px !important; font-size: 12px !important; text-transform: uppercase !important; letter-spacing: .1em !important; color: rgba(255,255,255,0.8) !important; }
+#<?= esc_attr($wid) ?> .wxp-hero__news-list { list-style: none !important; margin: 0 !important; padding: 0 !important; }
+#<?= esc_attr($wid) ?> .wxp-hero__news-item { padding: 12px 0 !important; border-bottom: 1px solid rgba(255,255,255,0.14) !important; }
+#<?= esc_attr($wid) ?> .wxp-hero__news-item:last-child { border-bottom: 0 !important; padding-bottom: 0 !important; }
+#<?= esc_attr($wid) ?> .wxp-hero__news-link { color: #fff !important; text-decoration: none !important; font-weight: 600 !important; line-height: 1.35 !important; display: block !important; }
+#<?= esc_attr($wid) ?> .wxp-hero__news-link:hover { color: #F28C28 !important; }
+#<?= esc_attr($wid) ?> .wxp-hero__news-date { margin: 5px 0 0 !important; font-size: 12px !important; opacity: .68 !important; }
 #<?= esc_attr($wid) ?> .wxp-hero__media img { width: 100% !important; height: 100% !important; object-fit: cover !important; display: block !important; border-radius: 0 !important; }
 
 /* ============ Variant: gradient ============ */
@@ -141,7 +188,7 @@ return function ($section, $page, $ctx) {
 @media (max-width: 900px) {
     #<?= esc_attr($wid) ?> .wxp-hero { min-height: auto !important; }
     #<?= esc_attr($wid) ?> .wxp-hero__inner { padding-top: 64px !important; padding-bottom: 64px !important; gap: 36px !important; }
-    #<?= esc_attr($wid) ?> .wxp-hero--has-image .wxp-hero__inner { grid-template-columns: 1fr !important; }
+    #<?= esc_attr($wid) ?> .wxp-hero--has-image .wxp-hero__inner, #<?= esc_attr($wid) ?> .wxp-hero--has-news-widget .wxp-hero__inner { grid-template-columns: 1fr !important; }
     #<?= esc_attr($wid) ?> .wxp-hero__media { aspect-ratio: 16 / 10 !important; }
     #<?= esc_attr($wid) ?> .wxp-hero__shape--1 { width: 220px !important; height: 220px !important; left: 5% !important; }
     #<?= esc_attr($wid) ?> .wxp-hero__shape--2 { display: none !important; }

@@ -170,7 +170,7 @@ return function ($section, $page, $ctx) {
     <style>
 #<?= esc_attr($wid) ?> .wxp-cg__header { display: grid !important; grid-template-columns: 1fr auto !important; align-items: end !important; gap: 32px !important; margin: 0 0 56px !important; padding: 0 0 24px !important; border-bottom: 1px solid rgba(15,15,15,0.10) !important; }
 #<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-cg__header { border-bottom-color: rgba(255,255,255,0.14) !important; }
-#<?= esc_attr($wid) ?> .wxp-cg__title-block { max-width: 56ch !important; }
+#<?= esc_attr($wid) ?> .wxp-cg__title-block { max-width: 60% !important; }
 #<?= esc_attr($wid) ?> .wxp-cg__title { font-family: 'DM Sans', system-ui, sans-serif !important; font-size: clamp(1.875rem, 3.4vw, 2.625rem) !important; font-weight: 600 !important; line-height: 1.08 !important; letter-spacing: -0.025em !important; color: #11325D !important; margin: 0 0 14px !important; padding: 0 !important; background: none !important; }
 #<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-cg__title { color: #fff !important; }
 #<?= esc_attr($wid) ?> .wxp-cg__lede { font-size: 15px !important; line-height: 1.6 !important; color: #5A6473 !important; margin: 0 !important; max-width: 52ch !important; }
