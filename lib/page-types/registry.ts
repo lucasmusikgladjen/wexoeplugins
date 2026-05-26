@@ -25,6 +25,10 @@
  *      `app/editor/<type>/[recordId]/page.tsx` (edit) — peka mot
  *      <PageTypeBuilder uiDef={<type>UI} … />.
  *   6. Lägg till entry i `PAGE_TYPES` nedan.
+ *   7. Wire copy-funktionen: lägg till en handler i
+ *      `app/api/copy/route.ts::COPY_HANDLERS` och sätt `copy: { apiType }`
+ *      i registry-entry:n. Utan steget döljs Kopiera-menyn för den nya
+ *      typen — användarna förväntar sig att alla sidtyper kan dupliceras.
  *
  * Steg 6 är det enda som syns för slutanvändaren — homepage:n, filter,
  * "Ny sida"-dialogen och list-fetchen drivs alla från registry:n.
@@ -35,13 +39,15 @@ import {
   LP_ENTITIES,
   PA_ENTITIES,
   CMS_PAGES_ENTITIES,
+  CASE_ENTITIES,
 } from '../wexoe-cache-entities';
 
 export type PageTypeId =
   | 'landing'
   | 'product'
   | 'customer-type'
-  | 'page';
+  | 'page'
+  | 'case';
 
 export interface PageRow {
   id: string;
@@ -79,6 +85,17 @@ export interface PageTypeMeta {
   cacheEntities: readonly string[];
   /** Konvertera ett list-response till homepage:ns PageRow[]. */
   mapList: (data: RawListResponse) => PageRow[];
+  /**
+   * Stöder typen duplicering via UI:ns "Kopiera"-meny + POST /api/copy?
+   * Sätt till `undefined` för sidtyper som ännu inte fått en copy-handler
+   * — då döljs Kopiera-menyn och API:t avvisar typen.
+   *
+   * `apiType` är strängen som POST /api/copy förväntar sig i body.type.
+   * Måste matcha en registrerad handler i `app/api/copy/route.ts`.
+   * Konvention: samma som `id` för enkla typer, men `product-area` istället
+   * för `product` av historiska skäl.
+   */
+  copy?: { apiType: string };
 }
 
 function pickString(p: Record<string, unknown>, ...keys: string[]): string {
@@ -113,6 +130,7 @@ export const PAGE_TYPES = definePageTypes([
     createPath: '/editor',
     editPath: (id) => `/editor/${id}`,
     cacheEntities: LP_ENTITIES,
+    copy: { apiType: 'landing' },
     mapList: (data) =>
       (data.pages ?? []).map((p) => ({
         id: pickString(p, 'id'),
@@ -133,6 +151,7 @@ export const PAGE_TYPES = definePageTypes([
     createPath: '/editor/product-area',
     editPath: (id) => `/editor/product-area/${id}`,
     cacheEntities: PA_ENTITIES,
+    copy: { apiType: 'product-area' },
     mapList: (data) =>
       (data.pages ?? []).map((p) => ({
         id: pickString(p, 'id'),
@@ -152,6 +171,7 @@ export const PAGE_TYPES = definePageTypes([
     createPath: '/editor/customer-type',
     editPath: (id) => `/editor/customer-type/${id}`,
     cacheEntities: CUSTOMER_TYPE_PAGE_ENTITIES,
+    copy: { apiType: 'customer-type' },
     mapList: (data) =>
       (data.pages ?? []).map((p) => ({
         id: pickString(p, 'id'),
@@ -170,6 +190,7 @@ export const PAGE_TYPES = definePageTypes([
     createPath: '/editor/page',
     editPath: (id) => `/editor/page/${id}`,
     cacheEntities: CMS_PAGES_ENTITIES,
+    copy: { apiType: 'page' },
     mapList: (data) =>
       (data.pages ?? []).map((p) => ({
         id: pickString(p, 'id'),
@@ -179,6 +200,25 @@ export const PAGE_TYPES = definePageTypes([
         type: 'page',
         divisionIds: pickStringArray(p, 'divisionIds'),
         countryIds: pickStringArray(p, 'countryIds'),
+      })),
+  },
+  {
+    id: 'case',
+    label: 'Case',
+    description: 'Kundcase i editorial artikel-format med sticky "Caset i korthet"-sidebar',
+    creatable: true,
+    listUrl: '/api/case?action=list',
+    createPath: '/editor/case',
+    editPath: (id) => `/editor/case/${id}`,
+    cacheEntities: CASE_ENTITIES,
+    copy: { apiType: 'case' },
+    mapList: (data) =>
+      (data.pages ?? []).map((p) => ({
+        id: pickString(p, 'id'),
+        name: pickString(p, 'name', 'h1', 'slug'),
+        slug: pickString(p, 'slug'),
+        h1: pickString(p, 'h1'),
+        type: 'case',
       })),
   },
 ]);

@@ -22,3 +22,7 @@ export const SSOT_ENTITIES = [
 // polymorfa cms_page_sections. Tabs-sektionstypen har egna sub-records i
 // cms_section_tabs som invalideras tillsammans.
 export const CMS_PAGES_ENTITIES = ['cms_pages', 'cms_page_sections', 'cms_section_tabs'] as const;
+// Case-sidor (editorial artikel-format). Bara en tabell — produkter/artiklar
+// som länkas cachas av sina egna sidtyper (PA m.fl.), så ingen anledning att
+// invalidiera dem härifrån.
+export const CASE_ENTITIES = ['cms_cases'] as const;

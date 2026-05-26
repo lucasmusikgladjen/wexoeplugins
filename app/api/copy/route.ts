@@ -4,6 +4,7 @@ import {
   listRecords,
   createRecord,
   AirtableRecord,
+  SSOT_BASE_ID,
 } from '@/lib/airtable';
 import { TABLE_IDS as LP_TABLE_IDS } from '@/lib/airtable';
 import { PA_TABLE_IDS, PA_BASE_ID } from '@/lib/product-area-mapper';
@@ -11,7 +12,18 @@ import {
   CUSTOMER_TYPE_TABLE_IDS,
   CUSTOMER_TYPE_BASE_ID,
 } from '@/lib/customer-type-mapper';
-import { invalidateWexoeCoreCache, CUSTOMER_TYPE_PAGE_ENTITIES } from '@/lib/wexoe-cache';
+import { CASE_TABLE_ID, CASE_BASE_ID } from '@/lib/case-mapper';
+import {
+  CMS_PAGES_TABLE_ID,
+  CMS_PAGE_SECTIONS_TABLE_ID,
+  CMS_SECTION_TABS_TABLE_ID,
+} from '@/lib/cms-page-types';
+import {
+  invalidateWexoeCoreCache,
+  CUSTOMER_TYPE_PAGE_ENTITIES,
+  CASE_ENTITIES,
+  CMS_PAGES_ENTITIES,
+} from '@/lib/wexoe-cache';
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 
@@ -47,12 +59,39 @@ const PA_SECTION_FIELDS_TO_DROP = new Set([
   'last_modified_by',
 ]);
 
+// cms_cases-records är flat. Det enda fältet att skippa är backlinken som
+// pekar tillbaka från cms_partner_pages — Airtable avvisar PATCH/CREATE som
+// skriver till en computed reverse-link.
+const CASE_FIELDS_TO_DROP = new Set(['cms_partner_pages']);
+
+// cms_pages är en deep-tree (page → sections → tabs). Page-recordet har
+// owned section_ids som vi bygger om från färska sections nedan.
+const CMS_PAGE_FIELDS_TO_DROP = new Set(['section_ids']);
+const CMS_SECTION_FIELDS_TO_DROP = new Set([
+  // Backlink till cms_pages — kopierade sektioner får sin egen page_ids via
+  // den nya page:ens section_ids-array.
+  'page_ids',
+  // Tab-children rebuildas; gamla tabs_tab_ids pekar på källans tabs.
+  'tabs_tab_ids',
+]);
+const CMS_SECTION_TAB_FIELDS_TO_DROP = new Set([
+  // Backlink till cms_page_sections — sätts om till den nya parent-sektionen.
+  'section_ids',
+]);
+
 interface CopyRequest {
-  type: 'landing' | 'product-area' | 'customer-type';
+  type: string;
   sourceId: string;
   name?: string;
   slug?: string;
 }
+
+type CopyHandler = (
+  apiKey: string,
+  sourceId: string,
+  name: string | undefined,
+  slug: string | undefined,
+) => Promise<Response>;
 
 function strip(fields: Record<string, unknown>, drop: Set<string>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
@@ -328,6 +367,208 @@ async function copyCustomerType(
   });
 }
 
+// ─── Case (flat copy — product_ids/article_ids shared by reference) ───────
+//
+// cms_cases är flat: pseudo-arrayer (quick_stat_N_*, result_N_*,
+// gallery_image_N_*) är bara fält på recordet och följer med automatiskt.
+// product_ids + article_ids delas med källan — flera case-sidor kan länka
+// samma cms_products/cms_articles utan att skapa duplicerade records.
+
+async function copyCase(
+  apiKey: string,
+  sourceId: string,
+  name: string | undefined,
+  slug: string | undefined,
+) {
+  const source = await getRecord(apiKey, CASE_TABLE_ID, sourceId, CASE_BASE_ID);
+  const sourceTitle = (source.fields.title as string) || '';
+  const sourceSlug = (source.fields.slug as string) || '';
+
+  const newName = name?.trim() || defaultCopyName(sourceTitle);
+  const newSlug = slug?.trim() || defaultCopySlug(sourceSlug);
+
+  if (await isSlugTaken(apiKey, CASE_TABLE_ID, newSlug, 'slug', CASE_BASE_ID)) {
+    return NextResponse.json(
+      { error: `Slug "${newSlug}" finns redan. Välj ett annat.` },
+      { status: 409 },
+    );
+  }
+
+  const fields = strip(source.fields, CASE_FIELDS_TO_DROP);
+  fields.slug = newSlug;
+  // `title` är H1 på den publika sidan och case-sidans "namn" i listan
+  // (listItemMapper plockar title som name). Kopiera rubriken så list-vyn
+  // inte visar två identiska poster.
+  fields.title = newName;
+
+  const created = await createRecord(apiKey, CASE_TABLE_ID, fields, CASE_BASE_ID);
+  await invalidateWexoeCoreCache(CASE_ENTITIES, 'case:copy');
+
+  return NextResponse.json({
+    success: true,
+    id: created.id,
+    name: newName,
+    slug: newSlug,
+    type: 'case' as const,
+  });
+}
+
+// ─── CMS Page (deep copy — page + owned sections + tabs sub-records) ─────
+//
+// cms_pages-familjen är multi-tabell precis som LP men med polymorfa sektioner.
+// Skriv-ordning vid copy:
+//   1. CREATE alla cms_section_tabs (innan sektionerna så vi har deras IDs)
+//   2. CREATE alla cms_page_sections (sätt tabs_tab_ids = nya tab-IDs där relevant)
+//   3. CREATE cms_pages med section_ids = nya section-IDs (i källans ordning)
+
+async function copyCmsPage(
+  apiKey: string,
+  sourceId: string,
+  name: string | undefined,
+  slug: string | undefined,
+) {
+  const source = await getRecord(apiKey, CMS_PAGES_TABLE_ID, sourceId, SSOT_BASE_ID);
+  const sourceSlug = (source.fields.slug as string) || '';
+  const sourceLabel =
+    (source.fields.internal_label as string) ||
+    (source.fields.h1 as string) ||
+    sourceSlug;
+
+  // `name`-fältet från UI:n hamnar på `internal_label` (redaktörsetiketten).
+  // CMS-pages har ingen separat `name`-kolumn.
+  const newInternalLabel = name?.trim() || defaultCopyName(sourceLabel);
+  const newSlug = slug?.trim() || defaultCopySlug(sourceSlug);
+
+  if (await isSlugTaken(apiKey, CMS_PAGES_TABLE_ID, newSlug, 'slug', SSOT_BASE_ID)) {
+    return NextResponse.json(
+      { error: `Slug "${newSlug}" finns redan. Välj ett annat.` },
+      { status: 409 },
+    );
+  }
+
+  // 1. Läs alla source-sektioner i deras source-ordning.
+  const sourceSectionIds = (source.fields['section_ids'] as string[] | undefined) ?? [];
+  let sourceSections: AirtableRecord[] = [];
+  if (sourceSectionIds.length > 0) {
+    const formula = `OR(${sourceSectionIds.map((id) => `RECORD_ID()='${id}'`).join(',')})`;
+    sourceSections = await listRecords(apiKey, CMS_PAGE_SECTIONS_TABLE_ID, {
+      filterByFormula: formula,
+      baseId: SSOT_BASE_ID,
+    });
+  }
+  const sourceSectionsById = new Map(sourceSections.map((s) => [s.id, s]));
+
+  // 2. Samla alla tab-IDs som hör till tabs-sektioner.
+  const tabsBySourceSection = new Map<string, string[]>();
+  const allSourceTabIds = new Set<string>();
+  for (const sec of sourceSections) {
+    const tabIds = (sec.fields['tabs_tab_ids'] as string[] | undefined) ?? [];
+    if (tabIds.length > 0) {
+      tabsBySourceSection.set(sec.id, tabIds);
+      tabIds.forEach((id) => allSourceTabIds.add(id));
+    }
+  }
+
+  // 3. Läs alla source-tabs.
+  let sourceTabs: AirtableRecord[] = [];
+  if (allSourceTabIds.size > 0) {
+    const ids = [...allSourceTabIds];
+    const formula = `OR(${ids.map((id) => `RECORD_ID()='${id}'`).join(',')})`;
+    sourceTabs = await listRecords(apiKey, CMS_SECTION_TABS_TABLE_ID, {
+      filterByFormula: formula,
+      baseId: SSOT_BASE_ID,
+    });
+  }
+  const sourceTabsById = new Map(sourceTabs.map((t) => [t.id, t]));
+
+  // 4. CREATE nya tabs (utan section_ids backlink). Map: gammal → ny tab-ID.
+  const tabIdMap = new Map<string, string>();
+  for (const sourceTab of sourceTabs) {
+    const tabFields = strip(sourceTab.fields, CMS_SECTION_TAB_FIELDS_TO_DROP);
+    const created = await createRecord(
+      apiKey,
+      CMS_SECTION_TABS_TABLE_ID,
+      tabFields,
+      SSOT_BASE_ID,
+    );
+    tabIdMap.set(sourceTab.id, created.id);
+  }
+
+  // 5. CREATE nya sections i källans ordning. Sätt tabs_tab_ids = nya tab-IDs
+  //    där sektionen är en tabs-typ. Map: gammal → ny section-ID.
+  const sectionIdMap = new Map<string, string>();
+  const newSectionIdsOrdered: string[] = [];
+  for (const sourceSectionId of sourceSectionIds) {
+    const sourceSection = sourceSectionsById.get(sourceSectionId);
+    if (!sourceSection) continue;
+
+    const sectionFields = strip(sourceSection.fields, CMS_SECTION_FIELDS_TO_DROP);
+    const oldTabIds = tabsBySourceSection.get(sourceSectionId);
+    if (oldTabIds && oldTabIds.length > 0) {
+      const newTabIds = oldTabIds
+        .map((id) => tabIdMap.get(id))
+        .filter((id): id is string => !!id);
+      sectionFields['tabs_tab_ids'] = newTabIds;
+    }
+
+    const createdSection = await createRecord(
+      apiKey,
+      CMS_PAGE_SECTIONS_TABLE_ID,
+      sectionFields,
+      SSOT_BASE_ID,
+    );
+    sectionIdMap.set(sourceSectionId, createdSection.id);
+    newSectionIdsOrdered.push(createdSection.id);
+    // Notera: vi rensar inte upp ifall en sub-step failar — Airtable saknar
+    // transaktioner. Orphan-records kan tas bort manuellt eller via en
+    // framtida cleanup-route. Matchar copyLandingPage:s semantik.
+    void sourceTabsById;
+  }
+
+  // 6. CREATE cms_pages med section_ids = nya sektioners IDs.
+  const pageFields = strip(source.fields, CMS_PAGE_FIELDS_TO_DROP);
+  pageFields.slug = newSlug;
+  pageFields.internal_label = newInternalLabel;
+  pageFields.section_ids = newSectionIdsOrdered;
+  // `is_published` ärvs INTE — en kopia ska aldrig auto-publiceras. Användaren
+  // får aktivt sätta toggle:n efter att ha justerat content. Defensivt mot
+  // att en redaktör råkar publicera en halvfärdig duplikat.
+  pageFields.is_published = false;
+
+  const created = await createRecord(apiKey, CMS_PAGES_TABLE_ID, pageFields, SSOT_BASE_ID);
+  await invalidateWexoeCoreCache(CMS_PAGES_ENTITIES, 'page:copy');
+
+  return NextResponse.json({
+    success: true,
+    id: created.id,
+    name: newInternalLabel,
+    slug: newSlug,
+    type: 'page' as const,
+    sectionsCopied: newSectionIdsOrdered.length,
+    tabsCopied: tabIdMap.size,
+  });
+}
+
+// ─── Dispatch ──────────────────────────────────────────────────────────────
+//
+// När en ny sidtyp läggs till:
+//   1. Skriv copy<Type>-funktionen ovan.
+//   2. Lägg till en rad i COPY_HANDLERS nedan med samma `apiType`-sträng
+//      som `copy: { apiType }` i `lib/page-types/registry.ts`.
+//
+// UI:n (CopyPageDialog + RowActionsMenu) läser från registry:n och dyker
+// upp så snart steg 2 är gjort. Tappas en handler hamnar typen i "Ogiltig
+// typ"-grenen nedan — bättre att returnera 400 explicit än att kraschar
+// fel handler.
+
+const COPY_HANDLERS: Record<string, CopyHandler> = {
+  'landing': copyLandingPage,
+  'product-area': copyProductArea,
+  'customer-type': copyCustomerType,
+  'case': copyCase,
+  'page': copyCmsPage,
+};
+
 // ─── Handler ───────────────────────────────────────────────────────────────
 
 export async function POST(request: Request) {
@@ -341,16 +582,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'sourceId krävs' }, { status: 400 });
     }
 
-    if (body.type === 'landing') {
-      return await copyLandingPage(AIRTABLE_API_KEY, body.sourceId, body.name, body.slug);
+    const handler = COPY_HANDLERS[body.type];
+    if (!handler) {
+      return NextResponse.json(
+        { error: `Ogiltig typ: ${body.type}` },
+        { status: 400 },
+      );
     }
-    if (body.type === 'product-area') {
-      return await copyProductArea(AIRTABLE_API_KEY, body.sourceId, body.name, body.slug);
-    }
-    if (body.type === 'customer-type') {
-      return await copyCustomerType(AIRTABLE_API_KEY, body.sourceId, body.name, body.slug);
-    }
-    return NextResponse.json({ error: 'Ogiltig typ.' }, { status: 400 });
+
+    return await handler(AIRTABLE_API_KEY, body.sourceId, body.name, body.slug);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Okänt fel';
     console.error('[copy] Error:', message);

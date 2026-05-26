@@ -154,8 +154,9 @@ FAS 1 (schema) och FAS 2 (PHP-plugin) körs först. Denna fas antar att:
 | `app/api/<type>/route.ts` | CRUD-endpoint (oftast en factory-anrop) |
 | `app/editor/<type>/page.tsx` | Create-vy (server page) |
 | `app/editor/<type>/[recordId]/page.tsx` | Edit-vy (server page) |
-| `lib/page-types/registry.ts` | Lägg till entry i `PAGE_TYPES`-arrayen |
+| `lib/page-types/registry.ts` | Lägg till entry i `PAGE_TYPES`-arrayen + `copy: { apiType }` |
 | `lib/wexoe-cache-entities.ts` | Lägg till `<TYPE>_ENTITIES`-konstant |
+| `app/api/copy/route.ts` | Lägg till `copy<Type>`-handler + rad i `COPY_HANDLERS` |
 
 ### Trelagsbeslut
 
@@ -214,8 +215,14 @@ Verifiera schema-MD mot live-records innan du anser den klar — fel fältnamn i
 10. `lib/page-types/registry.ts`:
     - Utöka `PageTypeId`-unionen med det nya id:t (`'landing' | 'product' | ... | '<type>'`). Annars rejectar TypeScript ditt nya `id`/`type` innan routen ens kan byggas.
     - Lägg till entry i `PAGE_TYPES` (id, label, description, createPath, editPath, cacheEntities, listUrl, mapList). `mapList` returnerar `PageRow[]` med `type: '<type>'` — samma literal som du la till i unionen.
+    - Sätt `copy: { apiType: '<api-type>' }` på entry:n. `apiType`-strängen är vad UI:n och `/api/copy` använder för att para ihop sidtypen med rätt handler — konvention: samma som `id`, förutom `product-area` för historiska skäl.
 
-11. Testa: `npm run dev`, gå till `/`, klicka "Ny sida" → välj din nya typ → fyll i → spara → ladda om → editera → spara → kolla i Airtable. Aktivera pluginet på WP och verifiera att en publik sida renderas.
+11. `app/api/copy/route.ts`:
+    - Skriv en `copy<Type>(apiKey, sourceId, name, slug)`-funktion enligt mönstret som de andra typerna följer (slug-uniqueness-kollen, fält-strip av backlinks/computed, defaultCopyName/Slug-fallback, cache-invalidation).
+    - Lägg till `'<api-type>': copy<Type>` i `COPY_HANDLERS`-tabellen.
+    - Utan steget döljs Kopiera-menyn för den nya typen (registry:n vet inte att stödet finns) — men användarna förväntar sig att alla sidor går att duplicera, så hoppa inte över detta.
+
+12. Testa: `npm run dev`, gå till `/`, klicka "Ny sida" → välj din nya typ → fyll i → spara → ladda om → editera → spara → kolla i Airtable. Hovra över sidan i listan och klicka tre-prickar-menyn → Kopiera → verifiera att kopian dyker upp. Aktivera pluginet på WP och verifiera att en publik sida renderas.
 
 ### Vanliga felskott
 
@@ -225,6 +232,36 @@ Verifiera schema-MD mot live-records innan du anser den klar — fel fältnamn i
 - **Cache rensas inte** → glömt `cacheEntities` i serverDef ELLER glömt entitetsnamnet i `<TYPE>_ENTITIES`.
 - **Sidan listas inte på `/`** → glömt registry-entry, eller `mapList` returnerar tom array.
 - **Preview re-renderar inte vid edit** → preview-komponenten läser från egen state istället för från props.
+- **Kopiera-knappen kraschar för den nya typen** → glömt `copy: { apiType }` i registry, eller glömt en handler i `app/api/copy/route.ts::COPY_HANDLERS`. Se nästa avsnitt.
+
+---
+
+## Copy-flödet (Kopiera-knappen i listan)
+
+Tre-prickar-menyn i sidolistan visar **Kopiera** för varje sidtyp som har `copy: { apiType }` i sin registry-entry. Implementationen är dispatch-baserad — UI:n och API:t paras ihop via `apiType`-strängen.
+
+### Komponenter
+
+| Lager | Fil | Roll |
+|---|---|---|
+| Registry | `lib/page-types/registry.ts` | Sätter `copy: { apiType }` på varje sidtyp som stöder copy. Saknas fältet → menyn döljs. |
+| UI | `app/page.tsx::RowActionsMenu` | Visas bara när `getPageType(page.type).copy` är truthy. |
+| UI | `app/page.tsx::CopyPageDialog` | Läser `getPageType(source.type).copy.apiType` och POST:ar mot `/api/copy`. |
+| API | `app/api/copy/route.ts::COPY_HANDLERS` | Lookup-tabell: `apiType`-sträng → `copy<Type>`-handler. |
+| API | `app/api/copy/route.ts::copy<Type>` | Hämtar source, rensar fält som inte ska kopieras, skapar nya records, invaliderar cache. |
+
+### Konventioner per copy-handler
+
+- **Slug-unikhet:** kör `isSlugTaken(...)` mot tabellen innan create. Returnera 409 om upptaget — UI:n visar felet inline.
+- **Defaultnamn:** kalla `defaultCopyName(sourceName)` och `defaultCopySlug(sourceSlug)` för fallback när användaren inte fyllt i fälten. `defaultCopySlug` hanterar `-copy → -copy-2 → -copy-3` automatiskt.
+- **Fält att rensa:** strippa allt som är (a) backlink till parent, (b) ägd child-länk som rebuildas, eller (c) Airtable computed/audit-fält. Se `<TYPE>_FIELDS_TO_DROP`-konstanterna för existerande mönster.
+- **Owned vs shared children:** owned (sektioner, tabs, downloads) deep-copy:as. Shared (länkar till partners, produkter, divisions) ärvs by reference. Customer-types `case_ids` och CMS-pages `is_published=false` är medvetna avvikelser — när tvekan: dokumentera valet i en code-kommentar.
+- **Cache:** anropa `invalidateWexoeCoreCache(<TYPE>_ENTITIES, '<type>:copy')` efter lyckad create så Core-pluginet inte serverar stale list-data.
+- **Respons:** returnera `{ success: true, id, name, slug, type }` — UI:n bumpar `refreshKey` när success är true och hämtar listan igen.
+
+### När en sidtyp avsiktligt INTE ska kunna kopieras
+
+Lämna `copy` undefined i registry-entry:n. UI:n döljer Kopiera-menyn, och API:t returnerar 400 om någon ändå försöker. Lämpligt för system-typer eller singletons.
 
 ---
 

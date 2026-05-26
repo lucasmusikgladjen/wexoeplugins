@@ -267,9 +267,10 @@ export default function PageManager() {
                   {/* Three-dots menu — sibling of the Link, appears on hover.
                       Provides "Kopiera" today; designed to host future actions
                       (Radera, Duplicera till annan typ, ...) without redesigning
-                      the row. CMS-page-sidor saknar copy-path i /api/copy så
-                      menyn döljs där tills fler alternativ tillkommer. */}
-                  {page.type !== 'page' && (
+                      the row. Menyn döljs för sidtyper som saknar
+                      `copy`-meta i registry — då har vi ingen copy-handler i
+                      /api/copy och valet skulle bara krascha för användaren. */}
+                  {getPageType(page.type).copy && (
                     <RowActionsMenu
                       onCopy={() => setCopyTarget(page)}
                     />
@@ -538,17 +539,20 @@ function CopyPageDialog({
     setBusy(true);
     setError(null);
     try {
-      const apiType =
-        source.type === 'product'
-          ? 'product-area'
-          : source.type === 'customer-type'
-          ? 'customer-type'
-          : 'landing';
+      // apiType läses från registry så vi inte hårdkodar mappingen två gånger
+      // (en gång här, en gång i /api/copy). Om en sidtyp saknar `copy`-meta
+      // ska RowActionsMenu redan ha dolt knappen som öppnar dialogen — men
+      // vi vägrar defensivt här också så ingen krasch sker om någon kallar
+      // dialogen programmatiskt för en typ utan copy-stöd.
+      const copyMeta = getPageType(source.type).copy;
+      if (!copyMeta) {
+        throw new Error(`Sidtypen "${source.type}" stöder inte kopiering.`);
+      }
       const res = await fetch('/api/copy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: apiType,
+          type: copyMeta.apiType,
           sourceId: source.id,
           name: name.trim() || undefined,
           slug: slug.trim() || undefined,

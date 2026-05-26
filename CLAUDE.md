@@ -114,6 +114,8 @@ Splittringen finns för att React-komponenter inte kan korsa Next:s server/clien
 
 **Airtable saknar transaktioner.** Ramverket lovar inte atomär rollback. Vid fel: primary skrivs först (eller stoppas hela operationen om primary failar); därefter en relation i taget; fel ackumuleras i `RelationSyncResult.errors`. Klienten visar fel tydligt och låter användaren retrya.
 
+**Copy-flödet är opt-in per sidtyp.** Tre-prickar-menyn "Kopiera" visas bara om registry-entry:n har `copy: { apiType: '...' }`, och `apiType`-strängen måste matcha en handler i `app/api/copy/route.ts::COPY_HANDLERS`. Glöms steget syns ingen Kopiera-knapp — vilket är säkrare än en knapp som kraschar mot fel handler, men användarna förväntar sig att alla sidor kan dupliceras. Se `NEW_PAGE_TYPE.md` § "Copy-flödet" för konventioner per handler (slug-unikhet, fält-strip, owned vs shared children, cache).
+
 Att lägga till en ny sidtyp = följ `NEW_PAGE_TYPE.md`.
 
 ---
