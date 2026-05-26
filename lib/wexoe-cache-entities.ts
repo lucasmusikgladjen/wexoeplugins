@@ -22,3 +22,13 @@ export const SSOT_ENTITIES = [
 // polymorfa cms_page_sections. Tabs-sektionstypen har egna sub-records i
 // cms_section_tabs som invalideras tillsammans.
 export const CMS_PAGES_ENTITIES = ['cms_pages', 'cms_page_sections', 'cms_section_tabs'] as const;
+// Partner-sidor (leverantörssidor som Rockwell, HMS, Wittenstein, …).
+// Sidan länkar in cms_cases (success cases) och product_areas (kategorier)
+// + core_partners (identitet). Alla fyra invalideras tillsammans när en
+// partner-sida muteras så att ändringar i linked records syns omedelbart.
+export const PARTNER_ENTITIES = [
+  'partner_pages',
+  'cases',
+  'product_areas',
+  'core_partners',
+] as const;

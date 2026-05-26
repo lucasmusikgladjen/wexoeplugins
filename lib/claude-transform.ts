@@ -20,6 +20,7 @@ import { PageState } from './types';
 import { ProductAreaState } from './product-area-types';
 import { CustomerTypePageState } from './customer-type-types';
 import { CmsPageState, PageSection, TabsSection } from './cms-page-types';
+import { PartnerPageState } from './partner-types';
 
 // ─── Schemas loaded once at module boot ────────────────────────────────────
 const SCHEMA_LP = readFileSync(
@@ -36,6 +37,10 @@ const SCHEMA_CUSTOMER_TYPE = readFileSync(
 );
 const SCHEMA_CMS_PAGE = readFileSync(
   join(process.cwd(), 'lib', 'airtable-schema-cms-page.md'),
+  'utf-8',
+);
+const SCHEMA_PARTNER = readFileSync(
+  join(process.cwd(), 'lib', 'airtable-schema-partner.md'),
   'utf-8',
 );
 
@@ -743,6 +748,183 @@ export async function transformCustomerType(
   }
   if (!parsed.customerTypePage || typeof parsed.customerTypePage !== 'object') {
     throw new Error('Claude utelämnade customerTypePage-objektet.');
+  }
+
+  return parsed;
+}
+
+
+// ─── Partner Page (leverantörssida) payload builder ───────────────────────
+
+export interface PartnerTransformResult {
+  partnerPage: Record<string, unknown>;
+}
+
+function buildPartnerPayload(
+  state: PartnerPageState,
+  mode: TransformMode,
+): string {
+  // Flatten ut quick-facts till 4 slot-fält. Tomma slots skickas som
+  // tomsträng vid UPDATE så Airtable rensar dem.
+  const factsPayload: Record<string, string> = {};
+  for (let i = 0; i < 4; i++) {
+    const slot = i + 1;
+    const fact = state.facts[i] ?? { icon: '', value: '', label: '' };
+    factsPayload[`facts_${slot}_icon`] = fact.icon;
+    factsPayload[`facts_${slot}_value`] = fact.value;
+    factsPayload[`facts_${slot}_label`] = fact.label;
+  }
+
+  const data: Record<string, unknown> = {
+    _mode: mode,
+    _recordId: state.recordId || null,
+
+    // Identity
+    slug: state.slug,
+    is_active: state.isActive,
+    internal_notes: state.internalNotes,
+    partner_ids: state.partnerIds,
+    country_ids: state.countryIds,
+
+    // SEO
+    seo_title: state.seoTitle,
+    seo_description: state.seoDescription,
+    og_image_url: state.ogImageUrl,
+
+    // Hero
+    hero_eyebrow: state.heroEyebrow,
+    h1: state.h1,
+    hero_tagline: state.heroTagline,
+    hero_cta_text: state.heroCtaText,
+    hero_cta_url: state.heroCtaUrl,
+    hero_cta2_text: state.heroCta2Text,
+    hero_cta2_url: state.heroCta2Url,
+    hero_image_url: state.heroImageUrl,
+
+    // Quick Facts
+    show_quick_facts: state.showQuickFacts,
+    ...factsPayload,
+
+    // About
+    show_about: state.showAbout,
+    about_eyebrow: state.aboutEyebrow,
+    about_h2: state.aboutH2,
+    about_text: state.aboutText,
+    about_image_url: state.aboutImageUrl,
+    about_badge_value: state.aboutBadgeValue,
+    about_badge_label: state.aboutBadgeLabel,
+
+    // Why Wexoe + benefits + cases
+    show_why_wexoe: state.showWhyWexoe,
+    why_h2: state.whyH2,
+    why_text: state.whyText,
+    why_benefits: state.whyBenefits, // string[] — Claude joinar till lines
+    case_ids: state.caseIds,
+    cases_view_all_text: state.casesViewAllText,
+    cases_view_all_url: state.casesViewAllUrl,
+
+    // Categories
+    show_categories: state.showCategories,
+    categories_eyebrow: state.categoriesEyebrow,
+    categories_h2: state.categoriesH2,
+    categories_intro: state.categoriesIntro,
+    category_ids: state.categoryIds,
+
+    // FAQ — Claude serialiserar till JSON-sträng, drop:ar clientId
+    show_faq: state.showFaq,
+    faq_h2: state.faqH2,
+    faqs: state.faqs.map((item) => ({
+      question: item.question,
+      answer: item.answer,
+    })),
+
+    // Contact Person
+    show_contact_person: state.showContactPerson,
+    contact_name: state.contactName,
+    contact_title: state.contactTitle,
+    contact_email: state.contactEmail,
+    contact_phone: state.contactPhone,
+    contact_image_url: state.contactImageUrl,
+    contact_quote: state.contactQuote,
+
+    // Contact Form (15 fält) — identisk uppsättning som andra sidtyper
+    show_contact_form: state.showContactForm,
+    contact_form_eyebrow: state.contactForm.eyebrow,
+    contact_form_title: state.contactForm.title,
+    contact_form_subtitle: state.contactForm.subtitle,
+    contact_form_layout: state.contactForm.layout,
+    contact_form_theme: state.contactForm.theme,
+    contact_form_show_company: state.contactForm.showCompany,
+    contact_form_show_phone: state.contactForm.showPhone,
+    contact_form_show_dropdown: state.contactForm.showDropdown,
+    contact_form_dropdown_label: state.contactForm.dropdownLabel,
+    contact_form_options: state.contactForm.options,
+    contact_form_cta_text: state.contactForm.ctaText,
+    contact_form_message_label: state.contactForm.messageLabel,
+    contact_form_trust_signals: state.contactForm.trustSignals,
+    contact_form_show_contact_person: state.contactForm.showContactPerson,
+  };
+
+  return JSON.stringify(data, null, 2);
+}
+
+function buildPartnerSystemPrompt(mode: TransformMode): string {
+  const common = `Du är en datatransformerare. Du tar emot partner-sida-data (leverantörssida) i JSON-format och konverterar den till Airtable-redo JSON enligt schemat nedan.
+
+${SCHEMA_PARTNER}
+
+Svara med ENBART valid JSON (ingen markdown, ingen förklaring).
+
+Output-format:
+{
+  "partnerPage": { <Airtable-fältnamn>: <värde>, ... }
+}
+
+KRITISKT:
+- Använd exakta Airtable-fältnamn från schemat (snake_case).
+- Inkludera ALLTID boolean-fält (is_active, alla show_*-toggles inkl. de 4 contact_form_show_*).
+- Inkludera ALLTID alla 15 contact_form_*-fält vid UPDATE (även tomma/false).
+- "why_benefits" kommer som en array av strängar. Joina med "\\n", trimma varje rad, filtrera bort tomma rader. Emit som en multilineText-sträng.
+- "faqs" kommer som en array av {question, answer}-objekt. Filtrera bort poster där question är tom. Emit som JSON.stringify(...) av den filtrerade arrayen. Tom array → "[]". Inkludera ALDRIG clientId eller andra meta-fält.
+- Quick-facts-ikon (facts_N_icon) måste vara en av: "calendar","users","globe","shield","building","factory","award","package","briefcase","target", eller "". Allt annat → "".
+- Linkade record-fält (partner_ids, country_ids, case_ids, category_ids) är arrayer av Airtable record-IDs. Skicka dem som arrayer, inte strängar.`;
+
+  if (mode === 'create') {
+    return `${common}
+
+MODE: CREATE
+- Utelämna textfält med tomt värde (tomma strängar).
+- Utelämna länkade arrayer som är tomma (partner_ids, country_ids, case_ids, category_ids).
+- Inkludera ALLTID boolean-fält, layout/theme, alla quick-facts-ikon-fält och alla contact_form_*-checkboxes.
+- "faqs" och "why_benefits": utelämna om respektive input-array är tom.`;
+  }
+
+  return `${common}
+
+MODE: UPDATE
+- Inkludera ALLA fält från input (även tomma textfält som "") så Airtable rensar dem som tömts.
+- Länkade arrayer (partner_ids, country_ids, case_ids, category_ids): skicka ALLTID arrayen (även tom) så marknadsföraren kan ta bort länkningar.
+- "faqs": skicka alltid (även "[]"-sträng om tom). "why_benefits": skicka alltid (även "" om tom).
+- Inkludera ALLTID alla 15 contact_form_*-fält i partnerPage även om värdena är tomma eller false.`;
+}
+
+export async function transformPartner(
+  apiKey: string,
+  state: PartnerPageState,
+  mode: TransformMode,
+): Promise<PartnerTransformResult> {
+  const userPayload = buildPartnerPayload(state, mode);
+  const systemPrompt = buildPartnerSystemPrompt(mode);
+  const userPrompt = `Transformera denna data till Airtable-format:\n\n${userPayload}`;
+
+  const responseText = await callClaude(apiKey, systemPrompt, userPrompt);
+  const parsed = parseJsonOrThrow<PartnerTransformResult>(responseText);
+
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('Claude returnerade oväntat format.');
+  }
+  if (!parsed.partnerPage || typeof parsed.partnerPage !== 'object') {
+    throw new Error('Claude utelämnade partnerPage-objektet.');
   }
 
   return parsed;

@@ -29,6 +29,7 @@ import {
 } from '@/components/editors/FieldInput';
 import ButtonFieldset from '@/components/editors/ButtonFieldset';
 import LinkedRecords from './LinkedRecords';
+import StringListField from './StringListField';
 
 export const Field = {
   Text: FieldInput,
@@ -40,6 +41,7 @@ export const Field = {
   Buttons: ButtonFieldset,
   Group: FieldGroup,
   LinkedRecords: LinkedRecords,
+  StringList: StringListField,
 } as const;
 
 export {
@@ -52,4 +54,5 @@ export {
   FieldGroup,
   ButtonFieldset,
   LinkedRecords,
+  StringListField,
 };

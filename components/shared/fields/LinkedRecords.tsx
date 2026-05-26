@@ -1,13 +1,15 @@
 'use client';
 
 /**
- * Multi-select field för länkning till core-entiteter.
+ * Multi-select field för länkning till core- eller CMS-records.
  *
  * Säkerhet/design:
- *   - `source` är en *whitelist*-key från `lib/core/registry` (CORE_ENTITIES).
+ *   - `source` är en *whitelist*-key från `lib/linked-sources.ts`
+ *     (`LinkedSourceName` = `CoreEntityName | CmsLinkedSourceName`).
  *     Komponenten exponerar INTE ett fritt tableId-API — Airtable-nyckeln
  *     stannar därför på servern.
- *   - Datat hämtas via `/api/core/<source>` som körs server-side.
+ *   - Datat hämtas via `/api/linked/<source>` som körs server-side och
+ *     dispatchar mellan core-normaliseringen och CMS-passthrough.
  *   - Resultaten cachas på modulnivå per source så sessionsnavigation
  *     mellan editorer inte triggar ny fetch.
  *
@@ -16,20 +18,24 @@
  *   - Sökfält filtrerar dropdown:en. Klick på en option lägger till.
  *   - Visar laddnings- och felstate.
  *   - `max`-prop begränsar antalet samtidiga val (lämpligt för t.ex. ett
- *     ensamt land där 0–1 förväntas).
+ *     ensamt land där 0–1 förväntas, eller en single-pick partner).
+ *
+ * Att lägga till en ny linkbar källa = lägg entry i
+ * `lib/linked-sources.ts::CMS_LINKED_SOURCES` (för cms_*-tabeller) eller
+ * `lib/core/registry.ts::CORE_ENTITIES` (för core_*-tabeller). Lägg sedan
+ * en `defaultLabel`-case nedan.
  */
 
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import type { CoreEntityName } from '@/lib/core/registry';
-
-interface NormalizedRecord {
-  _recordId: string;
-  [key: string]: unknown;
-}
+import type { LinkedSourceName } from '@/lib/linked-sources';
+import {
+  fetchLinkedRecords as fetchRecords,
+  type NormalizedRecord,
+} from '@/lib/linked-records-cache';
 
 interface Props {
   label: string;
-  source: CoreEntityName;
+  source: LinkedSourceName;
   value: string[];
   onChange: (next: string[]) => void;
   description?: string;
@@ -44,34 +50,11 @@ interface Props {
   filter?: (record: NormalizedRecord) => boolean;
 }
 
-// ─── Module-level cache ────────────────────────────────────────────────────
+// ─── Default labels per source ─────────────────────────────────────────────
 
-const cache = new Map<CoreEntityName, Promise<NormalizedRecord[]>>();
-
-function fetchRecords(source: CoreEntityName): Promise<NormalizedRecord[]> {
-  const cached = cache.get(source);
-  if (cached) return cached;
-  const promise = fetch(`/api/core/${source}`)
-    .then(async (r) => {
-      const data = await r.json();
-      if (!r.ok || !data.success) {
-        throw new Error(data.error || `HTTP ${r.status}`);
-      }
-      return (data.records ?? []) as NormalizedRecord[];
-    })
-    .catch((err) => {
-      // Rensa cachen vid fel så användaren kan retrya genom att navigera om.
-      cache.delete(source);
-      throw err;
-    });
-  cache.set(source, promise);
-  return promise;
-}
-
-// ─── Default labels per entity ─────────────────────────────────────────────
-
-function defaultLabel(source: CoreEntityName, rec: NormalizedRecord): string {
+function defaultLabel(source: LinkedSourceName, rec: NormalizedRecord): string {
   switch (source) {
+    // core_*
     case 'core_countries':
       return `${rec.name as string} (${rec.code as string})`;
     case 'core_divisions':
@@ -86,8 +69,23 @@ function defaultLabel(source: CoreEntityName, rec: NormalizedRecord): string {
       return (rec.company_name as string) || '';
     case 'core_graphic_profile':
       return (rec.slug as string) || '';
+    // cms_*
+    case 'cases':
+      return (
+        (rec.title as string) ||
+        (rec.customer_name as string) ||
+        (rec.slug as string) ||
+        ''
+      );
+    case 'product_areas':
+      return (
+        (rec.name as string) ||
+        (rec.h1 as string) ||
+        (rec.slug as string) ||
+        ''
+      );
     default: {
-      // Type-exhaustiveness — om CORE_ENTITIES utökas och vi glömmer
+      // Type-exhaustiveness — om LinkedSourceName utökas och vi glömmer
       // case:t här fångar TypeScript det vid compile.
       const _exhaustive: never = source;
       void _exhaustive;
