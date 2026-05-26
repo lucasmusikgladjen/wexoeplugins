@@ -1,13 +1,16 @@
 'use client';
 
 /**
- * Multi-select field för länkning till core-entiteter.
+ * Multi-select field för länkning till core- eller cms-records.
  *
  * Säkerhet/design:
- *   - `source` är en *whitelist*-key från `lib/core/registry` (CORE_ENTITIES).
+ *   - `source` är en *whitelist*-key. Idag stöds:
+ *       - Alla `core_*`-entiteter från `lib/core/registry` (CORE_ENTITIES)
+ *       - cms-records `products` / `articles` (via `/api/cms-link/[entity]`)
  *     Komponenten exponerar INTE ett fritt tableId-API — Airtable-nyckeln
  *     stannar därför på servern.
- *   - Datat hämtas via `/api/core/<source>` som körs server-side.
+ *   - Datat hämtas via `/api/core/<source>` (för core_*) eller
+ *     `/api/cms-link/<source>` (för products/articles) som körs server-side.
  *   - Resultaten cachas på modulnivå per source så sessionsnavigation
  *     mellan editorer inte triggar ny fetch.
  *
@@ -21,15 +24,24 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { CoreEntityName } from '@/lib/core/registry';
+import {
+  fetchLinkedRecords,
+  type LinkedRecordSource,
+  type CmsLinkSource,
+  type NormalizedLinkedRecord,
+} from '@/lib/linked-records-cache';
 
-interface NormalizedRecord {
-  _recordId: string;
-  [key: string]: unknown;
+type NormalizedRecord = NormalizedLinkedRecord;
+
+export type { LinkedRecordSource, CmsLinkSource };
+
+function isCmsLinkSource(source: LinkedRecordSource): source is CmsLinkSource {
+  return source === 'products' || source === 'articles';
 }
 
 interface Props {
   label: string;
-  source: CoreEntityName;
+  source: LinkedRecordSource;
   value: string[];
   onChange: (next: string[]) => void;
   description?: string;
@@ -44,33 +56,17 @@ interface Props {
   filter?: (record: NormalizedRecord) => boolean;
 }
 
-// ─── Module-level cache ────────────────────────────────────────────────────
-
-const cache = new Map<CoreEntityName, Promise<NormalizedRecord[]>>();
-
-function fetchRecords(source: CoreEntityName): Promise<NormalizedRecord[]> {
-  const cached = cache.get(source);
-  if (cached) return cached;
-  const promise = fetch(`/api/core/${source}`)
-    .then(async (r) => {
-      const data = await r.json();
-      if (!r.ok || !data.success) {
-        throw new Error(data.error || `HTTP ${r.status}`);
-      }
-      return (data.records ?? []) as NormalizedRecord[];
-    })
-    .catch((err) => {
-      // Rensa cachen vid fel så användaren kan retrya genom att navigera om.
-      cache.delete(source);
-      throw err;
-    });
-  cache.set(source, promise);
-  return promise;
-}
-
 // ─── Default labels per entity ─────────────────────────────────────────────
 
-function defaultLabel(source: CoreEntityName, rec: NormalizedRecord): string {
+function defaultLabel(source: LinkedRecordSource, rec: NormalizedRecord): string {
+  // Cms-källor har 'name' (products) eller 'name' + 'article_number' (articles).
+  if (isCmsLinkSource(source)) {
+    const name = (rec.name as string) || '(namnlös)';
+    if (source === 'articles' && rec.article_number) {
+      return `${name} (${rec.article_number as string})`;
+    }
+    return name;
+  }
   switch (source) {
     case 'core_countries':
       return `${rec.name as string} (${rec.code as string})`;
@@ -119,7 +115,7 @@ export default function LinkedRecords({
 
   useEffect(() => {
     let cancelled = false;
-    fetchRecords(source)
+    fetchLinkedRecords(source)
       .then((data) => {
         if (!cancelled) setRecords(data);
       })

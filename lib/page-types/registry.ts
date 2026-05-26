@@ -35,13 +35,15 @@ import {
   LP_ENTITIES,
   PA_ENTITIES,
   CMS_PAGES_ENTITIES,
+  CASE_ENTITIES,
 } from '../wexoe-cache-entities';
 
 export type PageTypeId =
   | 'landing'
   | 'product'
   | 'customer-type'
-  | 'page';
+  | 'page'
+  | 'case';
 
 export interface PageRow {
   id: string;
@@ -179,6 +181,24 @@ export const PAGE_TYPES = definePageTypes([
         type: 'page',
         divisionIds: pickStringArray(p, 'divisionIds'),
         countryIds: pickStringArray(p, 'countryIds'),
+      })),
+  },
+  {
+    id: 'case',
+    label: 'Case',
+    description: 'Kundcase i editorial artikel-format med sticky "Caset i korthet"-sidebar',
+    creatable: true,
+    listUrl: '/api/case?action=list',
+    createPath: '/editor/case',
+    editPath: (id) => `/editor/case/${id}`,
+    cacheEntities: CASE_ENTITIES,
+    mapList: (data) =>
+      (data.pages ?? []).map((p) => ({
+        id: pickString(p, 'id'),
+        name: pickString(p, 'name', 'h1', 'slug'),
+        slug: pickString(p, 'slug'),
+        h1: pickString(p, 'h1'),
+        type: 'case',
       })),
   },
 ]);
