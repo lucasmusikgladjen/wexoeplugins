@@ -33,6 +33,11 @@ return [
         'name' => 'name',
         'h1' => 'h1',
 
+        // Card-presentation (när produktområdet visas som kort på andra sidor,
+        // t.ex. categories-sektionen på cms_partner_pages).
+        'card_image_url' => 'card_image_url',
+        'card_description' => 'card_description',
+
         // Top banner
         'top_bg' => 'top_bg',
 
