@@ -73,8 +73,8 @@ return function ($section, $page, $ctx) {
 #<?= esc_attr($wid) ?> .wxp-nts__grid { display: grid !important; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) !important; gap: 56px !important; align-items: start !important; }
 #<?= esc_attr($wid) ?> .wxp-nts__text { min-width: 0 !important; }
 #<?= esc_attr($wid) ?> .wxp-nts__cta-row { margin: 24px 0 0 !important; padding: 0 !important; }
-#<?= esc_attr($wid) ?> .wxp-nts__widget { padding: 24px 24px 24px 28px !important; background: #fff !important; border: 1px solid rgba(17,50,93,0.08) !important; border-left: 3px solid #F28C28 !important; border-radius: 12px !important; box-shadow: 0 4px 14px rgba(10,26,46,0.05) !important; }
-#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-nts__widget { background: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.10) !important; border-left-color: #F28C28 !important; box-shadow: none !important; }
+#<?= esc_attr($wid) ?> .wxp-nts__widget { padding: 24px 24px 24px 28px !important; background: #fff !important; border: 1px solid rgba(15,15,15,0.10) !important; border-left: 3px solid #11325D !important; border-radius: 2px !important; box-shadow: none !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-nts__widget { background: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.10) !important; border-left-color: #fff !important; box-shadow: none !important; }
 #<?= esc_attr($wid) ?> .wxp-nts__widget-h3 { font-family: 'DM Sans', system-ui, sans-serif !important; font-size: 12px !important; text-transform: uppercase !important; letter-spacing: 0.1em !important; margin: 0 0 16px !important; padding: 0 !important; opacity: 0.78 !important; font-weight: 700 !important; color: inherit !important; background: none !important; }
 #<?= esc_attr($wid) ?> .wxp-nts__list { list-style: none !important; padding: 0 !important; margin: 0 !important; }
 #<?= esc_attr($wid) ?> .wxp-nts__item { list-style: none !important; padding: 14px 0 !important; margin: 0 !important; border-bottom: 1px solid rgba(17,50,93,0.08) !important; background: none !important; }

@@ -2,13 +2,19 @@
 /**
  * Section: company_data_strip (section_type = "company_data_strip")
  *
- * Smal "Wexoe i siffror"-avdelare. Layout: 1/4 header-spalt (rubrik + valfri
- * beskrivning) till vänster, 3/4 siffer-grid till höger. Två data-källor:
- *   1. cds_use_company_singleton=true → hämta från core_company för
- *      cds_country_code (eller sidans country som fallback). Bygger items
- *      från fasta fält (org_number, email, phone, address).
- *   2. cds_items (lines) — format "Label | Value | Suffix" per rad. Suffix
- *      är valfri (t.ex. "+", "%", "år").
+ * "Wexoe i siffror"-strip. Navy-bg by default, öppen layout utan per-stat-
+ * cards. Layout: ikon + flerradig titel (auto), 1px vertikal divider, siffer-
+ * grid (1fr). Stora vita siffror med orange suffix som unit-accent
+ * (Mkr, %, +, år).
+ *
+ * Datakällor (samma som tidigare):
+ *   1. cds_use_company_singleton=true → core_company för cds_country_code
+ *      eller sidans country. Items byggs från company-fält (org_number,
+ *      email, phone, address).
+ *   2. cds_items (lines) — "Label | Value | Suffix" per rad.
+ *
+ * Ny ikon: hämtas från core_graphic_profile.icon_light_url för sidans
+ * division (eller default-profilen). Tom URL → ikon-slot rendreras inte.
  */
 
 if (!defined('ABSPATH')) exit;
@@ -56,52 +62,85 @@ return function ($section, $page, $ctx) {
 
     if (empty($items)) return '';
 
+    // Ikon: graphic_profile.icon_light_url för sidans division (eller default).
+    $icon_url = '';
+    if (class_exists('\\Wexoe\\Core\\Helpers\\Singletons')) {
+        $division = !empty($ctx['page_division_slug']) ? $ctx['page_division_slug'] : null;
+        $profile = \Wexoe\Core\Helpers\Singletons::graphic_profile_for_division($division);
+        if (is_array($profile) && !empty($profile['icon_light_url'])) {
+            $icon_url = (string) $profile['icon_light_url'];
+        }
+    }
+
     $wid = (string) ($ctx['wrapper_id'] ?? '');
     $has_header = ($h2 !== '' || $body !== '');
-    $attrs = wexoe_pages_section_attrs($section, $ctx, 'wxp-cds' . ($has_header ? ' wxp-cds--with-header' : ' wxp-cds--no-header'));
+    $extra_class = 'wxp-cds';
+    if ($has_header) $extra_class .= ' wxp-cds--with-header';
+    if ($icon_url !== '') $extra_class .= ' wxp-cds--with-icon';
+    $attrs = wexoe_pages_section_attrs($section, $ctx, $extra_class);
     ob_start();
     ?>
     <section <?= $attrs ?>>
         <div class="wxp-section__inner wxp-cds__inner">
             <?php if ($has_header): ?>
-                <div class="wxp-cds__header">
-                    <?php if ($h2 !== ''): ?><h2 class="wxp-h2 wxp-cds__h2"><?= esc_html($h2) ?></h2><?php endif; ?>
-                    <?php if ($body !== ''): ?><div class="wxp-body wxp-cds__body"><?= wexoe_pages_md($body) ?></div><?php endif; ?>
+                <div class="wxp-cds__title-wrap">
+                    <?php if ($icon_url !== ''): ?>
+                        <span class="wxp-cds__icon-slot">
+                            <img class="wxp-cds__icon" src="<?= esc_url($icon_url) ?>" alt="" loading="lazy" />
+                        </span>
+                    <?php endif; ?>
+                    <div class="wxp-cds__title-block">
+                        <?php if ($h2 !== ''): ?><h2 class="wxp-cds__h2"><?= nl2br(esc_html($h2)) ?></h2><?php endif; ?>
+                        <?php if ($body !== ''): ?><div class="wxp-cds__body"><?= wexoe_pages_md($body) ?></div><?php endif; ?>
+                    </div>
                 </div>
+                <div class="wxp-cds__divider" aria-hidden="true"></div>
             <?php endif; ?>
             <dl class="wxp-cds__grid">
                 <?php foreach ($items as $item): ?>
                     <div class="wxp-cds__item">
-                        <dt class="wxp-cds__label"><?= esc_html($item['label']) ?></dt>
                         <dd class="wxp-cds__value"><?= esc_html($item['value']) ?><?php if ($item['suffix'] !== ''): ?><span class="wxp-cds__suffix"><?= esc_html($item['suffix']) ?></span><?php endif; ?></dd>
+                        <?php if (!empty($item['label'])): ?><dt class="wxp-cds__label"><?= esc_html($item['label']) ?></dt><?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             </dl>
         </div>
     </section>
     <style>
-/* Default bg: ljusgrå så avdelaren sticker ut mellan content-sektioner.
-   Användaren kan överstyra via background_color-fältet på sektionen. */
-#<?= esc_attr($wid) ?> .wxp-cds:not(.wxp-section--custom-bg) { background: #F5F6F8 !important; }
-#<?= esc_attr($wid) ?> .wxp-cds__inner { display: grid !important; gap: 32px !important; align-items: center !important; }
-#<?= esc_attr($wid) ?> .wxp-cds--with-header .wxp-cds__inner { grid-template-columns: minmax(0, 1fr) minmax(0, 3fr) !important; gap: 48px !important; }
-#<?= esc_attr($wid) ?> .wxp-cds__header { max-width: 320px !important; }
-#<?= esc_attr($wid) ?> .wxp-cds__h2 { margin: 0 0 12px !important; font-size: clamp(1.4rem, 2.4vw, 1.85rem) !important; line-height: 1.2 !important; }
-#<?= esc_attr($wid) ?> .wxp-cds__body { font-size: 14.5px !important; line-height: 1.6 !important; opacity: 0.78 !important; color: inherit !important; }
-#<?= esc_attr($wid) ?> .wxp-cds__body p { margin: 0 0 8px !important; color: inherit !important; }
+/* Default-bg: navy. background_color på sektionen overrides (då används
+   --on-dark/--on-light klasserna från section_attrs istället). */
+#<?= esc_attr($wid) ?> .wxp-cds:not(.wxp-section--custom-bg) { background: #11325D !important; color: #fff !important; }
+#<?= esc_attr($wid) ?> .wxp-cds__inner { display: grid !important; grid-template-columns: 1fr !important; gap: 32px !important; align-items: center !important; }
+#<?= esc_attr($wid) ?> .wxp-cds--with-header .wxp-cds__inner { grid-template-columns: minmax(0, auto) 1px minmax(0, 1fr) !important; gap: 56px !important; }
+#<?= esc_attr($wid) ?> .wxp-cds__title-wrap { display: flex !important; align-items: flex-start !important; gap: 18px !important; }
+#<?= esc_attr($wid) ?> .wxp-cds__icon-slot { display: flex !important; align-items: center !important; justify-content: center !important; width: 52px !important; height: 52px !important; flex-shrink: 0 !important; background: rgba(255,255,255,0.04) !important; border: 1px solid rgba(255,255,255,0.10) !important; border-radius: 2px !important; padding: 8px !important; }
+#<?= esc_attr($wid) ?> .wxp-cds__icon { width: 100% !important; height: 100% !important; object-fit: contain !important; display: block !important; }
+#<?= esc_attr($wid) ?> .wxp-cds__title-block { min-width: 0 !important; padding-top: 2px !important; }
+#<?= esc_attr($wid) ?> .wxp-cds__h2 { font-family: 'DM Sans', system-ui, sans-serif !important; font-size: clamp(1.5rem, 2.4vw, 1.875rem) !important; font-weight: 700 !important; line-height: 1.12 !important; letter-spacing: -0.02em !important; color: inherit !important; margin: 0 !important; padding: 0 !important; background: none !important; }
+#<?= esc_attr($wid) ?> .wxp-cds__body { font-size: 14.5px !important; line-height: 1.6 !important; opacity: 0.78 !important; color: inherit !important; margin-top: 10px !important; }
+#<?= esc_attr($wid) ?> .wxp-cds__body p { margin: 0 0 6px !important; color: inherit !important; }
 #<?= esc_attr($wid) ?> .wxp-cds__body p:last-child { margin-bottom: 0 !important; }
-#<?= esc_attr($wid) ?> .wxp-cds__grid { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important; gap: 14px !important; margin: 0 !important; padding: 0 !important; }
-#<?= esc_attr($wid) ?> .wxp-cds__item { margin: 0 !important; padding: 22px 20px !important; border-radius: 12px !important; background: #fff !important; border: 1px solid rgba(17,50,93,0.06) !important; text-align: left !important; }
-#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-cds__item { background: rgba(255,255,255,0.06) !important; border-color: rgba(255,255,255,0.08) !important; }
-#<?= esc_attr($wid) ?> .wxp-cds__label { font-family: 'DM Sans', system-ui, sans-serif !important; font-size: 11px !important; text-transform: uppercase !important; letter-spacing: 0.08em !important; opacity: 0.7 !important; margin: 0 0 6px !important; padding: 0 !important; font-weight: 600 !important; color: inherit !important; background: none !important; }
-#<?= esc_attr($wid) ?> .wxp-cds__value { font-family: 'DM Sans', system-ui, sans-serif !important; font-size: clamp(1.6rem, 2.4vw, 2.1rem) !important; font-weight: 800 !important; margin: 0 !important; padding: 0 !important; line-height: 1.05 !important; color: #F28C28 !important; background: none !important; }
-#<?= esc_attr($wid) ?> .wxp-cds__suffix { font-size: 0.55em !important; font-weight: 700 !important; opacity: 0.9 !important; margin-left: 1px !important; vertical-align: baseline !important; }
+#<?= esc_attr($wid) ?> .wxp-cds__divider { width: 1px !important; height: 96px !important; background: rgba(255,255,255,0.22) !important; justify-self: center !important; align-self: center !important; }
+#<?= esc_attr($wid) ?> .wxp-cds__grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 32px !important; margin: 0 !important; padding: 0 !important; }
+#<?= esc_attr($wid) ?> .wxp-cds__item { margin: 0 !important; padding: 0 !important; background: none !important; border: none !important; display: flex !important; flex-direction: column !important; gap: 8px !important; text-align: left !important; }
+#<?= esc_attr($wid) ?> .wxp-cds__value { font-family: 'DM Sans', system-ui, sans-serif !important; font-size: clamp(2rem, 3.4vw, 2.75rem) !important; font-weight: 700 !important; line-height: 1 !important; letter-spacing: -0.025em !important; color: inherit !important; font-variant-numeric: tabular-nums !important; margin: 0 !important; padding: 0 !important; background: none !important; }
+#<?= esc_attr($wid) ?> .wxp-cds__suffix { font-weight: 500 !important; color: #F28C28 !important; font-size: 0.6em !important; margin-left: 0.06em !important; letter-spacing: 0 !important; }
+#<?= esc_attr($wid) ?> .wxp-cds__label { font-family: 'DM Sans', system-ui, sans-serif !important; font-size: 14px !important; font-weight: 400 !important; text-transform: none !important; letter-spacing: -0.003em !important; opacity: 0.74 !important; margin: 0 !important; padding: 0 !important; color: inherit !important; background: none !important; line-height: 1.35 !important; }
 
-@media (max-width: 800px) {
-    #<?= esc_attr($wid) ?> .wxp-cds--with-header .wxp-cds__inner { grid-template-columns: 1fr !important; gap: 24px !important; }
-    #<?= esc_attr($wid) ?> .wxp-cds__header { max-width: none !important; }
-    #<?= esc_attr($wid) ?> .wxp-cds__grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important; gap: 10px !important; }
-    #<?= esc_attr($wid) ?> .wxp-cds__item { padding: 16px 14px !important; }
+/* On-light override (när användaren satt custom ljus bakgrund) */
+#<?= esc_attr($wid) ?> .wxp-cds.wxp-section--on-light .wxp-cds__icon-slot { background: rgba(17,50,93,0.04) !important; border-color: rgba(17,50,93,0.12) !important; }
+#<?= esc_attr($wid) ?> .wxp-cds.wxp-section--on-light .wxp-cds__divider { background: rgba(17,50,93,0.14) !important; }
+
+/* Färre items (1–3) → grid-template anpassas så cellerna inte sträcker sig orimligt brett. */
+#<?= esc_attr($wid) ?> .wxp-cds__grid:has(.wxp-cds__item:only-child) { grid-template-columns: minmax(0, auto) !important; justify-content: start !important; }
+
+@media (max-width: 880px) {
+    #<?= esc_attr($wid) ?> .wxp-cds--with-header .wxp-cds__inner { grid-template-columns: 1fr !important; gap: 28px !important; }
+    #<?= esc_attr($wid) ?> .wxp-cds__divider { display: none !important; }
+    #<?= esc_attr($wid) ?> .wxp-cds__grid { grid-template-columns: repeat(2, 1fr) !important; gap: 24px 32px !important; }
+}
+@media (max-width: 480px) {
+    #<?= esc_attr($wid) ?> .wxp-cds__grid { grid-template-columns: 1fr !important; gap: 18px !important; }
 }
     </style>
     <?php

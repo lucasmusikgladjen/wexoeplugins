@@ -567,8 +567,10 @@ function wexoe_pages_scoped_base_styles($id) {
 
 /* ============ TYPOGRAPHY ============ */
 <?= $w ?> .wxp__h1 { font-size: clamp(2rem, 4vw, 2.75rem) !important; font-weight: 700 !important; line-height: 1.15 !important; color: inherit !important; margin: 0 0 24px !important; padding: 24px 24px 0 !important; }
-<?= $w ?> .wxp-eyebrow { display: inline-flex !important; align-items: center !important; gap: 10px !important; text-transform: uppercase !important; letter-spacing: 0.12em !important; font-size: 12px !important; font-weight: 700 !important; color: #F28C28 !important; margin: 0 0 16px !important; padding: 0 !important; background: none !important; }
-<?= $w ?> .wxp-eyebrow::before { content: '' !important; display: inline-block !important; width: 22px !important; height: 2px !important; background: #F28C28 !important; flex-shrink: 0 !important; }
+<?= $w ?> .wxp-eyebrow { display: inline-flex !important; align-items: center !important; gap: 10px !important; text-transform: uppercase !important; letter-spacing: 0.14em !important; font-size: 11px !important; font-weight: 600 !important; color: #5A6473 !important; margin: 0 0 16px !important; padding: 0 !important; background: none !important; }
+<?= $w ?> .wxp-eyebrow::before { content: '' !important; display: inline-block !important; width: 22px !important; height: 1px !important; background: #5A6473 !important; flex-shrink: 0 !important; }
+<?= $w ?> .wxp-section--on-dark .wxp-eyebrow { color: rgba(255,255,255,0.72) !important; }
+<?= $w ?> .wxp-section--on-dark .wxp-eyebrow::before { background: rgba(255,255,255,0.72) !important; }
 <?= $w ?> .wxp-h2 { font-size: clamp(1.75rem, 3.5vw, 2.4rem) !important; font-weight: 700 !important; line-height: 1.18 !important; color: #11325D !important; margin: 0 0 18px !important; padding: 0 !important; letter-spacing: -0.01em !important; background: none !important; }
 <?= $w ?> .wxp-section--on-dark .wxp-h2, <?= $w ?> .wxp-section--on-dark.wxp-h2 { color: #fff !important; }
 <?= $w ?> .wxp-body { font-size: 16px !important; line-height: 1.7 !important; color: inherit; }
@@ -604,7 +606,7 @@ function wexoe_pages_scoped_base_styles($id) {
 
 /* ============ BUTTONS ============ */
 <?= $w ?> .wxp-actions { display: flex !important; flex-wrap: wrap !important; gap: 12px !important; margin: 0 !important; padding: 0 !important; }
-<?= $w ?> .wxp-btn { display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; padding: 14px 28px !important; border-radius: 8px !important; text-decoration: none !important; font-weight: 600 !important; font-size: 15px !important; line-height: 1.2 !important; transition: all 0.2s ease !important; border: 2px solid transparent !important; cursor: pointer !important; white-space: nowrap !important; box-shadow: none !important; text-shadow: none !important; }
+<?= $w ?> .wxp-btn { display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; padding: 14px 28px !important; border-radius: 2px !important; text-decoration: none !important; font-weight: 600 !important; font-size: 15px !important; line-height: 1.2 !important; transition: all 0.2s ease !important; border: 2px solid transparent !important; cursor: pointer !important; white-space: nowrap !important; box-shadow: none !important; text-shadow: none !important; }
 <?= $w ?> .wxp-btn--primary { background: #F28C28 !important; color: #fff !important; border-color: #F28C28 !important; }
 <?= $w ?> .wxp-btn--primary:hover { background: #e07b1a !important; border-color: #e07b1a !important; color: #fff !important; transform: translateY(-1px) !important; box-shadow: 0 6px 16px rgba(242,140,40,0.28) !important; }
 <?= $w ?> .wxp-btn--secondary { background: transparent !important; color: #11325D !important; border-color: rgba(17,50,93,0.28) !important; }

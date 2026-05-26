@@ -114,6 +114,8 @@ return [
         'cg_scope_customer_type' => 'cg_scope_customer_type',
         'cg_limit' => ['source' => 'cg_limit', 'type' => 'int'],
         'cg_columns' => 'cg_columns',
+        'cg_cta_text' => 'cg_cta_text',
+        'cg_cta_url' => 'cg_cta_url',
 
         // news_grid
         'ng_eyebrow' => 'ng_eyebrow',

@@ -22,6 +22,8 @@ return [
         'is_default' => ['source' => 'is_default', 'type' => 'bool'],
         'logo_primary_url' => 'logo_primary_url',
         'logo_dark_url' => 'logo_dark_url',
+        'icon_light_url' => 'icon_light_url',
+        'icon_dark_url' => 'icon_dark_url',
         'favicon_url' => 'favicon_url',
         'color_primary' => 'color_primary',
         'color_secondary' => 'color_secondary',

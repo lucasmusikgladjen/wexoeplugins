@@ -40,12 +40,14 @@ return function ($section, $page, $ctx) {
 #<?= esc_attr($wid) ?> .wxp-to__body ul, #<?= esc_attr($wid) ?> .wxp-to__body ol { list-style: none !important; padding: 0 !important; margin: 18px 0 !important; display: inline-flex !important; flex-direction: column !important; gap: 8px !important; text-align: left !important; }
 #<?= esc_attr($wid) ?> .wxp-to--center .wxp-to__body ul, #<?= esc_attr($wid) ?> .wxp-to--center .wxp-to__body ol { margin-left: auto !important; margin-right: auto !important; }
 #<?= esc_attr($wid) ?> .wxp-to__body ul li, #<?= esc_attr($wid) ?> .wxp-to__body ol li { position: relative !important; list-style: none !important; padding: 0 0 0 22px !important; margin: 0 !important; line-height: 1.55 !important; background: none !important; color: inherit !important; }
-#<?= esc_attr($wid) ?> .wxp-to__body ul li::before { content: '' !important; position: absolute !important; left: 4px !important; top: 0.7em !important; width: 6px !important; height: 6px !important; border-radius: 50% !important; background: #F28C28 !important; }
+#<?= esc_attr($wid) ?> .wxp-to__body ul li::before { content: '' !important; position: absolute !important; left: 4px !important; top: 0.7em !important; width: 6px !important; height: 6px !important; border-radius: 50% !important; background: #11325D !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-to__body ul li::before { background: #fff !important; }
 #<?= esc_attr($wid) ?> .wxp-to__body ol { counter-reset: wxp-to-ol !important; }
 #<?= esc_attr($wid) ?> .wxp-to__body ol li { counter-increment: wxp-to-ol !important; }
-#<?= esc_attr($wid) ?> .wxp-to__body ol li::before { content: counter(wxp-to-ol) '.' !important; position: absolute !important; left: 0 !important; top: 0 !important; font-weight: 700 !important; color: #F28C28 !important; }
+#<?= esc_attr($wid) ?> .wxp-to__body ol li::before { content: counter(wxp-to-ol) '.' !important; position: absolute !important; left: 0 !important; top: 0 !important; font-weight: 700 !important; color: #11325D !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-to__body ol li::before { color: #fff !important; }
 #<?= esc_attr($wid) ?> .wxp-to__body a { color: #11325D !important; text-decoration: underline !important; }
-#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-to__body a { color: #F28C28 !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-to__body a { color: #fff !important; }
     </style>
     <?php
     return ob_get_clean();

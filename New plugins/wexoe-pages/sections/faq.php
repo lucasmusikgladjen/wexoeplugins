@@ -54,7 +54,7 @@ return function ($section, $page, $ctx) {
 #<?= esc_attr($wid) ?> .wxp-faq__inner { max-width: 820px !important; }
 #<?= esc_attr($wid) ?> .wxp-faq__body { margin-bottom: 28px !important; }
 #<?= esc_attr($wid) ?> .wxp-faq__list { list-style: none !important; padding: 0 !important; margin: 0 !important; display: flex !important; flex-direction: column !important; gap: 10px !important; }
-#<?= esc_attr($wid) ?> .wxp-faq__item { list-style: none !important; padding: 0 !important; margin: 0 !important; background: #fff !important; border: 1px solid rgba(17,50,93,0.10) !important; border-radius: 12px !important; box-shadow: 0 2px 8px rgba(10,26,46,0.04) !important; overflow: hidden !important; }
+#<?= esc_attr($wid) ?> .wxp-faq__item { list-style: none !important; padding: 0 !important; margin: 0 !important; background: #fff !important; border: 1px solid rgba(15,15,15,0.10) !important; border-radius: 2px !important; box-shadow: none !important; overflow: hidden !important; }
 #<?= esc_attr($wid) ?> .wxp-faq__item::before { content: none !important; display: none !important; background: none !important; }
 #<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-faq__item { background: rgba(255,255,255,0.06) !important; border-color: rgba(255,255,255,0.12) !important; box-shadow: none !important; }
 #<?= esc_attr($wid) ?> .wxp-faq__item details { padding: 0 !important; margin: 0 !important; background: none !important; }

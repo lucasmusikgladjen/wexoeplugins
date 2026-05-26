@@ -103,12 +103,16 @@ return function ($section, $page, $ctx) {
 #<?= esc_attr($wid) ?> .wxp-hero__inner { position: relative !important; z-index: 5 !important; padding-top: 88px !important; padding-bottom: 88px !important; display: grid !important; grid-template-columns: 1fr !important; gap: 48px !important; align-items: center !important; }
 #<?= esc_attr($wid) ?> .wxp-hero--has-image .wxp-hero__inner { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) !important; }
 #<?= esc_attr($wid) ?> .wxp-hero__text { max-width: 640px !important; position: relative !important; z-index: 5 !important; }
-#<?= esc_attr($wid) ?> .wxp-hero__eyebrow { color: #F28C28 !important; }
+/* Eyebrow ärver muted-vit från .wxp-section--on-dark .wxp-eyebrow (basstil).
+   Hero har dock dark bg utan att vara på-dark-flaggad via section_attrs, så
+   tvinga den varianten lokalt. */
+#<?= esc_attr($wid) ?> .wxp-hero__eyebrow { color: rgba(255,255,255,0.72) !important; }
+#<?= esc_attr($wid) ?> .wxp-hero__eyebrow::before { background: rgba(255,255,255,0.72) !important; }
 #<?= esc_attr($wid) ?> .wxp-hero__h1 { font-family: 'DM Sans', system-ui, sans-serif !important; font-size: clamp(2.25rem, 5vw, 3.5rem) !important; font-weight: 700 !important; line-height: 1.08 !important; letter-spacing: -0.02em !important; color: #fff !important; margin: 0 0 18px !important; padding: 0 !important; background: none !important; text-shadow: none !important; }
 #<?= esc_attr($wid) ?> .wxp-hero__subtitle { font-family: 'DM Sans', system-ui, sans-serif !important; font-size: clamp(1.05rem, 1.4vw, 1.2rem) !important; line-height: 1.6 !important; color: rgba(255,255,255,0.86) !important; max-width: 560px !important; margin: 0 0 30px !important; padding: 0 !important; background: none !important; }
 #<?= esc_attr($wid) ?> .wxp-hero__actions { margin: 0 !important; }
-#<?= esc_attr($wid) ?> .wxp-hero__media { position: relative !important; z-index: 5 !important; border-radius: 16px !important; overflow: hidden !important; box-shadow: 0 28px 60px rgba(0,0,0,0.35) !important; aspect-ratio: 4 / 3 !important; }
-#<?= esc_attr($wid) ?> .wxp-hero__media img { width: 100% !important; height: 100% !important; object-fit: cover !important; display: block !important; border-radius: 16px !important; }
+#<?= esc_attr($wid) ?> .wxp-hero__media { position: relative !important; z-index: 5 !important; border-radius: 2px !important; overflow: hidden !important; box-shadow: 0 28px 60px rgba(0,0,0,0.35) !important; aspect-ratio: 4 / 3 !important; }
+#<?= esc_attr($wid) ?> .wxp-hero__media img { width: 100% !important; height: 100% !important; object-fit: cover !important; display: block !important; border-radius: 0 !important; }
 
 /* ============ Variant: gradient ============ */
 #<?= esc_attr($wid) ?> .wxp-hero--gradient::before { content: '' !important; position: absolute !important; inset: 0 !important; background-image: radial-gradient(circle at 18% 80%, rgba(255,255,255,0.05) 0%, transparent 45%), radial-gradient(circle at 82% 22%, rgba(255,255,255,0.07) 0%, transparent 40%) !important; pointer-events: none !important; z-index: 1 !important; }

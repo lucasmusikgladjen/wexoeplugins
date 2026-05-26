@@ -41,6 +41,7 @@ return [
         'card_result' => 'card_result',
         'card_image_url' => 'card_image_url',
         'card_cta_text' => 'card_cta_text',
+        'card_industry' => 'card_industry',
         'legacy_external_url' => 'legacy_external_url',
 
         // Full case-sida — hero & SEO

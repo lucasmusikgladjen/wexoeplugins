@@ -133,8 +133,11 @@ body #top #<?= esc_attr($wid) ?> .wxp-tabs__pill.is-active,
 body #top #<?= esc_attr($wid) ?> button.wxp-tabs__pill.is-active,
 html body #top #<?= esc_attr($wid) ?> button.wxp-tabs__pill.is-active,
 .avia_codeblock #<?= esc_attr($wid) ?> button.wxp-tabs__pill.is-active { background: #11325D !important; background-color: #11325D !important; background-image: none !important; color: #fff !important; border-color: #11325D !important; opacity: 1 !important; box-shadow: 0 2px 8px rgba(17,50,93,0.18) !important; }
+/* On-dark active: vit fyllning + navy text (orange friställs till action). */
 #<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-tabs__pill.is-active,
-body #top #<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-tabs__pill.is-active { background: #F28C28 !important; background-color: #F28C28 !important; color: #fff !important; border-color: #F28C28 !important; }
+body #top #<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-tabs__pill.is-active { background: #fff !important; background-color: #fff !important; color: #11325D !important; border-color: #fff !important; }
+#<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-tabs__pill:hover:not(.is-active),
+body #top #<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-tabs__pill:hover:not(.is-active) { background: rgba(255,255,255,0.08) !important; background-color: rgba(255,255,255,0.08) !important; color: #fff !important; border-color: #fff !important; }
 #<?= esc_attr($wid) ?> .wxp-tabs__panel { display: none !important; }
 #<?= esc_attr($wid) ?> .wxp-tabs__panel.is-active { display: block !important; }
 #<?= esc_attr($wid) ?> .wxp-tabs__panel-grid { display: grid !important; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) !important; gap: 56px !important; align-items: center !important; }
@@ -146,7 +149,7 @@ body #top #<?= esc_attr($wid) ?> .wxp-section--on-dark .wxp-tabs__pill.is-active
 #<?= esc_attr($wid) ?> .wxp-tabs__bullets li::before { content: none !important; display: none !important; }
 #<?= esc_attr($wid) ?> .wxp-tabs__bullets span { flex-shrink: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; width: 22px !important; height: 22px !important; border-radius: 50% !important; background: #10B981 !important; color: #fff !important; font-size: 13px !important; font-weight: 700 !important; margin-top: 2px !important; }
 #<?= esc_attr($wid) ?> .wxp-tabs__actions { margin-top: 8px !important; }
-#<?= esc_attr($wid) ?> .wxp-tabs__panel-image-wrap { border-radius: 16px !important; overflow: hidden !important; box-shadow: 0 18px 40px rgba(10,26,46,0.12) !important; aspect-ratio: 4 / 3 !important; background: #F5F6F8 !important; }
+#<?= esc_attr($wid) ?> .wxp-tabs__panel-image-wrap { border-radius: 2px !important; overflow: hidden !important; box-shadow: 0 18px 40px rgba(10,26,46,0.12) !important; aspect-ratio: 4 / 3 !important; background: #FAFAF7 !important; }
 #<?= esc_attr($wid) ?> .wxp-tabs__panel-image { width: 100% !important; height: 100% !important; object-fit: cover !important; display: block !important; border-radius: 0 !important; }
 @media (max-width: 900px) {
     #<?= esc_attr($wid) ?> .wxp-tabs__panel-grid { grid-template-columns: 1fr !important; gap: 32px !important; }

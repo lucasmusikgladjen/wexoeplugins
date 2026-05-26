@@ -70,7 +70,7 @@ return function ($section, $page, $ctx) {
 #<?= esc_attr($wid) ?> .wxp-ti__bullets li::before { content: none !important; display: none !important; }
 #<?= esc_attr($wid) ?> .wxp-ti__check { flex-shrink: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; width: 22px !important; height: 22px !important; border-radius: 50% !important; background: #10B981 !important; color: #fff !important; font-size: 13px !important; font-weight: 700 !important; line-height: 1 !important; margin-top: 2px !important; }
 #<?= esc_attr($wid) ?> .wxp-ti__bullet-text { flex: 1 !important; color: inherit !important; }
-#<?= esc_attr($wid) ?> .wxp-ti__image-wrap { position: relative !important; aspect-ratio: 4 / 3 !important; border-radius: 16px !important; overflow: hidden !important; background: #F5F6F8 !important; box-shadow: 0 18px 40px rgba(10,26,46,0.12) !important; }
+#<?= esc_attr($wid) ?> .wxp-ti__image-wrap { position: relative !important; aspect-ratio: 4 / 3 !important; border-radius: 2px !important; overflow: hidden !important; background: #FAFAF7 !important; box-shadow: 0 18px 40px rgba(10,26,46,0.12) !important; }
 #<?= esc_attr($wid) ?> .wxp-ti__image { width: 100% !important; height: 100% !important; object-fit: cover !important; display: block !important; border-radius: 0 !important; }
 #<?= esc_attr($wid) ?> .wxp-ti__actions { margin-top: 4px !important; }
 @media (max-width: 900px) {
