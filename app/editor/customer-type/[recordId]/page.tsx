@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import PageTypeBuilder from '@/components/shared/builder/PageTypeBuilder';
-import { customerTypeUI } from '@/lib/page-types/customer-type.ui';
+import CustomerTypeBuilder from '@/components/customer-type/CustomerTypeBuilder';
 import { loadCustomerTypePageState } from '@/lib/customer-type-loader';
 import { CustomerTypePageState } from '@/lib/customer-type-types';
 
@@ -33,14 +32,7 @@ export default async function EditCustomerTypePage({ params }: Props) {
     return <ErrorScreen title="Kunde inte hämta sidan" message={message} />;
   }
 
-  return (
-    <PageTypeBuilder
-      uiDef={customerTypeUI}
-      initialState={state}
-      mode="edit"
-      recordId={recordId}
-    />
-  );
+  return <CustomerTypeBuilder initialState={state} mode="edit" recordId={recordId} />;
 }
 
 function ErrorScreen({ title, message }: { title: string; message: string }) {

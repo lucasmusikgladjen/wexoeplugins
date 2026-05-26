@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import PageTypeBuilder from '@/components/shared/builder/PageTypeBuilder';
-import { productAreaUI } from '@/lib/page-types/product-area.ui';
+import ProductAreaBuilder from '@/components/product-area/ProductAreaBuilder';
 import { loadProductAreaState } from '@/lib/product-area-loader';
 import { ProductAreaState } from '@/lib/product-area-types';
 
@@ -33,16 +32,7 @@ export default async function EditProductAreaPage({ params }: Props) {
     return <ErrorScreen title="Kunde inte hämta sidan" message={message} />;
   }
 
-  return (
-    <PageTypeBuilder
-      uiDef={productAreaUI}
-      initialState={state}
-      mode="edit"
-      recordId={recordId}
-      apiPath="/api/product-area"
-      editPath="/editor/product-area/:recordId"
-    />
-  );
+  return <ProductAreaBuilder initialState={state} mode="edit" recordId={recordId} />;
 }
 
 function ErrorScreen({ title, message }: { title: string; message: string }) {

@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import PageTypeBuilder from '@/components/shared/builder/PageTypeBuilder';
-import { caseUI } from '@/lib/page-types/case.ui';
+import CaseBuilder from '@/components/case/CaseBuilder';
 import { loadCaseState } from '@/lib/case-loader';
 import { CaseState } from '@/lib/case-types';
 
@@ -33,14 +32,7 @@ export default async function EditCasePage({ params }: Props) {
     return <ErrorScreen title="Kunde inte hämta caset" message={message} />;
   }
 
-  return (
-    <PageTypeBuilder
-      uiDef={caseUI}
-      initialState={state}
-      mode="edit"
-      recordId={recordId}
-    />
-  );
+  return <CaseBuilder initialState={state} mode="edit" recordId={recordId} />;
 }
 
 function ErrorScreen({ title, message }: { title: string; message: string }) {
