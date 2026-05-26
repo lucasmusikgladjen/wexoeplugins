@@ -792,7 +792,7 @@ class Wexoe_Case {
 
 <?php echo $w; ?> {
     --case-main: #11325D;
-    --case-secondary: #F28C28;
+    --case-secondary: #2B4D7A;
     --case-green: #10B981;
     --case-text: #1a1a1a;
     --case-muted: #6B7280;
@@ -811,7 +811,13 @@ class Wexoe_Case {
 
 <?php echo $w; ?> .case-wrap { overflow-x: hidden; }
 <?php echo $w; ?> .case-container { max-width: 1100px; margin: 0 auto; padding: 0 32px; }
-<?php echo $w; ?> .case-fullwidth { width: 100vw; margin-left: calc(-50vw + 50%); }
+<?php echo $w; ?> .case-fullwidth { width: 100vw; max-width: none; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); }
+<?php echo $w; ?> .case-wrap > .case-header.case-fullwidth {
+    width: 100vw;
+    max-width: none;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+}
 
 /* ============================================================
    ARTICLE HEADER
@@ -915,8 +921,9 @@ class Wexoe_Case {
     align-items: center;
 }
 <?php echo $w; ?> .case-byline-logo {
-    height: 26px;
-    max-width: 110px;
+    width: auto;
+    height: 24px;
+    max-width: 130px;
     object-fit: contain;
     display: block;
 }
@@ -982,8 +989,8 @@ class Wexoe_Case {
     color: var(--case-muted);
     font-style: italic;
     margin-top: 10px;
-    padding-left: 14px;
-    border-left: 2px solid var(--case-rule);
+    padding-left: 0;
+    border-left: 0;
 }
 
 <?php echo $w; ?> .case-lead-paragraph {
@@ -994,16 +1001,6 @@ class Wexoe_Case {
 }
 <?php echo $w; ?> .case-lead-paragraph p { margin: 0 0 1.1em; color: inherit; }
 <?php echo $w; ?> .case-lead-paragraph p:last-child { margin-bottom: 0; }
-<?php echo $w; ?> .case-lead-paragraph::first-letter {
-    font-weight: 700;
-    font-size: 3.6rem;
-    float: left;
-    line-height: 0.95;
-    padding: 8px 14px 0 0;
-    color: var(--case-main);
-    letter-spacing: -0.04em;
-}
-
 /* ============================================================
    SECTION HEADINGS
    ============================================================ */
@@ -1048,25 +1045,45 @@ class Wexoe_Case {
 <?php echo $w; ?> .case-section-body p { margin: 0 0 1.1em; }
 <?php echo $w; ?> .case-section-body p:last-child { margin-bottom: 0; }
 
-<?php echo $w; ?> .case-bullet-list {
+<?php echo $w; ?> .case-bullet-list,
+<?php echo $w; ?> .case-section-body ul.case-bullet-list,
+<?php echo $w; ?> .case-section-body ol.case-bullet-list,
+<?php echo $w; ?> .case-section-body + ul.case-bullet-list,
+<?php echo $w; ?> .case-section-body + ol.case-bullet-list {
     list-style: none;
     padding: 0;
     margin: 24px 0 0;
 }
-<?php echo $w; ?> .case-bullet-list li {
+<?php echo $w; ?> .case-bullet-list li,
+<?php echo $w; ?> .case-section-body ul.case-bullet-list li,
+<?php echo $w; ?> .case-section-body ol.case-bullet-list li,
+<?php echo $w; ?> .case-section-body + ul.case-bullet-list li,
+<?php echo $w; ?> .case-section-body + ol.case-bullet-list li {
     position: relative;
     padding-left: 30px;
     margin-bottom: 12px;
     line-height: 1.65;
     font-size: 1rem;
+    list-style: none;
 }
-<?php echo $w; ?> .case-bullet-list li::before {
-    content: "→";
+<?php echo $w; ?> .case-bullet-list li::before,
+<?php echo $w; ?> .case-section-body ul.case-bullet-list li::before,
+<?php echo $w; ?> .case-section-body ol.case-bullet-list li::before,
+<?php echo $w; ?> .case-section-body + ul.case-bullet-list li::before,
+<?php echo $w; ?> .case-section-body + ol.case-bullet-list li::before {
+    content: "✓";
     position: absolute;
     left: 0;
-    top: 1px;
-    color: var(--case-secondary);
+    top: 2px;
+    color: var(--case-green);
     font-weight: 700;
+}
+<?php echo $w; ?> .case-bullet-list li::after,
+<?php echo $w; ?> .case-section-body ul.case-bullet-list li::after,
+<?php echo $w; ?> .case-section-body ol.case-bullet-list li::after,
+<?php echo $w; ?> .case-section-body + ul.case-bullet-list li::after,
+<?php echo $w; ?> .case-section-body + ol.case-bullet-list li::after {
+    content: none;
 }
 
 <?php echo $w; ?> .case-inline-image { margin: 32px 0 0; }
@@ -1079,8 +1096,8 @@ class Wexoe_Case {
     color: var(--case-muted);
     font-style: italic;
     margin-top: 10px;
-    padding-left: 14px;
-    border-left: 2px solid var(--case-rule);
+    padding-left: 0;
+    border-left: 0;
 }
 
 /* ============================================================
@@ -1138,6 +1155,8 @@ class Wexoe_Case {
     color: var(--case-main);
     margin: 0 0 14px;
     letter-spacing: -0.005em;
+    border: 0;
+    padding: 0;
 }
 <?php echo $w; ?> .case-pullquote-inline blockquote p { margin: 0 0 10px; color: inherit; }
 <?php echo $w; ?> .case-pullquote-inline blockquote p:last-child { margin-bottom: 0; }
@@ -1166,6 +1185,8 @@ class Wexoe_Case {
     color: var(--case-main);
     margin: 0 0 22px;
     position: relative;
+    border: 0;
+    padding: 0;
 }
 <?php echo $w; ?> .case-testimonial-inline blockquote::before {
     content: "\201C";
@@ -1399,7 +1420,6 @@ class Wexoe_Case {
         order: -1;
     }
     <?php echo $w; ?> .case-lead-paragraph { font-size: 1.08rem; }
-    <?php echo $w; ?> .case-lead-paragraph::first-letter { font-size: 3rem; }
     <?php echo $w; ?> .case-products-grid,
     <?php echo $w; ?> .case-products-grid--single { grid-template-columns: 1fr; }
     <?php echo $w; ?> .case-gallery-item:nth-child(n) { grid-column: span 1; }
