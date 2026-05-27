@@ -20,6 +20,12 @@ import { PageState } from './types';
 import { ProductAreaState } from './product-area-types';
 import { CustomerTypePageState } from './customer-type-types';
 import { CmsPageState, PageSection, TabsSection } from './cms-page-types';
+import {
+  CaseState,
+  CASE_QUICK_STATS_MAX,
+  CASE_RESULTS_MAX,
+  CASE_GALLERY_MAX,
+} from './case-types';
 import { PartnerPageState } from './partner-types';
 
 // ─── Schemas loaded once at module boot ────────────────────────────────────
@@ -37,6 +43,10 @@ const SCHEMA_CUSTOMER_TYPE = readFileSync(
 );
 const SCHEMA_CMS_PAGE = readFileSync(
   join(process.cwd(), 'lib', 'airtable-schema-cms-page.md'),
+  'utf-8',
+);
+const SCHEMA_CASE = readFileSync(
+  join(process.cwd(), 'lib', 'airtable-schema-case.md'),
   'utf-8',
 );
 const SCHEMA_PARTNER = readFileSync(
@@ -85,6 +95,14 @@ export interface PaTransformResult {
 
 export interface CustomerTypeTransformResult {
   customerTypePage: Record<string, unknown>;
+}
+
+export interface CaseTransformResult {
+  case: Record<string, unknown>;
+}
+
+export interface PartnerTransformResult {
+  partnerPage: Record<string, unknown>;
 }
 
 export interface CmsPageTransformSection {
@@ -754,11 +772,233 @@ export async function transformCustomerType(
 }
 
 
-// ─── Partner Page (leverantörssida) payload builder ───────────────────────
+// ─── Case payload builder ──────────────────────────────────────────────────
 
-export interface PartnerTransformResult {
-  partnerPage: Record<string, unknown>;
+function buildCasePayload(state: CaseState, mode: TransformMode): string {
+  // Pseudo-arrays skickas som riktiga arrays här. Claude expanderar till
+  // numrerade fält enligt schema-MD-instruktionerna. Vid UPDATE måste vi
+  // skicka MAX-antal items så Claude tömmer borttagna positioner — annars
+  // skulle ett item som tagits bort i editorn stå kvar i Airtable. Padding
+  // sker här (inte i system-prompten) så Claude bara behöver mappa items
+  // till numrerade fält.
+  const padArray = <T extends Record<string, string>>(
+    arr: T[],
+    max: number,
+    empty: T,
+  ): T[] => {
+    if (mode === 'create') return arr;
+    const out: T[] = [...arr];
+    while (out.length < max) out.push({ ...empty });
+    return out.slice(0, max);
+  };
+
+  const quickStats = padArray(
+    state.quickStats,
+    CASE_QUICK_STATS_MAX,
+    { value: '', label: '' },
+  );
+  const results = padArray(
+    state.results,
+    CASE_RESULTS_MAX,
+    { value: '', label: '' },
+  );
+  const galleryImages = padArray(
+    state.galleryImages,
+    CASE_GALLERY_MAX,
+    { url: '', caption: '' },
+  );
+
+  const data: Record<string, unknown> = {
+    _mode: mode,
+    _recordId: state.recordId || null,
+
+    slug: state.slug,
+    internal_notes: state.internalNotes,
+    is_active: state.isActive,
+
+    // SEO
+    seo_title: state.seoTitle,
+    seo_description: state.seoDescription,
+    og_image_url: state.ogImageUrl,
+
+    // Header
+    industry: state.industry,
+    title: state.title,
+    subtitle: state.subtitle,
+    customer_name: state.customerName,
+    location: state.location,
+    project_year: state.projectYear,
+    project_type: state.projectType,
+    reading_time: state.readingTime,
+    header_logos: state.headerLogos,
+
+    // Lead
+    lead_image_url: state.leadImageUrl,
+    lead_image_caption: state.leadImageCaption,
+    lead_paragraph: state.leadParagraph,
+
+    // Stats strip
+    show_stats_strip: state.showStatsStrip,
+    quick_stats: quickStats,
+
+    // Challenge
+    challenge_eyebrow: state.challengeEyebrow,
+    challenge_title: state.challengeTitle,
+    challenge_text: state.challengeText,
+    challenge_bullets: state.challengeBullets,
+    challenge_image_url: state.challengeImageUrl,
+    challenge_image_caption: state.challengeImageCaption,
+
+    // Pullquote
+    show_pullquote: state.showPullquote,
+    pullquote_text: state.pullquoteText,
+    pullquote_attribution: state.pullquoteAttribution,
+
+    // Solution
+    solution_eyebrow: state.solutionEyebrow,
+    solution_title: state.solutionTitle,
+    solution_text: state.solutionText,
+    solution_image_url: state.solutionImageUrl,
+    solution_image_caption: state.solutionImageCaption,
+
+    // Products
+    products_title: state.productsTitle,
+    products_meta: state.productsMeta,
+    product_ids: state.productIds,
+    article_ids: state.articleIds,
+
+    // Results
+    results_eyebrow: state.resultsEyebrow,
+    results_title: state.resultsTitle,
+    results_text: state.resultsText,
+    results,
+
+    // Testimonial
+    show_testimonial: state.showTestimonial,
+    testimonial_quote: state.testimonialQuote,
+    testimonial_photo_url: state.testimonialPhotoUrl,
+    testimonial_author_name: state.testimonialAuthorName,
+    testimonial_author_title: state.testimonialAuthorTitle,
+
+    // Gallery
+    show_gallery: state.showGallery,
+    gallery_title: state.galleryTitle,
+    gallery_images: galleryImages,
+
+    // About customer
+    show_about_customer: state.showAboutCustomer,
+    about_customer_logo_url: state.aboutCustomerLogoUrl,
+    about_customer_title: state.aboutCustomerTitle,
+    about_customer_text: state.aboutCustomerText,
+    about_customer_link_label: state.aboutCustomerLinkLabel,
+    about_customer_url: state.aboutCustomerUrl,
+
+    // Glance sidebar
+    glance_challenge: state.glanceChallenge,
+    glance_solution: state.glanceSolution,
+    glance_result: state.glanceResult,
+
+    // Contact form (15 fält)
+    show_contact_form: state.showContactForm,
+    contact_form_eyebrow: state.contactForm.eyebrow,
+    contact_form_title: state.contactForm.title,
+    contact_form_subtitle: state.contactForm.subtitle,
+    contact_form_layout: state.contactForm.layout,
+    contact_form_theme: state.contactForm.theme,
+    contact_form_show_company: state.contactForm.showCompany,
+    contact_form_show_phone: state.contactForm.showPhone,
+    contact_form_show_dropdown: state.contactForm.showDropdown,
+    contact_form_dropdown_label: state.contactForm.dropdownLabel,
+    contact_form_options: state.contactForm.options,
+    contact_form_cta_text: state.contactForm.ctaText,
+    contact_form_message_label: state.contactForm.messageLabel,
+    contact_form_trust_signals: state.contactForm.trustSignals,
+    contact_form_show_contact_person: state.contactForm.showContactPerson,
+  };
+
+  return JSON.stringify(data, null, 2);
 }
+
+function buildCaseSystemPrompt(mode: TransformMode): string {
+  const common = `Du är en datatransformerare. Du tar emot case-sida-data i JSON-format och konverterar den till Airtable-redo JSON enligt schemat nedan.
+
+${SCHEMA_CASE}
+
+Svara med ENBART valid JSON (ingen markdown, ingen förklaring).
+
+Output-format:
+{
+  "case": { <Airtable-fältnamn>: <värde>, ... }
+}
+
+KRITISKT:
+- Använd exakta Airtable-fältnamn från schemat (snake_case).
+- ALDRIG inkludera "cms_partner_pages" (backlink) i outputen.
+- Inkludera ALLTID boolean-fält: is_active, show_stats_strip, show_pullquote, show_testimonial, show_gallery, show_about_customer, show_contact_form, contact_form_show_company, contact_form_show_phone, contact_form_show_dropdown, contact_form_show_contact_person.
+- Inkludera ALLTID alla 15 contact_form_*-fält i case-objektet (även tomma/false) så de inte tappas vid PATCH.
+- Pseudo-arrayerna i input (quick_stats, results, gallery_images) ska EXPANDERAS till numrerade Airtable-fält:
+  • quick_stats[0..3] → quick_stat_1_value, quick_stat_1_label, quick_stat_2_value, ... quick_stat_4_value, quick_stat_4_label
+  • results[0..3] → result_1_value, result_1_label, ... result_4_value, result_4_label
+  • gallery_images[0..5] → gallery_image_1_url, gallery_image_1_caption, ... gallery_image_6_url, gallery_image_6_caption
+- product_ids och article_ids: skicka som array av string rec-IDs (eller []).
+- Lines-fält (header_logos, challenge_bullets, contact_form_options, contact_form_trust_signals): skicka RÅ multiline-sträng — inte array.`;
+
+  if (mode === 'create') {
+    return `${common}
+
+MODE: CREATE
+- Utelämna fält med tomt värde (tomma strängar, null), MEN inkludera ALLTID boolean-fält, layout/theme och alla contact_form_show_*-checkboxar.
+- Utelämna pseudo-array-fält (quick_stat_N_*, result_N_*, gallery_image_N_*) där värdena är tomma.
+- Utelämna product_ids/article_ids om arrayen är tom.`;
+  }
+
+  return `${common}
+
+MODE: UPDATE
+- Inkludera ALLA fält från input (även tomma) som "" så Airtable rensar dem.
+- Inkludera ALLTID alla 15 contact_form_*-fält i case (även tomma/false).
+- Inkludera ALLTID ALLA pseudo-array-fält upp till MAX-antal:
+  • quick_stat_1_value..quick_stat_4_label (8 fält totalt)
+  • result_1_value..result_4_label (8 fält totalt)
+  • gallery_image_1_url..gallery_image_6_caption (12 fält totalt)
+  Skicka "" för positioner som inte har data i input. Detta krävs så Airtable rensar items användaren raderat.
+- Skicka product_ids och article_ids även när tomma (tom array []).`;
+}
+
+export async function transformCase(
+  apiKey: string,
+  state: CaseState,
+  mode: TransformMode,
+): Promise<CaseTransformResult> {
+  const userPayload = buildCasePayload(state, mode);
+  const systemPrompt = buildCaseSystemPrompt(mode);
+  const userPrompt = `Transformera denna data till Airtable-format:\n\n${userPayload}`;
+
+  const responseText = await callClaude(apiKey, systemPrompt, userPrompt);
+  const parsed = parseJsonOrThrow<CaseTransformResult>(responseText);
+
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('Claude returnerade oväntat format.');
+  }
+  if (!parsed.case || typeof parsed.case !== 'object') {
+    throw new Error('Claude utelämnade case-objektet.');
+  }
+
+  // Backfilla product_ids / article_ids från state — skydd mot Claude som
+  // glömmer eller returnerar non-array. PATCH-en skulle annars tolka som
+  // "lämna fältet orört" vid CREATE eller "lägg inte till länkar" vid UPDATE.
+  if (!Array.isArray(parsed.case.product_ids)) {
+    parsed.case.product_ids = state.productIds;
+  }
+  if (!Array.isArray(parsed.case.article_ids)) {
+    parsed.case.article_ids = state.articleIds;
+  }
+
+  return parsed;
+}
+
+
+// ─── Partner Page (leverantörssida) payload builder ───────────────────────
 
 function buildPartnerPayload(
   state: PartnerPageState,

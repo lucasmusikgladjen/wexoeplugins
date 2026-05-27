@@ -1,33 +1,62 @@
 /**
- * Linkade-records-källor — registry för `Field.LinkedRecords`-pickern.
+ * Linkade-records-källor — registry för `Field.LinkedRecords`-pickern och
+ * preview-uppslag via `useLinkedRecord` / `useLinkedRecords`.
  *
  * En "källa" är en Airtable-tabell som kan visas i en multi-select-picker.
- * Innan denna fil hade vi bara core_*-källor via `lib/core/registry.ts` +
- * `/api/core/[entity]`. Den här filen utvidgar mängden så CMS-tabeller
- * (cms_cases, cms_product_pages) också kan väljas — utan att blanda in
- * SSOT-editor-logiken (which is what CORE_ENTITIES is for).
+ * Två kategorier:
  *
- * Filosofi:
- *   - core_*-källor delegeras till befintlig `/api/core/[entity]`-route så
- *     normaliseringen i `lib/core/mapper.ts` återanvänds (det är samma data
- *     som SSOT-editorn ser).
- *   - cms_*-källor läses direkt mot Airtable via en ny generisk route
- *     `/api/linked/[source]` som returnerar `{ _recordId, ...fields }`.
+ *   - core_*-källor — delegeras till befintlig `/api/core/[entity]`-route
+ *     internt (normaliseringen i `lib/core/mapper.ts` återanvänds). De är
+ *     deklarerade i `lib/core/registry.ts::CORE_ENTITIES`.
  *
- * När en sidtyp behöver en ny picker-källa: lägg till entry här (eller
- * skapa en ny `kind`-gren om datat ligger någon annanstans). Editorn
- * importerar bara `LinkedSourceName`-strängen — ingen sidtyp tar i routes
- * eller table-IDs direkt.
+ *   - cms_*-källor — Airtable-tabeller som projekteras tunt (bara fält
+ *     pickern behöver för label/thumbnail). Källorna deklareras nedan i
+ *     `CMS_LINKED_SOURCES`.
+ *
+ * Båda kategorierna hämtas via en enda klient-endpoint `/api/linked/[source]`
+ * som dispatchar internt. Whitelist-typen `LinkedSourceName` säkerställer
+ * att klienten inte kan fritextspecificera ett tableId.
+ *
+ * När en ny sidtyp behöver en ny picker-källa: lägg till entry här (för
+ * cms_*-tabeller) eller utöka `CORE_ENTITIES` (för core_*-tabeller). Lägg
+ * sedan en `defaultLabel`-case i `LinkedRecords.tsx`.
  */
 
 import { CORE_ENTITIES, type CoreEntityName } from './core/registry';
 
-/** CMS-tabeller som finns som linkbara källor (utöver core_*-mängden). */
+/**
+ * CMS-tabeller som finns som linkbara källor (utöver core_*-mängden).
+ * `fields` är minimal-projektionen — håll den smal så pickern blir snabb.
+ */
 export const CMS_LINKED_SOURCES = {
+  /** cms_products — delar/komponenter med artikelnummer. Linkas av case-sidor. */
+  products: {
+    tableId: 'tblN23V7uAMpeZoO1',
+    fields: [
+      'name',
+      'image_url',
+      'is_active',
+      'supplier_ids',
+      'description',
+    ] as const,
+    sortField: 'name',
+  },
+  /** cms_articles — produktartiklar (SKU-nivå). Linkas av case-sidor. */
+  articles: {
+    tableId: 'tblhnz3MQG1JwfKrN',
+    fields: [
+      'name',
+      'image_url',
+      'article_number',
+      'is_active',
+      'supplier_ids',
+      'description',
+    ] as const,
+    sortField: 'name',
+  },
+  /** cms_cases — kundcase-stories. Linkas av partner-sidor (success cases). */
   cases: {
-    /** cms_cases — kundcase-stories. */
     tableId: 'tblxH3ECSMvDTYrIQ',
-    /** Fält att hämta från Airtable. Håll listan minimal för snabba pickers. */
     fields: [
       'slug',
       'title',
@@ -37,9 +66,10 @@ export const CMS_LINKED_SOURCES = {
       'lead_image_url',
       'is_active',
     ] as const,
+    sortField: 'slug',
   },
+  /** cms_product_pages — produktområdessidor. Linkas av partner-sidor (kategorier). */
   product_areas: {
-    /** cms_product_pages — produktområdessidor. */
     tableId: 'tbl5PQR7FNHCogeya',
     fields: [
       'slug',
@@ -49,6 +79,7 @@ export const CMS_LINKED_SOURCES = {
       'card_description',
       'is_active',
     ] as const,
+    sortField: 'slug',
   },
 } as const;
 

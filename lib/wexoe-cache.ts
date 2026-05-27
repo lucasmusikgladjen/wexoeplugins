@@ -22,6 +22,7 @@ export {
   PA_ENTITIES,
   SSOT_ENTITIES,
   CMS_PAGES_ENTITIES,
+  CASE_ENTITIES,
   PARTNER_ENTITIES,
 } from './wexoe-cache-entities';
 

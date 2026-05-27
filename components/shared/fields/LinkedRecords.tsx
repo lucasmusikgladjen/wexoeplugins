@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Multi-select field för länkning till core- eller CMS-records.
+ * Multi-select field för länkning till core- eller cms-records.
  *
  * Säkerhet/design:
  *   - `source` är en *whitelist*-key från `lib/linked-sources.ts`
@@ -11,7 +11,8 @@
  *   - Datat hämtas via `/api/linked/<source>` som körs server-side och
  *     dispatchar mellan core-normaliseringen och CMS-passthrough.
  *   - Resultaten cachas på modulnivå per source så sessionsnavigation
- *     mellan editorer inte triggar ny fetch.
+ *     mellan editorer inte triggar ny fetch (delad cache i
+ *     `lib/linked-records-cache.ts`).
  *
  * Ergonomi:
  *   - Selected items visas som chips. Klicka ✕ för att avlänka.
@@ -27,11 +28,16 @@
  */
 
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import type { LinkedSourceName } from '@/lib/linked-sources';
 import {
-  fetchLinkedRecords as fetchRecords,
-  type NormalizedRecord,
+  isCmsLinkedSource,
+  type LinkedSourceName,
+} from '@/lib/linked-sources';
+import {
+  fetchLinkedRecords,
+  type NormalizedLinkedRecord,
 } from '@/lib/linked-records-cache';
+
+type NormalizedRecord = NormalizedLinkedRecord;
 
 interface Props {
   label: string;
@@ -53,8 +59,35 @@ interface Props {
 // ─── Default labels per source ─────────────────────────────────────────────
 
 function defaultLabel(source: LinkedSourceName, rec: NormalizedRecord): string {
+  // CMS-källor delar prefix-route men har olika canonical label-fält.
+  if (isCmsLinkedSource(source)) {
+    switch (source) {
+      case 'products': {
+        return (rec.name as string) || '(namnlös)';
+      }
+      case 'articles': {
+        const name = (rec.name as string) || '(namnlös)';
+        return rec.article_number
+          ? `${name} (${rec.article_number as string})`
+          : name;
+      }
+      case 'cases':
+        return (
+          (rec.title as string) ||
+          (rec.customer_name as string) ||
+          (rec.slug as string) ||
+          ''
+        );
+      case 'product_areas':
+        return (
+          (rec.name as string) ||
+          (rec.h1 as string) ||
+          (rec.slug as string) ||
+          ''
+        );
+    }
+  }
   switch (source) {
-    // core_*
     case 'core_countries':
       return `${rec.name as string} (${rec.code as string})`;
     case 'core_divisions':
@@ -69,23 +102,8 @@ function defaultLabel(source: LinkedSourceName, rec: NormalizedRecord): string {
       return (rec.company_name as string) || '';
     case 'core_graphic_profile':
       return (rec.slug as string) || '';
-    // cms_*
-    case 'cases':
-      return (
-        (rec.title as string) ||
-        (rec.customer_name as string) ||
-        (rec.slug as string) ||
-        ''
-      );
-    case 'product_areas':
-      return (
-        (rec.name as string) ||
-        (rec.h1 as string) ||
-        (rec.slug as string) ||
-        ''
-      );
     default: {
-      // Type-exhaustiveness — om LinkedSourceName utökas och vi glömmer
+      // Type-exhaustiveness — om CORE_ENTITIES utökas och vi glömmer
       // case:t här fångar TypeScript det vid compile.
       const _exhaustive: never = source;
       void _exhaustive;
@@ -117,7 +135,7 @@ export default function LinkedRecords({
 
   useEffect(() => {
     let cancelled = false;
-    fetchRecords(source)
+    fetchLinkedRecords(source)
       .then((data) => {
         if (!cancelled) setRecords(data);
       })

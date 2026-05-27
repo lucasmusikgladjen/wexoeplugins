@@ -1,22 +1,46 @@
 /**
- * Delad client-side cache för linkade-records-pickers OCH preview-uppslag.
+ * Delat client-side cache för records som ska visas i `LinkedRecords`-pickern
+ * och i preview-komponenter som vill rendera linked records (t.ex.
+ * `CasePreviewPanel` som visar valda produkter och artiklar, eller
+ * `PartnerPreviewPanel` som visar partner-logo + success cases + kategorier).
  *
- * Både `Field.LinkedRecords` (multi-select-pickern) och preview-komponenter
- * som behöver hämta länkad metadata (t.ex. partner-logo från
- * core_partners-recordet) går genom samma cache så vi inte fetcher samma
- * lista två gånger per session.
+ * Varför separat modul? `LinkedRecords` är en client-komponent vars modulnivå-
+ * cache är lokal — preview kan inte komma åt den. Genom att exponera en
+ * fristående `fetchLinkedRecords(source)` får båda samma in-flight-promise
+ * och samma cache utan att kopplas till varandra.
  *
- * Endpoint: `/api/linked/[source]` — whitelist:ad via `lib/linked-sources.ts`.
+ * Källor:
+ *   - `core_*` (alla CoreEntityName från `lib/core/registry`).
+ *   - CMS-tabeller via `CmsLinkedSourceName` i `lib/linked-sources.ts`
+ *     (idag: products, articles, cases, product_areas).
+ *
+ * Endpoint: en enda generisk route `/api/linked/[source]` som dispatchar
+ * mellan core-normaliseringen och CMS-passthrough på serversidan.
  */
 
-import { LinkedSourceName } from './linked-sources';
+import { useEffect, useMemo, useState } from 'react';
+import type { LinkedSourceName, CmsLinkedSourceName } from './linked-sources';
 
-export interface NormalizedRecord {
+/**
+ * Bakåtkompatibla typalias som case-editor (och eventuella andra konsumenter
+ * som importerade dessa namn direkt) använder. Föredra `LinkedSourceName`
+ * och `NormalizedLinkedRecord` framöver — namnen är samma längs båda
+ * importvägarna men `LinkedRecordSource` är kvar tills alla callers
+ * städats.
+ */
+export type LinkedRecordSource = LinkedSourceName;
+export type CmsLinkSource = CmsLinkedSourceName;
+
+export interface NormalizedLinkedRecord {
   _recordId: string;
   [key: string]: unknown;
 }
 
-const cache = new Map<LinkedSourceName, Promise<NormalizedRecord[]>>();
+/** Behåller mitt ursprungliga internnamn som alias så preview-komponenter
+ *  som importerade `NormalizedRecord` också kompilerar. */
+export type NormalizedRecord = NormalizedLinkedRecord;
+
+const cache = new Map<LinkedRecordSource, Promise<NormalizedLinkedRecord[]>>();
 
 /**
  * Returnerar alla records för en linked-source. Cachas på modulnivå —
@@ -25,8 +49,8 @@ const cache = new Map<LinkedSourceName, Promise<NormalizedRecord[]>>();
  * Vid fel rensas cachen så användaren kan retrya genom att navigera om.
  */
 export function fetchLinkedRecords(
-  source: LinkedSourceName,
-): Promise<NormalizedRecord[]> {
+  source: LinkedRecordSource,
+): Promise<NormalizedLinkedRecord[]> {
   const cached = cache.get(source);
   if (cached) return cached;
   const promise = fetch(`/api/linked/${source}`)
@@ -35,7 +59,7 @@ export function fetchLinkedRecords(
       if (!r.ok || !data.success) {
         throw new Error(data.error || `HTTP ${r.status}`);
       }
-      return (data.records ?? []) as NormalizedRecord[];
+      return (data.records ?? []) as NormalizedLinkedRecord[];
     })
     .catch((err) => {
       cache.delete(source);
@@ -46,6 +70,16 @@ export function fetchLinkedRecords(
 }
 
 /**
+ * Manuell cache-rensning — användbart om en muterande operation
+ * (t.ex. en SSOT-edit) just har ändrat datan och vi vill att nästa
+ * pickeropp ska hämta fresh.
+ */
+export function clearLinkedRecordsCache(source?: LinkedRecordSource): void {
+  if (source) cache.delete(source);
+  else cache.clear();
+}
+
+/**
  * Lågnivåshook: hämtar hela record-listan för en source och returnerar
  * en map (recordId → record). Tom map tills datat laddats. Vi lagrar
  * hela mappen i state istället för att kalla setState från unmount-
@@ -53,10 +87,10 @@ export function fetchLinkedRecords(
  * varna och låter `useLinkedRecord` / `useLinkedRecords` derivera sina
  * resultat synkront från `recordId` resp. `recordIds` props.
  */
-import { useEffect, useMemo, useState } from 'react';
-
-function useLinkedRecordMap(source: LinkedSourceName): Map<string, NormalizedRecord> {
-  const [records, setRecords] = useState<NormalizedRecord[]>([]);
+function useLinkedRecordMap(
+  source: LinkedRecordSource,
+): Map<string, NormalizedLinkedRecord> {
+  const [records, setRecords] = useState<NormalizedLinkedRecord[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,7 +107,7 @@ function useLinkedRecordMap(source: LinkedSourceName): Map<string, NormalizedRec
   }, [source]);
 
   return useMemo(() => {
-    const m = new Map<string, NormalizedRecord>();
+    const m = new Map<string, NormalizedLinkedRecord>();
     for (const r of records) m.set(r._recordId, r);
     return m;
   }, [records]);
@@ -84,9 +118,9 @@ function useLinkedRecordMap(source: LinkedSourceName): Map<string, NormalizedRec
  * laddats (eller om recordet inte hittas).
  */
 export function useLinkedRecord(
-  source: LinkedSourceName,
+  source: LinkedRecordSource,
   recordId: string | null | undefined,
-): NormalizedRecord | null {
+): NormalizedLinkedRecord | null {
   const byId = useLinkedRecordMap(source);
   if (!recordId) return null;
   return byId.get(recordId) ?? null;
@@ -98,14 +132,14 @@ export function useLinkedRecord(
  * misses så längden kan vara mindre än inputs.
  */
 export function useLinkedRecords(
-  source: LinkedSourceName,
+  source: LinkedRecordSource,
   recordIds: readonly string[],
-): NormalizedRecord[] {
+): NormalizedLinkedRecord[] {
   const byId = useLinkedRecordMap(source);
   return useMemo(() => {
     return recordIds
       .map((id) => byId.get(id))
-      .filter((r): r is NormalizedRecord => r !== undefined);
+      .filter((r): r is NormalizedLinkedRecord => r !== undefined);
     // recordIds är en array — joinad sträng är stabil deps-jämförelse.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [byId, recordIds.join(',')]);
