@@ -4,18 +4,6 @@ import { PartnerPageState } from '@/lib/partner-types';
 import { Field } from '@/components/shared/fields';
 import type { SectionEditorProps } from '@/lib/page-types/types';
 
-/**
- * Identitet, SEO och länkar. Innehåller:
- *   - partner_ids — single-pick mot core_partners (logo + namn → hero-lockup)
- *   - country_ids — multi-pick mot core_countries (scope för andra sektioner
- *     som ärver — partner-sidan själv använder dem inte direkt men de finns
- *     i schemat för konsekvens)
- *   - SEO-fält (seo_title, seo_description, og_image_url)
- *   - internal_notes (osynligt fält för redaktörer)
- *
- * `is_active` toggles via toolbar-extras (samma mönster som customer-type),
- * inte här.
- */
 export default function SettingsEditor({
   state,
   onChange,
@@ -32,7 +20,6 @@ export default function SettingsEditor({
         onChange={(ids) => set('partnerIds', ids)}
         filter={(r) => r.is_active !== false}
         max={1}
-        description="Single-pick. Logo och partner-namn läses härifrån till hero-sektionen."
       />
 
       <Field.LinkedRecords
@@ -40,7 +27,6 @@ export default function SettingsEditor({
         source="core_countries"
         value={state.countryIds}
         onChange={(ids) => set('countryIds', ids)}
-        description="Vilka marknader sidan är relevant för (scope för länkade sektioner)."
       />
 
       <div className="pt-2 mt-2 border-t border-gray-100 space-y-3">

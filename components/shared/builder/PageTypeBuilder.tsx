@@ -24,7 +24,7 @@
  * och i create/edit-routes per Etapp 3-planen.
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import BuilderShell from '@/components/BuilderShell';
 import SectionEditor from '@/components/shared/SectionEditor';
@@ -85,8 +85,12 @@ export default function PageTypeBuilder<TState>({
 }: PageTypeBuilderProps<TState>) {
   const router = useRouter();
   const [state, setState] = useState<TState>(initialState);
+  const resolvedSections = useMemo(
+    () => (uiDef.resolveSections ? uiDef.resolveSections(state) : uiDef.sections),
+    [uiDef, state],
+  );
   const [activeSection, setActiveSection] = useState<string | null>(
-    uiDef.sections[0]?.id ?? null,
+    resolvedSections[0]?.id ?? null,
   );
   const [scrollTrigger, setScrollTrigger] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -98,6 +102,16 @@ export default function PageTypeBuilder<TState>({
 
   const isCreate = mode === 'create';
   const canSave = uiDef.canSave ? uiDef.canSave(state) : true;
+
+  useEffect(() => {
+    if (!resolvedSections.length) {
+      setActiveSection(null);
+      return;
+    }
+    if (!activeSection || !resolvedSections.some((s) => s.id === activeSection)) {
+      setActiveSection(resolvedSections[0].id);
+    }
+  }, [activeSection, resolvedSections]);
 
   const update = useCallback((next: TState) => {
     setState(next);
@@ -159,7 +173,7 @@ export default function PageTypeBuilder<TState>({
     }
   }
 
-  const quickNav = uiDef.sections.map((s) => ({ id: s.id, label: s.label }));
+  const quickNav = resolvedSections.map((s) => ({ id: s.id, label: s.label }));
 
   const slugConfig = uiDef.slugInput;
   const slug = slugConfig ? slugConfig.accessor(state) : '';
@@ -228,7 +242,7 @@ export default function PageTypeBuilder<TState>({
           />
         }
         editorSections={({ sectionRef, onSectionFocus }) =>
-          uiDef.sections.map((section) => (
+          resolvedSections.map((section) => (
             <SectionWrapper
               key={section.id}
               section={section}
@@ -287,4 +301,3 @@ function SectionWrapper<TState>({
     </div>
   );
 }
-

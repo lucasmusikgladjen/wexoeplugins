@@ -292,6 +292,8 @@ export interface PageTypeUIDef<TState> {
 
   /** Sektioner i editor-panelen, top-to-bottom. */
   sections: SectionDef<TState>[];
+  /** Valfri dynamisk sektionslista baserat på aktuellt state. */
+  resolveSections?: (state: TState) => SectionDef<TState>[];
 
   /** Preview-layout för sidan. Renderas till höger i builder-shellet.
    *  Ansvarar för att rendera `data-section={id}` på rätt ställe för

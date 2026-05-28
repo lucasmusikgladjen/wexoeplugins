@@ -4,13 +4,6 @@ import { PartnerPageState } from '@/lib/partner-types';
 import { Field } from '@/components/shared/fields';
 import type { SectionEditorProps } from '@/lib/page-types/types';
 
-/**
- * Produktkategorier — länkning till `cms_product_pages` (entity:
- * `product_areas`). Korten på publika sidan läser
- * `card_image_url` + `name` + `card_description` från den länkade
- * product-area-recorden, inte från partner-sidan. Här lagras bara
- * header-copy (eyebrow + h2 + intro) och själva ID-listan.
- */
 export default function CategoriesEditor({
   state,
   onChange,
@@ -39,7 +32,6 @@ export default function CategoriesEditor({
         value={state.categoriesIntro}
         onChange={(v) => set('categoriesIntro', v)}
         rows={3}
-        hint="Markdown inline."
         placeholder="Kort introduktion ovanför korten…"
       />
 
@@ -50,7 +42,6 @@ export default function CategoriesEditor({
           value={state.categoryIds}
           onChange={(ids) => set('categoryIds', ids)}
           filter={(r) => r.is_active !== false}
-          description="Korten på publika sidan läser bild, namn och beskrivning från det länkade product-area-recordet."
         />
       </div>
     </>

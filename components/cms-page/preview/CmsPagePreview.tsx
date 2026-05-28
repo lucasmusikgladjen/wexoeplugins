@@ -9,8 +9,7 @@
  * element.
  *
  * Editor-quickNav-syncen drivs av `data-section` på topp-nivå-paneler
- * (metadata/sections) — vi sätter en outer wrapper för "sections"-panelen
- * vid första section-block och låter quickNav scrolla dit.
+ * (metadata + en panel per section.clientId + add-section).
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -122,21 +121,18 @@ export default function CmsPagePreview({
         )}
 
         {state.sections.length === 0 && (
-          <div data-section="sections" className="p-12 text-center text-sm text-gray-400">
+          <div data-section="add-section" className="p-12 text-center text-sm text-gray-400">
             Inga sektioner. Lägg till en till höger.
           </div>
         )}
 
-        {state.sections.map((section, i) => {
+        {state.sections.map((section) => {
           const isFocused = focusedSection === section.clientId;
-          const isFirstSection = i === 0;
           return (
             <div
-              // Första sektionen får också data-section="sections" så
-              // quickNav-syncen för "Sektioner"-panelen scrollar hit.
-              data-section={isFirstSection ? `sections ${section.clientId}` : section.clientId}
+              data-section={section.clientId}
               key={section.clientId}
-              onClick={() => onSectionClick?.('sections')}
+              onClick={() => onSectionClick?.(section.clientId)}
               className={`relative cursor-pointer border-t border-gray-100/30 ${isFocused ? 'ring-2 ring-orange-400 ring-inset' : ''} ${!section.isActive ? 'opacity-50' : ''}`}
             >
               <span className="absolute top-2 right-3 text-[10px] uppercase tracking-wider text-gray-300 bg-white/80 px-1.5 py-0.5 rounded z-10">

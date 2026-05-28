@@ -9,15 +9,6 @@ import {
 import { Field } from '@/components/shared/fields';
 import type { SectionEditorProps } from '@/lib/page-types/types';
 
-/**
- * Quick-facts-sektionen har 4 fasta slots — schemat lagrar dem som
- * `facts_1_icon`..`facts_4_label`. Pluginet hoppar över slots där alla
- * tre fält är tomma, så marknadsföraren kan lämna luckor.
- *
- * Ikon-keyn är en dropdown med 10 låsta val + tomt (= ingen ikon). Listan
- * speglar `wexoe-partner-page/src/Renderer.php::$icons` — uppdatera båda
- * vid utökning.
- */
 
 const ICON_OPTIONS: readonly { value: QuickFactIcon; label: string }[] = [
   { value: '', label: '— Ingen ikon —' },
@@ -37,10 +28,6 @@ export default function QuickFactsEditor({
 
   return (
     <div className="space-y-4">
-      <p className="text-[11px] text-gray-400">
-        4 fasta slots. Tomma slots döljs i renderingen — fyll bara i de du behöver.
-      </p>
-
       {state.facts.map((fact, i) => (
         <div
           key={i}
