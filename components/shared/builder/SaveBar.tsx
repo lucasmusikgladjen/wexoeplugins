@@ -12,7 +12,7 @@ interface Props {
 
 export default function SaveBar({ dirty, saving, canSave, justSaved, isCreate, onSave, hint }: Props) {
   return (
-    <div className="flex items-center gap-2 rounded-full border border-gray-100 bg-white px-3 py-1.5 shadow-sm">
+    <div className="flex items-center gap-2">
       <span className="text-xs text-gray-400">
         {saving ? 'Sparar…' : justSaved ? 'Sparat ✓' : dirty ? 'Osparade ändringar' : 'Inga ändringar'}
       </span>
@@ -21,7 +21,7 @@ export default function SaveBar({ dirty, saving, canSave, justSaved, isCreate, o
         type="button"
         onClick={onSave}
         disabled={saving || !canSave || (!dirty && !isCreate)}
-        className="rounded-md px-3 py-1 text-xs font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+        className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
         style={{ background: '#11325D' }}
       >
         {saving ? (isCreate ? 'Skapar…' : 'Sparar…') : isCreate ? 'Skapa' : 'Spara'}
