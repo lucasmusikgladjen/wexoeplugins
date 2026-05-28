@@ -184,7 +184,7 @@ export default function PageTypeBuilder<TState>({
     <div className="flex items-center gap-2">
       {slugConfig && (
         <>
-          <span className="text-xs text-gray-400">Slug:</span>
+          <span className="text-xs text-lp-text-light">Slug:</span>
           <input
             type="text"
             value={slug}
@@ -193,13 +193,13 @@ export default function PageTypeBuilder<TState>({
               update(slugConfig.setter(state, cleaned));
             }}
             placeholder={slugConfig.placeholder ?? 'min-sida'}
-            className="w-44 px-2 py-1 text-sm border border-gray-200 rounded-md focus:border-gray-400 focus:outline-none"
+            className="w-40 px-2 py-1 text-sm border border-lp-border rounded-md focus:border-lp-main focus:outline-none focus:ring-1 focus:ring-lp-main"
           />
         </>
       )}
       {ToolbarExtras && <ToolbarExtras state={state} setState={update} />}
       {slugBadge && (
-        <span className="text-[10px] uppercase tracking-wider text-gray-300 ml-2">
+        <span className="text-[10px] uppercase tracking-wider text-lp-text-light ml-2">
           {slugBadge}
         </span>
       )}

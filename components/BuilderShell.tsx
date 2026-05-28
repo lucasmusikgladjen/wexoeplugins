@@ -192,10 +192,10 @@ export default function BuilderShell({
 
   return (
     <div className="h-screen flex flex-col" style={{ fontFamily: 'var(--font-dm-sans)' }}>
-      <header className="h-14 border-b border-gray-100 bg-white flex items-center px-4 gap-4 flex-shrink-0 z-10">
+      <header className="h-14 border-b border-lp-border bg-white flex items-center px-4 gap-4 flex-shrink-0 z-10">
         <Link
           href={backHref}
-          className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors"
+          className="flex items-center gap-2 text-gray-500 hover:text-lp-main transition-colors"
           title={`Tillbaka till ${backLabel.toLowerCase()}`}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -204,7 +204,7 @@ export default function BuilderShell({
           <span className="text-sm">{backLabel}</span>
         </Link>
 
-        <div className="h-5 w-px bg-gray-200 mx-1" />
+        <div className="h-6 w-px bg-lp-border mx-1" />
 
         {toolbar.left}
 
@@ -231,7 +231,7 @@ export default function BuilderShell({
             title="Dra för att ändra panelbredd"
           />
           {quickNav && quickNav.length > 0 && (
-            <div className="flex flex-wrap px-3 py-2 gap-x-0.5 gap-y-1 flex-shrink-0 border-b border-gray-100">
+            <div className="flex px-3 py-2 gap-0.5 flex-shrink-0 overflow-x-auto border-b border-gray-100">
               {quickNav.map((s) => (
                 <button
                   key={s.id}

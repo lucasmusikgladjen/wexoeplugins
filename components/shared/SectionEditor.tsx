@@ -43,7 +43,7 @@ export default function SectionEditor({
     <section
       data-section={id}
       aria-labelledby={headingId}
-      className="group rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-colors hover:border-gray-200 focus-within:border-gray-300"
+      className="group rounded-lg border border-gray-100 bg-white p-4 transition-colors hover:border-gray-200 focus-within:border-gray-300"
     >
       <div className="flex items-start gap-3">
         <button
@@ -66,7 +66,7 @@ export default function SectionEditor({
                 <path d="M4 2 L8 6 L4 10" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             )}
-            <h3 id={headingId} className="text-xl font-bold text-gray-900">
+            <h3 id={headingId} className="text-base font-semibold text-gray-800">
               {title}
             </h3>
             {filledIndicator !== undefined && (
@@ -91,7 +91,7 @@ export default function SectionEditor({
       </div>
 
       {bodyVisible && (
-        <div id={`${headingId}-body`} className="mt-4 space-y-3">
+        <div id={`${headingId}-body`} className="mt-3 space-y-3">
           {children}
         </div>
       )}
