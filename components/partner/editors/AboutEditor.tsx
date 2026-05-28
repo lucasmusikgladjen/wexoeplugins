@@ -29,7 +29,6 @@ export default function AboutEditor({ state, onChange }: SectionEditorProps<Part
         value={state.aboutText}
         onChange={(v) => set('aboutText', v)}
         rows={8}
-        hint="Markdown — **bold**, *italic*, [länk](url), - listor."
         placeholder="Berätta om partnerns bakgrund, fokus, position på marknaden…"
       />
 
@@ -54,9 +53,6 @@ export default function AboutEditor({ state, onChange }: SectionEditorProps<Part
           placeholder="T.ex. Globalt inom..."
         />
       </div>
-      <p className="text-[10px] text-gray-400 -mt-1">
-        Badge:n visas över bilden om <strong>värdet</strong> är ifyllt.
-      </p>
     </>
   );
 }

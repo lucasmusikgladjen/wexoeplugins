@@ -4,12 +4,6 @@ import { PartnerPageState } from '@/lib/partner-types';
 import { Field } from '@/components/shared/fields';
 import type { SectionEditorProps } from '@/lib/page-types/types';
 
-/**
- * Kontaktperson — fullbredd navy-strip i renderingen. Samma fält
- * återanvänds av "Varför Wexoe"-sektionens fallback-kort när
- * `case_ids` är tom, så lämna dem ifyllda även om kontaktperson-
- * sektionen själv är dold.
- */
 export default function ContactPersonEditor({
   state,
   onChange,
@@ -63,10 +57,6 @@ export default function ContactPersonEditor({
         rows={3}
         placeholder="T.ex. Rockwell är ett komplext ekosystem — min uppgift är att översätta ditt behov…"
       />
-
-      <p className="text-[11px] text-gray-400 mt-2 pt-2 border-t border-gray-100">
-        Samma fält används som fallback-kort i &quot;Varför Wexoe&quot; om inga success cases är valda.
-      </p>
     </>
   );
 }

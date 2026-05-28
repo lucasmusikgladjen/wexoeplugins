@@ -5,13 +5,6 @@ import { Field } from '@/components/shared/fields';
 import RepeaterCard from '@/components/shared/RepeaterCard';
 import type { SectionEditorProps } from '@/lib/page-types/types';
 
-/**
- * FAQ-poster. Lagras i Airtable som JSON-string `[{question, answer}, ...]`
- * — buildern håller den strukturerade arrayen och Claude-transformen
- * serialiserar vid spar. `clientId` skickas aldrig till Airtable.
- *
- * Tomma question:s filtreras bort av Claude (matchar pluginets parse-logik).
- */
 export default function FaqEditor({ state, onChange }: SectionEditorProps<PartnerPageState>) {
   const set = <K extends keyof PartnerPageState>(key: K, value: PartnerPageState[K]) =>
     onChange({ ...state, [key]: value });
@@ -67,7 +60,6 @@ export default function FaqEditor({ state, onChange }: SectionEditorProps<Partne
               value={faq.answer}
               onChange={(v) => patchFaq(i, { answer: v })}
               rows={5}
-              hint="Markdown — **bold**, *italic*, [länk](url), - listor."
               placeholder="Svaret på frågan…"
             />
           </RepeaterCard>
