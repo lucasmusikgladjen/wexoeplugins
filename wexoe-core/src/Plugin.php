@@ -40,6 +40,9 @@ class Plugin {
         add_action('rest_api_init', [RestApi::class, 'register_routes']);
         add_action('rest_api_init', [EntityRestApi::class, 'register_routes']);
         add_action('init', [ContactForm\Handler::class, 'register']);
+        // FAS 4: delade design-tokens (:root-variabler ur grafisk profil) +
+        // scoped bas-stylesheet, enqueue:at på front-end. Additivt.
+        DesignTokens::register();
         if (is_admin()) {
             Admin\Page::instance()->register();
             Admin\CacheTools::instance()->register();

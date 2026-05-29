@@ -1,0 +1,76 @@
+/*
+ * Wexoe delad bas-stylesheet (ARKITEKTURPLAN FAS 4).
+ *
+ * SCOPED till `.wexoe-block` — rör aldrig Enfold-temat globalt. Feature-plugins
+ * wrappar sin render i `.wexoe-block` och refererar `var(--wexoe-*)`-tokens
+ * (satta av DesignTokens i <head>) + klasserna nedan i stället för att inline:a
+ * egen box-model/färg/formulär-CSS. Migreras in plugin för plugin.
+ *
+ * Alla var() har inline-fallback så stylesheeten fungerar även om token-blocket
+ * saknas (ingen grafisk profil).
+ */
+
+.wexoe-block,
+.wexoe-block *,
+.wexoe-block *::before,
+.wexoe-block *::after {
+  box-sizing: border-box;
+}
+
+.wexoe-block {
+  font-family: var(--wexoe-font-body, inherit);
+  color: var(--wexoe-color-text, #11325d);
+}
+
+.wexoe-block h1,
+.wexoe-block h2,
+.wexoe-block h3,
+.wexoe-block h4 {
+  font-family: var(--wexoe-font-heading, inherit);
+  color: var(--wexoe-color-primary, #11325d);
+}
+
+.wexoe-block a {
+  color: var(--wexoe-color-primary, #11325d);
+}
+
+/* ── Delade formulärkontroller (opt-in via klasserna) ───────────────────── */
+
+.wexoe-block .wexoe-input,
+.wexoe-block .wexoe-textarea,
+.wexoe-block .wexoe-select {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #d1d8e0;
+  border-radius: 2px;
+  font: inherit;
+  color: var(--wexoe-color-text, #11325d);
+  background: #fff;
+}
+
+.wexoe-block .wexoe-input:focus,
+.wexoe-block .wexoe-textarea:focus,
+.wexoe-block .wexoe-select:focus {
+  outline: none;
+  border-color: var(--wexoe-color-primary, #11325d);
+}
+
+.wexoe-block .wexoe-btn {
+  display: inline-block;
+  padding: 0.7rem 1.25rem;
+  border: 0;
+  border-radius: 2px;
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  background: var(--wexoe-color-accent, #f28c28);
+  color: #fff;
+  text-decoration: none;
+}
+
+.wexoe-block .wexoe-btn--secondary {
+  background: transparent;
+  color: var(--wexoe-color-primary, #11325d);
+  border: 1px solid var(--wexoe-color-primary, #11325d);
+}
