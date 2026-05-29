@@ -110,7 +110,7 @@ return function ($section, $page, $ctx) {
                         $result = (string) ($case['card_result'] ?? '');
                         $industry = (string) ($case['card_industry'] ?? '');
                         $image = (string) ($case['card_image_url'] ?? '');
-                        $href = !empty($case['legacy_external_url']) ? (string) $case['legacy_external_url'] : ('/' . ($case['slug'] ?? ''));
+                        $href = \Wexoe\Core\Helpers\Permalink::for_record('case_pages', $case);
                         // Samla partner-namn (kan vara flera).
                         $partner_names = [];
                         if (!empty($case['partner_ids']) && is_array($case['partner_ids'])) {

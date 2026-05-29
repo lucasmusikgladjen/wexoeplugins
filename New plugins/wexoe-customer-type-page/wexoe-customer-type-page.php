@@ -49,17 +49,11 @@ class Wexoe_Customer_Type_Page {
     }
 
     /**
-     * Returnera "Läs mer"-URL för ett case. Preferensordning:
-     *   1. legacy_external_url (för cases utan dedikerad full-page i WP)
-     *   2. /case/{slug} (när full-page-pluginet finns på plats)
-     *   3. '#' (inget visningsbart)
+     * Returnera "Läs mer"-URL för ett case via den centrala permalink-tjänsten
+     * (legacy_external_url-override, annars /case/<slug>/ med ev. landsprefix).
      */
     private function case_link_url($case) {
-        $legacy = isset($case['legacy_external_url']) ? trim((string) $case['legacy_external_url']) : '';
-        if ($legacy !== '') return $legacy;
-        $slug = isset($case['slug']) ? trim((string) $case['slug']) : '';
-        if ($slug !== '') return '/case/' . rawurlencode($slug) . '/';
-        return '';
+        return \Wexoe\Core\Helpers\Permalink::for_record('case_pages', $case);
     }
 
     /** Hämta alla aktiva cases för en customer_type_page i ordningsföljd. */

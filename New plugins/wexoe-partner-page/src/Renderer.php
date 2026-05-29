@@ -479,8 +479,7 @@ class Renderer {
         $image       = trim((string) ($case['lead_image_url'] ?? ''));
         $title       = trim((string) ($case['title'] ?? ''));
         $description = trim((string) ($case['subtitle'] ?? ''));
-        $case_slug   = trim((string) ($case['slug'] ?? ''));
-        $link_url    = $case_slug !== '' ? '/case/' . rawurlencode($case_slug) . '/' : '';
+        $link_url    = \Wexoe\Core\Helpers\Permalink::for_record('cases', $case);
         $link_text   = 'Läs case';
 
         if ($title === '' && $image === '' && $description === '') return '';
