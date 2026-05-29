@@ -185,6 +185,7 @@ För riktiga sidor är detta för fattigt — då går vi via page-types-ramverk
 
 ## 9. Vart pekar resten?
 
+- `ARKITEKTURPLAN.md` (denna mapp) — den kanoniska, framåtblickande arkitektur-refaktorn (modularisering: single-source-schema, deterministisk save, delade block). Spegelidentisk i `wexoeplugins/`. Arbeta mot den och bocka av progress.
 - `NEW_PAGE_TYPE.md` (denna mapp) — recept för att lägga till en ny sidtyp i buildern. Pair-läs med samma fil i `wexoeplugins/`.
 - `wexoeplugins/UTVECKLINGSGUIDE.md` — fullständig referens för Core-API, schemaformat, plugin-konventioner.
 - `wexoeplugins/NEW_PAGE_TYPE.md` — plugin-sidans recept för samma flöde.
