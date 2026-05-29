@@ -23,7 +23,7 @@ import {
 } from '../airtable';
 import { PA_TABLE_IDS, PA_BASE_ID } from '../product-area-mapper';
 import { NormalSection, ProductAreaState } from '../product-area-types';
-import { transformProductArea } from '../claude-transform';
+import { buildProductAreaTransform } from '../deterministic-transform';
 import { contactFieldsEmpty, resolveDefaultCoworker } from '../default-coworker';
 import type { RelationSyncResult } from './types';
 
@@ -81,12 +81,6 @@ async function loadExistingPa(
   };
 }
 
-function requireAnthropicKey(): string {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) throw new Error('ANTHROPIC_API_KEY ej konfigurerad.');
-  return key;
-}
-
 // ─── Create ────────────────────────────────────────────────────────────────
 
 export async function productAreaCreate(
@@ -94,7 +88,6 @@ export async function productAreaCreate(
   ctx: { apiKey: string },
 ): Promise<Result> {
   const airtableKey = ctx.apiKey;
-  const anthropicKey = requireAnthropicKey();
 
   // Default-coworker injection: om alla contact_*-fält är tomma, slå upp
   // första aktiva coworker från SSOT och förfyll.
@@ -116,7 +109,7 @@ export async function productAreaCreate(
     }
   }
 
-  const transformed = await transformProductArea(anthropicKey, workingState, 'create');
+  const transformed = buildProductAreaTransform(workingState, 'create');
 
   const productsResult = emptyRelationResult();
   const solutionsResult = emptyRelationResult();
@@ -199,13 +192,12 @@ export async function productAreaUpdate(
   ctx: { apiKey: string },
 ): Promise<{ relations: Record<string, RelationSyncResult> }> {
   const airtableKey = ctx.apiKey;
-  const anthropicKey = requireAnthropicKey();
 
   const existingPa = await loadExistingPa(airtableKey, recordId);
   const existingProductIds = new Set(existingPa.productIds);
   const existingSolutionIds = new Set(existingPa.solutionIds);
 
-  const transformed = await transformProductArea(anthropicKey, state, 'update');
+  const transformed = buildProductAreaTransform(state, 'update');
 
   // VIKTIGT: products och solutions är *delade* linkade records. Att ta
   // bort från state UN-LINKAR från denna PA (parent-array uppdateras

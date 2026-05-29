@@ -8,9 +8,11 @@
  *
  *   - `mode` / `recordId` — meta (inte Airtable-fält).
  *   - `showValue` — beräknad UI-flagga (om något value/benefit-fält har innehåll).
- *   - `contactForm` — nästlat block; sätts via `contactFormFromFields`
- *     (blir ett eget block-schema i FAS 3). De 14 `contact_form_*`-fälten är
- *     `block`-flaggade i JSON och hoppas därför över av `stateFromRecord`.
+ *   - `contactForm` — nästlat delat block; sätts via `contactFormFromFields`,
+ *     som i FAS 3 föredrar JSON-spegeln `contact_form_json` och annars faller
+ *     tillbaka på de flata fälten. De 14 `contact_form_*`-fälten + JSON-kolumnen
+ *     är `block`/`php_only`-flaggade i schemat och hoppas därför över av
+ *     `stateFromRecord` (blocket hanteras separat).
  *
  * `stat_number` lagras som number i Airtable men redigeras som sträng i state —
  * det styrs av `builder_as: "string"` i schemat (ingen specialkod här).
@@ -21,8 +23,9 @@
 
 import { AirtableRecord, BASE_ID } from './airtable';
 import { CustomerTypePageState } from './customer-type-types';
-import { contactFormFromFields } from './contact-form-mapper';
+import { contactFormFromFields, contactFormToFields } from './contact-form-mapper';
 import { stateFromRecord } from './schema/to-state';
+import { toFields, WriteMode } from './schema/to-fields';
 import { EntitySchema } from './schema/entity-schema';
 import schemaJson from '@/schema/cms_customer_type_pages.json';
 
@@ -57,4 +60,30 @@ export function customerTypePageStateFromRecord(
     showValue,
     contactForm: contactFormFromFields(record.fields, 'snake_case'),
   } as unknown as CustomerTypePageState;
+}
+
+/**
+ * state → Airtable-fält, DETERMINISTISKT (FAS 2 — ersätter Claude på save).
+ *
+ * Skalär-/numeriska fält härleds generiskt ur schemat (mode-medvetet); det
+ * delade kontaktformuläret skrivs via `contactFormToFields`. `case_ids`,
+ * `country_ids`, `customer_type_ids` och `internal_notes` skrivs aldrig av
+ * buildern (read-only/PHP-only) — de utelämnas.
+ */
+export function customerTypeToFields(
+  state: CustomerTypePageState,
+  mode: WriteMode,
+): Record<string, unknown> {
+  const scalar = toFields(
+    state as unknown as Record<string, unknown>,
+    customerTypeSchema,
+    mode,
+    { omit: ['case_ids'] }, // länkas i Airtable, read-only i buildern
+  );
+  const contact = contactFormToFields(state.contactForm, {
+    schema: 'snake_case',
+    nullForEmpty: mode === 'update',
+    emitJson: true, // FAS 3: dual-write JSON-spegeln (flata fält kvar som SoT)
+  });
+  return { ...scalar, ...contact };
 }

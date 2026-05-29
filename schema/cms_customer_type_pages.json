@@ -45,6 +45,7 @@
     "contact_form_cta_text":             { "type": "text",  "block": "contact_form" },
     "contact_form_message_label":        { "type": "text",  "block": "contact_form" },
     "contact_form_trust_signals":        { "type": "lines", "block": "contact_form" },
-    "contact_form_show_contact_person":  { "type": "bool",  "block": "contact_form" }
+    "contact_form_show_contact_person":  { "type": "bool",  "block": "contact_form" },
+    "contact_form_json":                 { "type": "text",  "block": "contact_form" }
   }
 }

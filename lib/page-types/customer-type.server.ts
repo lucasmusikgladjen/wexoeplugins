@@ -1,13 +1,11 @@
 /**
  * Customer-type-page — server-side sidtypsdefinition (Lager 3).
  *
- * Lager 3 + Claude-transform: state → Airtable-fält går alltid via Claude
- * (`transformCustomerType`), inte en handskriven mapper. Det matchar
- * konventionen för alla nya sidtyper.
- *
- * Schemat är flatt (en tabell, inga child-records) men Claude-mellanlaget
- * gör det enkelt att lägga till nya format-regler eller fält utan att
- * röra TypeScript-mappers.
+ * FAS 2: skrivvägen är DETERMINISTISK — `customerTypeToFields(state, mode)`
+ * producerar Airtable-fälten direkt ur state + JSON-schemat. Inga
+ * Anthropic-anrop, ingen latens, ingen risk att Claude tappar innehåll.
+ * Schemat är flatt (en tabell, inga child-records); read och write delar
+ * samma `schema/cms_customer_type_pages.json`.
  */
 
 import { AirtableRecord } from '../airtable';
@@ -16,11 +14,11 @@ import {
   CUSTOMER_TYPE_TABLE_IDS,
   CUSTOMER_TYPE_BASE_ID,
   customerTypePageStateFromRecord,
+  customerTypeToFields,
 } from '../customer-type-mapper';
 import { loadCustomerTypePageState } from '../customer-type-loader';
 import { CustomerTypePageState, emptyCustomerTypePageState } from '../customer-type-types';
 import { CUSTOMER_TYPE_PAGE_ENTITIES } from '../wexoe-cache';
-import { transformCustomerType } from '../claude-transform';
 import type { PageTypeServerDef } from './types';
 
 export interface CustomerTypePageListItem {
@@ -30,22 +28,17 @@ export interface CustomerTypePageListItem {
   h1: string;
 }
 
-function requireAnthropicKey(): string {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) throw new Error('ANTHROPIC_API_KEY ej konfigurerad.');
-  return key;
-}
-
+// FAS 2: deterministisk skrivväg — inga Anthropic-anrop. `customerTypeToFields`
+// producerar Airtable-fälten direkt ur state + schema.
 async function customerTypeCreate(
   state: CustomerTypePageState,
   ctx: { apiKey: string },
 ): Promise<{ recordId: string }> {
-  const anthropicKey = requireAnthropicKey();
-  const { customerTypePage } = await transformCustomerType(anthropicKey, state, 'create');
+  const fields = customerTypeToFields(state, 'create');
   const created = await createRecord(
     ctx.apiKey,
     CUSTOMER_TYPE_TABLE_IDS.customerTypePages,
-    customerTypePage,
+    fields,
     CUSTOMER_TYPE_BASE_ID,
   );
   return { recordId: created.id };
@@ -56,13 +49,12 @@ async function customerTypeUpdate(
   state: CustomerTypePageState,
   ctx: { apiKey: string },
 ): Promise<{ relations: Record<string, never> }> {
-  const anthropicKey = requireAnthropicKey();
-  const { customerTypePage } = await transformCustomerType(anthropicKey, state, 'update');
+  const fields = customerTypeToFields(state, 'update');
   await updateRecord(
     ctx.apiKey,
     CUSTOMER_TYPE_TABLE_IDS.customerTypePages,
     recordId,
-    customerTypePage,
+    fields,
     CUSTOMER_TYPE_BASE_ID,
   );
   return { relations: {} };
