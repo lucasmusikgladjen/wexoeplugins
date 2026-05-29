@@ -24,9 +24,15 @@ import {
   CASE_GALLERY_MAX,
 } from './case-types';
 import { ProductAreaState, LinkedProduct, LinkedSolution } from './product-area-types';
+import { PageState, Tab } from './types';
 import { contactFormToFields } from './contact-form-mapper';
 import type { WriteMode } from './schema/to-fields';
-import type { PaTransformResult } from './claude-transform';
+import type {
+  PaTransformResult,
+  LpTransformResult,
+  LpTransformTab,
+  LpTransformDownload,
+} from './claude-transform';
 
 type Out = Record<string, unknown>;
 
@@ -399,4 +405,180 @@ export function buildProductAreaTransform(
       fields: buildPaSolutionFields(s, i, mode),
     })),
   };
+}
+
+// ─── Landing Page (multi-record: polymorfa tabs + downloads) ───────────────
+//
+// Returnerar samma { landingPage, tabs[], downloads[] }-shape som
+// transformLandingPage (LpTransformResult). publish-routen äger child-diffing,
+// landing_page_ids/tab_ids-länkning och clearsForTabType/clearsForSidebarType.
+
+/** Computed multiline-fält: CREATE utelämnar tomt, UPDATE skickar '' (rensar). */
+function putComputed(out: Out, key: string, s: string, mode: WriteMode): void {
+  if (mode === 'update') out[key] = s;
+  else if (s !== '') out[key] = s;
+}
+
+function faqItemsToString(items: Tab['faqItems']): string {
+  // En FAQ-rad kräver en fråga (rubriken); rader utan fråga droppas.
+  return items
+    .filter((f) => (f.question ?? '').trim() !== '')
+    .map((f) => `Q: ${f.question ?? ''}\nA: ${f.answer ?? ''}`)
+    .join('\n\n');
+}
+
+function compareRowsToString(rows: Tab['compareRows']): string {
+  return rows
+    .filter((r) => (r.label ?? '') !== '' || (r.valueA ?? '') !== '' || (r.valueB ?? '') !== '')
+    .map((r) => `${r.label ?? ''} | ${r.valueA ?? ''} | ${r.valueB ?? ''}`)
+    .join('\n');
+}
+
+function stepsToString(items: Tab['stepsItems']): string {
+  return items
+    .filter((s) => (s.title ?? '') !== '' || (s.description ?? '') !== '')
+    .map((s) => `${s.title ?? ''} | ${s.description ?? ''}`)
+    .join('\n');
+}
+
+function buildLpParentFields(state: PageState, mode: WriteMode): Out {
+  const o: Out = {};
+  putText(o, 'slug', state.slug, mode);
+  putText(o, 'h1', state.h1, mode);
+  putText(o, 'hero_description', state.heroDescription, mode);
+  putText(o, 'hero_image_url', state.heroImage, mode);
+  putText(o, 'hero_cta_text', state.heroCta1Text, mode);
+  putText(o, 'hero_cta_url', state.heroCta1Url, mode);
+  putText(o, 'hero_cta2_text', state.heroCta2Text, mode);
+  putText(o, 'hero_cta2_url', state.heroCta2Url, mode);
+  putText(o, 'content_h2', state.contentH2, mode);
+  putText(o, 'content_text', state.contentText, mode);
+  putText(o, 'content_benefits', state.contentBenefits, mode);
+
+  // sidebar_type är singleSelect → tom sträng skulle skapa ogiltig option.
+  // Sätt värdet om valt; rensa med null vid UPDATE; utelämna vid CREATE.
+  if (state.sidebarType) o['sidebar_type'] = state.sidebarType;
+  else if (mode === 'update') o['sidebar_type'] = null;
+
+  putText(o, 'contact_name', state.contactName, mode);
+  putText(o, 'contact_title', state.contactTitle, mode);
+  putText(o, 'contact_email', state.contactEmail, mode);
+  putText(o, 'contact_phone', state.contactPhone, mode);
+  putText(o, 'contact_image_url', state.contactImage, mode);
+  putText(o, 'contact_quote', state.contactQuote, mode);
+  putText(o, 'color_main', state.colorMain, mode);
+  putText(o, 'color_secondary', state.colorSecondary, mode);
+
+  putBool(o, 'show_content', state.showContent);
+  putBool(o, 'show_sidebar', state.showSidebar);
+  putBool(o, 'show_tabs', state.showTabs);
+  putBool(o, 'show_contact', state.showContact);
+
+  // Sidebar — endast aktiv typ (routen rensar övriga via clearsForSidebarType).
+  switch (state.sidebarType) {
+    case 'case':
+      putText(o, 'case_title', state.caseTitle, mode);
+      putText(o, 'case_description', state.caseDescription, mode);
+      putText(o, 'case_image_url', state.caseImage, mode);
+      putText(o, 'case_outcomes', state.caseOutcomes, mode);
+      putText(o, 'case_cta_text', state.caseCta, mode);
+      putText(o, 'case_cta_url', state.caseCtaUrl, mode);
+      break;
+    case 'event':
+      putText(o, 'event_type', state.eventType, mode);
+      putText(o, 'event_title', state.eventTitle, mode);
+      putText(o, 'event_description', state.eventDescription, mode);
+      putText(o, 'event_date', state.eventDate, mode);
+      putText(o, 'event_location', state.eventLocation, mode);
+      putText(o, 'event_webhook', state.eventWebhook, mode);
+      break;
+    case 'leadmagnet':
+      putText(o, 'magnet_title', state.magnetTitle, mode);
+      putText(o, 'magnet_format', state.magnetFormat, mode);
+      putText(o, 'magnet_description', state.magnetDescription, mode);
+      putText(o, 'magnet_file_url', state.magnetFileUrl, mode);
+      putText(o, 'magnet_webhook', state.magnetWebhook, mode);
+      break;
+    case 'calculator':
+      putText(o, 'calc_title', state.calcTitle, mode);
+      putText(o, 'calc_html', state.calcHtml, mode);
+      break;
+  }
+
+  putBool(o, 'show_contact_form', state.showContactForm);
+  Object.assign(
+    o,
+    contactFormToFields(state.contactForm, { schema: 'snake_case', nullForEmpty: mode === 'update' }),
+  );
+  return o;
+}
+
+function buildLpTabFields(tab: Tab, index: number, mode: WriteMode): Out {
+  // name/tab_type/order/is_active måste alltid finnas (backend korrelerar på dem).
+  const o: Out = { name: tab.name ?? '', tab_type: tab.type, order: index + 1, is_active: true };
+  switch (tab.type) {
+    case 'textimage':
+      putText(o, 'ti_h2', tab.tiH2, mode);
+      putText(o, 'ti_text', tab.tiText, mode);
+      putText(o, 'ti_benefits', tab.tiBenefits, mode);
+      putText(o, 'ti_image_url', tab.tiImage, mode);
+      putBool(o, 'ti_inverted', tab.tiInverted);
+      break;
+    case 'fullmedia':
+      putText(o, 'fm_url', tab.fmUrl, mode);
+      break;
+    case 'faq':
+      putComputed(o, 'faq_items', faqItemsToString(tab.faqItems), mode);
+      break;
+    case 'calameo':
+      putText(o, 'calameo_1_title', tab.calTitle1, mode);
+      putText(o, 'calameo_1_src', tab.calUrl1, mode);
+      putText(o, 'calameo_2_title', tab.calTitle2, mode);
+      putText(o, 'calameo_2_src', tab.calUrl2, mode);
+      putText(o, 'calameo_3_title', tab.calTitle3, mode);
+      putText(o, 'calameo_3_src', tab.calUrl3, mode);
+      break;
+    case 'compare':
+      putText(o, 'compare_title', tab.compareTitle, mode);
+      putText(o, 'compare_col_a', tab.compareColA, mode);
+      putText(o, 'compare_col_b', tab.compareColB, mode);
+      putComputed(o, 'compare_rows', compareRowsToString(tab.compareRows), mode);
+      break;
+    case 'steps':
+      putText(o, 'steps_title', tab.stepsTitle, mode);
+      putComputed(o, 'steps', stepsToString(tab.stepsItems), mode);
+      break;
+    case 'downloads':
+      // Inga tab-fält — downloads är separata records (se nedan).
+      break;
+  }
+  return o;
+}
+
+export function buildLandingTransform(state: PageState, mode: WriteMode): LpTransformResult {
+  const tabs: LpTransformTab[] = state.tabs.map((tab, i) => ({
+    _clientIndex: i,
+    _recordId: tab.recordId ?? null,
+    fields: buildLpTabFields(tab, i, mode),
+  }));
+
+  const downloads: LpTransformDownload[] = [];
+  state.tabs.forEach((tab, tabIndex) => {
+    if (tab.type !== 'downloads') return;
+    tab.downloads.forEach((dl, dlIndex) => {
+      const fields: Out = { order: dlIndex + 1, is_active: true };
+      putText(fields, 'name', dl.name, mode);
+      putText(fields, 'description', dl.description, mode);
+      putText(fields, 'file_url', dl.fileUrl, mode);
+      putText(fields, 'button_text', dl.fileType, mode);
+      downloads.push({
+        _clientIndex: dlIndex,
+        _tabClientIndex: tabIndex,
+        _recordId: dl.recordId ?? null,
+        fields,
+      });
+    });
+  });
+
+  return { landingPage: buildLpParentFields(state, mode), tabs, downloads };
 }
