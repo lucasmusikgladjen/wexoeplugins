@@ -1,0 +1,178 @@
+diff --git a/app/api/copy/route.ts b/app/api/copy/route.ts
+--- a/app/api/copy/route.ts
++++ b/app/api/copy/route.ts
+@@ -28,6 +28,24 @@ const LANDING_TABLE_IDS = AIRTABLE_FAMILIES.landing.tables;
+ const LP_FIELDS_TO_DROP = new Set(['tab_ids']);
+ const TAB_FIELDS_TO_DROP = new Set(['landing_page_ids', 'download_ids']);
+ const DOWNLOAD_FIELDS_TO_DROP = new Set(['tab_ids']);
++const PA_FIELDS_TO_DROP = new Set([
++  // Owned section links are rebuilt from freshly copied section records below.
++  'section_ids',
++]);
++const PA_SECTION_FIELDS_TO_DROP = new Set([
++  // Managed backlink to cms_product_pages. Copying it would attach cloned
++  // sections to the source Product Area and mutate the original relation graph.
++  'product_page_ids',
++  // Defensive aliases for older experiments/renames; harmless when absent.
++  'product_area_ids',
++  'product_ids',
++  'page_ids',
++  // Airtable computed/audit fields must never be written back on create.
++  'created_at',
++  'updated_at',
++  'created_by',
++  'last_modified_at',
++  'last_modified_by',
++]);
+@@ -204,13 +222,14 @@ async function copyProductArea(
+     });
+     sections.sort((a, b) => ((a.fields.order as number) ?? 0) - ((b.fields.order as number) ?? 0));
+     for (const section of sections) {
++      const sectionFields = strip(section.fields, PA_SECTION_FIELDS_TO_DROP);
+       const createdSection = await createRecord(
+         apiKey,
+         PA_TABLE_IDS.productPageSections,
+-        { ...section.fields },
++        sectionFields,
+         PA_BASE_ID,
+       );
+       newSectionIds.push(createdSection.id);
+@@ -220,7 +239,7 @@ async function copyProductArea(
+ 
+   // Product/Solution records are shared by reference. Owned sections are
+   // rewired to the freshly-created copies above.
+-  const fields: Record<string, unknown> = { ...source.fields };
++  const fields = strip(source.fields, PA_FIELDS_TO_DROP);
+   fields.name = newName;
+   fields.slug = newSlug;
+   fields.section_ids = newSectionIds;
+diff --git a/lib/page-types/landing-actions.ts b/lib/page-types/landing-actions.ts
+--- a/lib/page-types/landing-actions.ts
++++ b/lib/page-types/landing-actions.ts
+@@ -60,6 +60,30 @@ function validateDownloadRefs(args: {
+   }
+ }
++
++function collectDownloadIdsFromTabs(tabs: AirtableRecord[]): string[] {
++  const ids = new Set<string>();
++  for (const tab of tabs) {
++    const downloadIds = (tab.fields['download_ids'] as string[] | undefined) ?? [];
++    downloadIds.forEach((id) => ids.add(id));
++  }
++  return [...ids];
++}
++
++async function deleteDownloadsForTabs(args: {
++  apiKey: string;
++  tabs: AirtableRecord[];
++}): Promise<number> {
++  const downloadIds = collectDownloadIdsFromTabs(args.tabs);
++  if (downloadIds.length === 0) return 0;
++
++  await deleteRecords(
++    args.apiKey,
++    LANDING_TABLE_IDS.landingPageDownloads,
++    downloadIds,
++    LANDING_BASE_ID,
++  );
++  return downloadIds.length;
++}
+@@ -143,6 +167,19 @@ export async function landingCreate(
+   }
+ 
+   const transformed = await transformLandingPage(anthropicKey, state, 'create');
++
++  const sortedTabs = [...transformed.tabs].sort(
++    (a, b) => (a._clientIndex ?? 0) - (b._clientIndex ?? 0),
++  );
++  const pendingTabIdByClientIndex: Record<number, string> = {};
++  for (const tab of sortedTabs) pendingTabIdByClientIndex[tab._clientIndex] = '__pending__';
++  validateDownloadRefs({
++    downloads: transformed.downloads,
++    tabIdByClientIndex: pendingTabIdByClientIndex,
++    recordId: 'pending',
++    context: 'create',
++  });
++
+   const lp = await createRecord(
+     ctx.apiKey,
+     LANDING_TABLE_IDS.landingPages,
+@@ -152,12 +189,7 @@ export async function landingCreate(
+     LANDING_BASE_ID,
+   );
+ 
+-  const sortedTabs = [...transformed.tabs].sort(
+-    (a, b) => (a._clientIndex ?? 0) - (b._clientIndex ?? 0),
+-  );
+-
+   const tabIdByClientIndex: Record<number, string> = {};
+-
+   if (sortedTabs.length > 0) {
+     const createdTabs = await createRecords(
+       ctx.apiKey,
+@@ -185,13 +217,6 @@ export async function landingCreate(
+ 
+   let downloadCount = 0;
+   if (transformed.downloads.length > 0) {
+-    validateDownloadRefs({
+-      downloads: transformed.downloads,
+-      tabIdByClientIndex,
+-      recordId: lp.id,
+-      context: 'create',
+-    });
+-
+     const sortedDownloads = [...transformed.downloads].sort((a, b) => {
+       if (a._tabClientIndex !== b._tabClientIndex) return a._tabClientIndex - b._tabClientIndex;
+       return (a._clientIndex ?? 0) - (b._clientIndex ?? 0);
+@@ -272,10 +297,20 @@ export async function landingUpdate(
+ 
+   }
+ 
++  let downloadsCreated = 0;
++  let downloadsUpdated = 0;
++  let downloadsDeleted = 0;
++
+   const tabIdsToDelete = existingTabIds.filter((id) => !stateTabRecordIds.has(id));
+ 
+   if (tabIdsToDelete.length > 0) {
++    const tabsBeingDeleted = tabIdsToDelete
++      .map((id) => existingTabsById.get(id))
++      .filter((tab): tab is AirtableRecord => !!tab);
++    downloadsDeleted += await deleteDownloadsForTabs({
++      apiKey: ctx.apiKey,
++      tabs: tabsBeingDeleted,
++    });
+     await deleteRecords(ctx.apiKey, LANDING_TABLE_IDS.landingPageTabs, tabIdsToDelete, LANDING_BASE_ID);
+   }
+@@ -307,10 +342,6 @@ export async function landingUpdate(
+     });
+   }
+ 
+-  let downloadsCreated = 0;
+-  let downloadsUpdated = 0;
+-  let downloadsDeleted = 0;
+-
+   if (transformed.downloads.length > 0) {
+     validateDownloadRefs({
+       downloads: transformed.downloads,
+@@ -339,6 +370,8 @@ export async function landingUpdate(
+     const existingDlIds: string[] =
+       (existingTabRecord?.fields['download_ids'] as string[] | undefined) ?? [];
+ 
++    // Downloads belonging to tabs deleted above were already removed and counted.
++    // Only diff downloads for surviving tabs here.
+     const stateDlRecordIds = new Set(
+       stateTab.downloads.map((d) => d.recordId).filter((id): id is string => !!id),
+     );
+@@ -417,10 +450,7 @@ export async function landingDelete(recordId: string, ctx: { apiKey: string }): Promise<void> {
+       fields: ['download_ids'],
+     });
+ 
+-    for (const tab of tabs) {
+-      const ids = (tab.fields['download_ids'] as string[] | undefined) ?? [];
+-      ids.forEach((id) => downloadIds.add(id));
+-    }
++    collectDownloadIdsFromTabs(tabs).forEach((id) => downloadIds.add(id));
+   }
+ 
+   if (downloadIds.size > 0) {
