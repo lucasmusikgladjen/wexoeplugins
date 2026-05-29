@@ -345,7 +345,7 @@ function wexoe_lp_test_render_tab_textimage($tab, $id) {
     $h2 = wexoe_lp_test_field($tab, 'ti_h2', '');
     $text = wexoe_lp_test_field($tab, 'ti_text', '');
     $benefits = wexoe_lp_test_lines_to_array(wexoe_lp_test_field($tab, 'ti_benefits', ''));
-    $image = wexoe_lp_test_field($tab, 'ti_image', '');
+    $image = wexoe_lp_test_field($tab, 'ti_image_url', '');
     $inverted = !empty($tab['ti_inverted']);
 
     $html = '<div class="wexoe-lp-tab-textimg'.($inverted ? ' wexoe-lp-tab-textimg-inv' : '').'">';
@@ -914,7 +914,7 @@ function wexoe_landing_page_test_shortcode($atts) {
     $tab_ids = wexoe_lp_test_get_ids($data, 'tab_ids');
     $all_tabs = $tabs_repo->find_by_ids($tab_ids);
     $all_tabs = array_filter($all_tabs, function($tab) {
-        return !empty($tab['visa']);
+        return !empty($tab['is_active']);
     });
     usort($all_tabs, function($a, $b) {
         return ($a['order'] ?? 999) <=> ($b['order'] ?? 999);
