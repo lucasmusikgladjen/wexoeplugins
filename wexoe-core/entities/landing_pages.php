@@ -51,13 +51,10 @@ return [
         // Sidebar type
         'sidebar_type' => 'sidebar_type',
 
-        // Sidebar: case
-        'case_title' => 'case_title',
-        'case_description' => 'case_description',
-        'case_image_url' => 'case_image_url',
-        'case_outcomes' => ['source' => 'case_outcomes', 'type' => 'lines'],
-        'case_cta_text' => 'case_cta_text',
-        'case_cta_url' => 'case_cta_url',
+        // Sidebar: case — länk till ETT kundcase (cms_cases). Renderaren läser
+        // kort-lagret (card_*) + permalink från det länkade caset. Ersätter de
+        // gamla inline-fälten case_title/description/image_url/outcomes/cta_*.
+        'case_id' => ['source' => 'case_id', 'type' => 'link', 'entity' => 'cms_cases'],
 
         // Sidebar: calculator
         'calc_title' => 'calc_title',

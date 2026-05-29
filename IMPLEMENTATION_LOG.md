@@ -8,6 +8,35 @@ Detta dokument loggar varje konkret åtgärd som tas under implementationen av p
 
 ---
 
+## PR 3 — LP case-sidebar: inline-kort → länk till `cms_cases` (2026-05-29)
+
+**Branch (båda repon):** `claude/migrate-lp-case-cards` (PR-bas: `claude/ecstatic-heisenberg-IG3SH`, stackad ovanpå PR 2)
+**Bakgrund:** `cms_landing_pages` hade ett inline case-kort i sidebaren (`sidebar_type=case`) via 6 fält (`case_title/description/image_url/outcomes/cta_text/cta_url`). Dessa duplicerade case-innehåll som hör hemma i `cms_cases`. Migrerat till en enkellänk `case_id → cms_cases`; renderaren läser kort-lagret (card_*) + permalink från det länkade caset. (`cms_pages` har inget inline case-kort — dess `case_grid`-sektion länkar redan `cms_cases` sedan PR 2.)
+
+### Airtable-mutationer (`Wexoe NY` `appokKSTaBdCa8YiW`)
+- Nytt fält `cms_landing_pages.case_id` (fld3rsa8JLWB0cnL0) → `cms_cases`. Reciprok på cms_cases omdöpt till `landing_page_ids` (fldm0ELdfqPFTyYG6).
+- Nytt `cms_cases`-record för optix-LP-kortet: **recjm5YI1fZoOlzQc** (slug `hax-optix-stillestand`, "HAX kortade stillestånd med Optix"; card_* + legacy_external_url=wexoe.se/kontakt + country=SE + partner=Rockwell).
+- Länkar satta: LP `fjarraccess` (recfiEj26hn3sqUNa) → befintliga `maskinbyggare-fjarraccess` (recnCOqP9AA8iDAHL, identiskt kort); LP `optix` (recWFhYs7lQi66lFE) → nya recjm5YI1fZoOlzQc.
+- LP `test123` (recIFNbx7Qjqzb8Ow) + `optixtest` (recScuIRiWq4GyWx4): **hoppade över** (testdata/lorem) — case_id lämnat tomt per användarbeslut.
+
+### Kod — `wexoeplugins`
+- `entities/landing_pages.php`: inline `case_*` ersatta med `case_id` (link → cms_cases).
+- `wexoe-landing-page.php`: `wexoe_lp_test_render_sidebar_case()` laddar nu caset via `case_id` (ny helper `wexoe_lp_test_load_case`) och renderar card_title/description/result/image + `Permalink::for_record('cms_cases', …)`. `php -l` rent.
+
+### Kod — `wexoebuilder`
+- `types.ts`/`state.ts`: 6 case-fält → `caseId`. `page-mapper.ts`: `caseId` ← `linkedIds(f,'case_id')[0]`.
+- `claude-transform.ts`: case-payloadblocket borttaget; `LP_SIDEBAR_CASE_FIELDS = []` (case_id är backend-hanterad, ej stale-clearing).
+- `app/api/publish/route.ts`: sätter `case_id` direkt vid create/update (samma mönster som `tab_ids`; töms när sidebar ≠ case).
+- `airtable-schema-lp.md`: 6 case-rader → en `case_id`-rad (backend-hanterad). `linked-sources.ts`: `cases`-pickern projicerar nu även card_*.
+- `SidebarEditor.tsx`: case-panelen är nu en case-picker (`Field.LinkedRecords` source=cases, max 1). `SidebarPreview.tsx`: renderar det länkade caset via `useLinkedRecord('cases', caseId)`.
+
+### ⚠️ Manuell TODO efter merge (MCP saknar `delete_field`)
+Radera de 6 nu oanvända inline-kolumnerna på `cms_landing_pages` i Airtable-UI:
+`case_title` (fldVBAQjbBQsoX0n9), `case_description` (fld2EPBxqV9JkZt8d), `case_image_url` (fldomUsD2WNctRkRK), `case_outcomes` (fldFuuwQWQnw609pC), `case_cta_text` (fldqGET4LcMftHaBM), `case_cta_url` (fldm1hNUPnH50p9cy).
+Koden slutar läsa/skriva dem direkt; de innehåller bara kvarvarande (delvis test-)data tills de raderas. Rensa wexoe-core-cache + re-installera plugin-zip.
+
+---
+
 ## PR 2 — Case-konsolidering: `cms_case_pages` + `cases` → `cms_cases` (2026-05-29)
 
 **Branch (båda repon):** `claude/ecstatic-heisenberg-IG3SH`

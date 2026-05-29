@@ -215,24 +215,49 @@ function wexoe_lp_test_render_content_sidebar($data, $id) {
 }
 
 function wexoe_lp_test_render_sidebar_case($data, $id) {
-    $title = wexoe_lp_test_field($data, 'case_title', '');
-    $desc = wexoe_lp_test_field($data, 'case_description', '');
-    $image = wexoe_lp_test_field($data, 'case_image_url', '');
-    $outcomes = wexoe_lp_test_lines_to_array(wexoe_lp_test_field($data, 'case_outcomes', ''));
-    $cta_text = wexoe_lp_test_field($data, 'case_cta_text', '');
-    $cta_url = wexoe_lp_test_field($data, 'case_cta_url', '');
+    // Case-sidebaren visar ETT kundcase via case_id-länken till cms_cases.
+    // Kort-lagret (card_*) + permalink hämtas från det länkade caset.
+    $case = wexoe_lp_test_load_case($data);
+    if (!$case) return '';
+
+    $title    = wexoe_lp_test_field($case, 'card_title', wexoe_lp_test_field($case, 'title', ''));
+    $desc     = wexoe_lp_test_field($case, 'card_description', '');
+    $image    = wexoe_lp_test_field($case, 'card_image_url', '');
+    $result   = wexoe_lp_test_field($case, 'card_result', '');
+    $cta_text = wexoe_lp_test_field($case, 'card_cta_text', '');
+    $cta_url  = \Wexoe\Core\Helpers\Permalink::for_record('cms_cases', $case);
 
     $html = '<div class="wexoe-lp-sb-badge wexoe-lp-sb-badge-text">KUNDCASE</div>';
     if ($title) $html .= '<h3 class="wexoe-lp-sb-title">'.esc_html($title).'</h3>';
     if ($image) $html .= '<img class="wexoe-lp-sb-case-img" src="'.esc_url($image).'" alt="'.esc_attr($title).'" loading="lazy"/>';
     if ($desc) $html .= '<div class="wexoe-lp-sb-desc">'.wexoe_lp_test_md($desc).'</div>';
-    foreach ($outcomes as $o) {
-        $html .= '<div class="wexoe-lp-sb-outcome"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#10B981" opacity="0.15"/><path d="M6 10.5L8.5 13L14 7.5" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="wexoe-lp-sb-outcome-text">'.wexoe_lp_test_md($o).'</div></div>';
+    if ($result) {
+        $html .= '<div class="wexoe-lp-sb-outcome"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#10B981" opacity="0.15"/><path d="M6 10.5L8.5 13L14 7.5" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="wexoe-lp-sb-outcome-text">'.wexoe_lp_test_md($result).'</div></div>';
     }
     if ($cta_text && $cta_url) {
         $html .= '<a href="'.esc_url($cta_url).'" class="wexoe-lp-sb-cta-link">'.esc_html($cta_text).' &rarr;</a>';
     }
     return $html;
+}
+
+/** Ladda det länkade caset (cms_cases) för en LP:s case-sidebar via case_id. */
+function wexoe_lp_test_load_case($data) {
+    if (!wexoe_lp_test_core_ready()) return null;
+    $ids = isset($data['case_id']) && is_array($data['case_id']) ? $data['case_id'] : [];
+    $rec_id = $ids[0] ?? null;
+    if (!$rec_id) return null;
+
+    $repo = \Wexoe\Core\Core::entity('cms_cases');
+    if ($repo === null) return null;
+
+    $case = method_exists($repo, 'find_by_record_id') ? $repo->find_by_record_id($rec_id) : null;
+    if ($case === null && method_exists($repo, 'all')) {
+        foreach ($repo->all() as $row) {
+            if (!empty($row['_record_id']) && $row['_record_id'] === $rec_id) { $case = $row; break; }
+        }
+    }
+    if ($case && empty($case['is_active'])) return null;
+    return $case ?: null;
 }
 
 function wexoe_lp_test_render_sidebar_calculator($data, $id) {
