@@ -51,7 +51,7 @@ Alla bild-fält är `singleLineText` med URL till WP Media Library. Inga `multip
 | `LP Tabs` (tblvecOh3rAGmw3mw) | `cms_landing_page_tabs` | 24 | Schema-utbyggnad av stub |
 | `LP Downloads` (tblbLM827DzjWGjCR) | `cms_landing_page_downloads` | 4 | Schema-utbyggnad av stub |
 | `Product Areas` (tblgatNFYFMwF4EcQ) | `cms_product_pages` + `cms_product_page_sections` | 19 | Splitta `Normal 1-4` till sub-records |
-| `Customer types` (tblvNf1CqAYEFvTpu) | `cms_customer_type_pages` + `cms_case_pages` | 9 | Splitta case-fält till egen tabell |
+| `Customer types` (tblvNf1CqAYEFvTpu) | `cms_customer_type_pages` + `cms_cases` | 9 | Splitta case-fält till egen tabell. Case-korten konsoliderades till `cms_cases` i PR 2 (var tidigare `cms_case_pages`). |
 | `Products` (tblHafyCEyh7S3Y64) | `cms_products` | ? | Bara CMS-fält; PIM-data lämnas |
 | `Articles` (tblb87eWIjnW3ttOL) | `cms_articles` | 59 | Renderings-metadata |
 | `Solutions & Concepts` (tblc98m9MJcpbWAVU) | `cms_solutions_mini` | 11 | Omdöpt |
@@ -283,10 +283,21 @@ Pillar-sidor (`automation-pillar`-fil-grupp) — befintliga sektioner räcker.
 | `benefit_1` | singleLineText | |
 | `benefit_2` | singleLineText | |
 | `benefit_3` | singleLineText | |
-| `case_ids` | multipleRecordLinks → `cms_case_pages` | |
+| `case_ids` | multipleRecordLinks → `cms_cases` | Konsoliderad i PR 2 (tidigare `cms_case_pages`). |
 | `show_contact_form` + alla `contact_form_*` | (samma som LP) | |
 
-### `cms_case_pages` (utbyggnad av stub `tbl3uMV6IpRIZeucA`)
+### `cms_case_pages` (UTFASAD — konsoliderad till `cms_cases` i PR 2)
+
+> **OBS (PR 2):** Den separata case-tabellen `cms_case_pages` (`tbl3uMV6IpRIZeucA`)
+> har slagits ihop med den rikare `cms_cases` (`tblxH3ECSMvDTYrIQ`). De 9 kort-
+> recorden migrerades dit (card_*, legacy_external_url, scope-länkar) och alla
+> konsumenter (customer_type_pages, partner_pages, case-grid, core_*-backlänkar)
+> pekar nu på `cms_cases`. Entiteterna `case_pages` och `cases` är borttagna —
+> `cms_cases` är den enda kanoniska case-entiteten. Schemat nedan är historiskt;
+> aktuellt schema finns i `wexoe-core/entities/cms_cases.php`. Se
+> `IMPLEMENTATION_LOG.md` för migrationsdetaljer och kvarvarande manuell radering.
+
+### `cms_case_pages` (historiskt schema — utbyggnad av stub `tbl3uMV6IpRIZeucA`)
 
 | Field | Type | Notering |
 |---|---|---|
@@ -567,7 +578,7 @@ Befintlig tabell — döper om alla fält från PascalCase till snake_case enlig
 
 1. SSOT-resterande data: `Partners` → `core_partners`, `Divisions` → `core_divisions`, `Coworkers` → `core_coworkers`
 2. Leaf-tabeller: `cms_articles`, `cms_landing_page_downloads`, `cms_solutions_mini`, `cms_offerings`, `cms_product_navigation`
-3. Mid-level: `cms_products` (länkar till articles), `cms_landing_page_tabs` (länkar till downloads), `cms_case_pages`
+3. Mid-level: `cms_products` (länkar till articles), `cms_landing_page_tabs` (länkar till downloads), `cms_cases`
 4. Parent-tabeller: `cms_landing_pages` (länkar till tabs), `cms_product_pages` (länkar till sections, products, solutions), `cms_customer_type_pages` (länkar till cases)
 5. Linked-record-rewiring: ersätt gamla record-IDs med nya enligt mappning
 

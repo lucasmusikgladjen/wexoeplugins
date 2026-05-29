@@ -11,8 +11,8 @@
  *
  * Konvention: snake_case överallt — passthrough.
  *
- * Cases visas i strippen via `case_ids`-länken till `cms_case_pages`. Renderaren
- * hämtar varje case via `Core::entity('case_pages')->find_by_ids($p['case_ids'])`
+ * Cases visas i strippen via `case_ids`-länken till `cms_cases`. Renderaren
+ * hämtar varje case via `Core::entity('cms_cases')->find_by_ids($p['case_ids'])`
  * och läser bara `card_*`-fält + `slug`/`legacy_external_url` för länken.
  */
 
@@ -51,8 +51,8 @@ return [
         'benefit_2' => 'benefit_2',
         'benefit_3' => 'benefit_3',
 
-        // Cases — länk till cms_case_pages
-        'case_ids' => ['source' => 'case_ids', 'type' => 'link', 'entity' => 'case_pages'],
+        // Cases — länk till cms_cases (kanonisk case-entitet)
+        'case_ids' => ['source' => 'case_ids', 'type' => 'link', 'entity' => 'cms_cases'],
 
         // Contact form
         'show_contact_form' => ['source' => 'show_contact_form', 'type' => 'bool'],

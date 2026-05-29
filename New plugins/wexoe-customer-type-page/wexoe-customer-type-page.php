@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Wexoe Customer Type Page
- * Description: Publik sida per kundtyp (installatör, OEM, panelbyggare etc.). Hero + värdeproposition + case-strip + kontaktform. Data via Wexoe Core (cms_customer_type_pages + cms_case_pages).
+ * Description: Publik sida per kundtyp (installatör, OEM, panelbyggare etc.). Hero + värdeproposition + case-strip + kontaktform. Data via Wexoe Core (cms_customer_type_pages + cms_cases).
  * Version: 3.0.0
  * Author: Wexoe
  *
@@ -53,7 +53,7 @@ class Wexoe_Customer_Type_Page {
      * (legacy_external_url-override, annars /case/<slug>/ med ev. landsprefix).
      */
     private function case_link_url($case) {
-        return \Wexoe\Core\Helpers\Permalink::for_record('case_pages', $case);
+        return \Wexoe\Core\Helpers\Permalink::for_record('cms_cases', $case);
     }
 
     /** Hämta alla aktiva cases för en customer_type_page i ordningsföljd. */
@@ -61,7 +61,7 @@ class Wexoe_Customer_Type_Page {
         if (empty($data['case_ids']) || !is_array($data['case_ids'])) return [];
         if (!wexoe_ctp_core_ready()) return [];
 
-        $repo = \Wexoe\Core\Core::entity('case_pages');
+        $repo = \Wexoe\Core\Core::entity('cms_cases');
         if ($repo === null) return [];
 
         $cases = [];
@@ -146,7 +146,7 @@ class Wexoe_Customer_Type_Page {
         $benefit_2 = $this->parse_benefit_formatting(esc_html($data['benefit_2'] ?? ''));
         $benefit_3 = $this->parse_benefit_formatting(esc_html($data['benefit_3'] ?? ''));
 
-        // Cases (multi via case_ids → case_pages)
+        // Cases (multi via case_ids → cms_cases)
         $cases = $this->load_cases($data);
 
         ob_start();

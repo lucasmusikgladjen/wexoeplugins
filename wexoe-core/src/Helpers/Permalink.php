@@ -17,8 +17,8 @@ if (!defined('ABSPATH')) {
  * bor nu här.
  *
  * Användning (feature-plugins):
- *   $url = Permalink::for_record('cases', $case);   // legacy-override + slug
- *   $url = Permalink::build('cases', 'volvo-trucks'); // ren slug → path
+ *   $url = Permalink::for_record('cms_cases', $case);   // legacy-override + slug
+ *   $url = Permalink::build('cms_cases', 'volvo-trucks'); // ren slug → path
  *
  * Multi-country: prependar core_countries.url_prefix när den är ifylld.
  * Default-landet (idag SE) har tom prefix → URL:en lämnas oförändrad, så
@@ -29,17 +29,16 @@ class Permalink {
     /**
      * Route-mönster per entitet. {slug} ersätts med en URL-encodad slug.
      *
-     * Alla case-entiteter pekar på samma /case/<slug>/-konvention eftersom
-     * wexoe-case-pluginet renderar dem via [wexoe_case slug="..."]. Lägg till
-     * nya entiteter HÄR — aldrig genom att handbygga paths i feature-plugins.
+     * cms_cases är den kanoniska case-entiteten; wexoe-case-pluginet renderar
+     * den via [wexoe_case slug="..."]. (Tidigare alias 'cases' och 'case_pages'
+     * konsoliderades bort i PR 2.) Lägg till nya entiteter HÄR — aldrig genom
+     * att handbygga paths i feature-plugins.
      *
      * @return array<string,string>
      */
     private static function patterns() {
         return [
-            'cases'      => '/case/{slug}/',
-            'cms_cases'  => '/case/{slug}/',
-            'case_pages' => '/case/{slug}/',
+            'cms_cases' => '/case/{slug}/',
         ];
     }
 

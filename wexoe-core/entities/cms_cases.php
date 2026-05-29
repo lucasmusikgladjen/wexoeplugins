@@ -10,8 +10,12 @@
  * hämtas via supplier_ids på den länkade posten — ingen junction-tabell och
  * ingen role_in_solution-data på case-recordet.
  *
- * OBS: separat från entity 'case_pages' (tabell cms_case_pages) som är den
- * äldre case-modellen. cms_cases är den nya editorial-formatet från FAS 0.
+ * KANONISK case-entitet. Tidigare fanns även 'case_pages' (tabell
+ * cms_case_pages, nu utfasad) samt en redundant alias 'cases' (samma tabell) —
+ * båda konsoliderade hit i PR 2. Schemat täcker nu både kort-lagret (card_*,
+ * renderat i case-grid och på customer_type_pages) OCH full editorial-sida
+ * (challenge/solution/results/testimonial/gallery), plus scope-länkar
+ * (country/customer_type/partner) och teaser-länken legacy_external_url.
  *
  * Airtable-tabell: cms_cases (tblxH3ECSMvDTYrIQ) i Wexoe NY.
  * Primärnyckel: 'slug'.
@@ -32,6 +36,24 @@ return [
         'slug' => 'slug',
         'internal_notes' => 'internal_notes',
         'is_active' => ['source' => 'is_active', 'type' => 'bool'],
+        'order' => ['source' => 'order', 'type' => 'int'],
+
+        // Scope-länkar (SSOT) — driver case-grid pin-then-scope och audience-kort.
+        'country_ids' => ['source' => 'country_ids', 'type' => 'link', 'entity' => 'core_countries'],
+        'customer_type_ids' => ['source' => 'customer_type_ids', 'type' => 'link', 'entity' => 'core_customer_types'],
+        'customer_type_page_ids' => ['source' => 'customer_type_page_ids', 'type' => 'link', 'entity' => 'customer_type_pages'],
+        'partner_ids' => ['source' => 'partner_ids', 'type' => 'link', 'entity' => 'core_partners'],
+
+        // Kort-lager (preview) — renderat i case-grid och på customer_type_pages,
+        // skiljt från full-sidans title/lead. legacy_external_url = "Läs mer"-mål
+        // för teaser-cases som ännu bor på gammal WP/PDF (migrerat från cms_case_pages).
+        'card_title' => 'card_title',
+        'card_description' => 'card_description',
+        'card_result' => 'card_result',
+        'card_image_url' => 'card_image_url',
+        'card_cta_text' => 'card_cta_text',
+        'card_industry' => 'card_industry',
+        'legacy_external_url' => 'legacy_external_url',
 
         // SEO
         'seo_title' => 'seo_title',
