@@ -1,75 +1,60 @@
 /**
- * Forward and reverse mapping between Airtable `cms_customer_type_pages`
- * records och `CustomerTypePageState`.
+ * Airtable `cms_customer_type_pages` record → `CustomerTypePageState`.
  *
- * Schema är flat (en linked-record-länk till cms_cases, ingen Claude-
- * transform). snake_case-konvention både i Airtable och här.
+ * ARKITEKTURPLAN FAS 1 (pilot): fältlistan bor på ett ställe — schemat
+ * `schema/cms_customer_type_pages.json` (kanoniskt i wexoeplugins/wexoe-core/
+ * schema/, speglat hit). De skalära fälten + länkar härleds generiskt via
+ * `stateFromRecord`; sidtypen lägger bara till det som inte är ren fält-mappning:
+ *
+ *   - `mode` / `recordId` — meta (inte Airtable-fält).
+ *   - `showValue` — beräknad UI-flagga (om något value/benefit-fält har innehåll).
+ *   - `contactForm` — nästlat block; sätts via `contactFormFromFields`
+ *     (blir ett eget block-schema i FAS 3). De 14 `contact_form_*`-fälten är
+ *     `block`-flaggade i JSON och hoppas därför över av `stateFromRecord`.
+ *
+ * `stat_number` lagras som number i Airtable men redigeras som sträng i state —
+ * det styrs av `builder_as: "string"` i schemat (ingen specialkod här).
+ *
+ * Skriv-vägen (state → Airtable) går fortfarande via Claude-transform; den
+ * ersätts av en deterministisk `toFields` i FAS 2.
  */
 
 import { AirtableRecord, BASE_ID } from './airtable';
 import { CustomerTypePageState } from './customer-type-types';
-import { str, bool } from './airtable-helpers';
 import { contactFormFromFields } from './contact-form-mapper';
+import { stateFromRecord } from './schema/to-state';
+import { EntitySchema } from './schema/entity-schema';
+import schemaJson from '@/schema/cms_customer_type_pages.json';
+
+const customerTypeSchema = schemaJson as unknown as EntitySchema;
 
 export const CUSTOMER_TYPE_BASE_ID = BASE_ID;
 
 export const CUSTOMER_TYPE_TABLE_IDS = {
-  customerTypePages: 'tblZufoWVNKPuJdMK',
+  // Single-sourced ur schemat (samma värde som tidigare hårdkodat).
+  customerTypePages: customerTypeSchema.table_id,
   casePages: 'tbl3uMV6IpRIZeucA',
 } as const;
-
-function strArray(fields: Record<string, unknown>, key: string): string[] {
-  const v = fields[key];
-  return Array.isArray(v) ? (v.filter((x) => typeof x === 'string') as string[]) : [];
-}
 
 export function customerTypePageStateFromRecord(
   record: AirtableRecord,
 ): CustomerTypePageState {
-  const f = record.fields;
-  const valueH2 = str(f, 'value_h2');
-  const valueText1 = str(f, 'value_text_1');
-  const valueText2 = str(f, 'value_text_2');
-  const benefit1 = str(f, 'benefit_1');
-  const benefit2 = str(f, 'benefit_2');
-  const benefit3 = str(f, 'benefit_3');
+  const base = stateFromRecord(record, customerTypeSchema);
 
-  const statNumberRaw = f['stat_number'];
-  const statNumber =
-    typeof statNumberRaw === 'number'
-      ? String(statNumberRaw)
-      : typeof statNumberRaw === 'string'
-        ? statNumberRaw
-        : '';
+  const showValue = !!(
+    base.valueH2 ||
+    base.valueText1 ||
+    base.valueText2 ||
+    base.benefit1 ||
+    base.benefit2 ||
+    base.benefit3
+  );
 
   return {
+    ...base,
     mode: 'edit',
     recordId: record.id,
-    slug: str(f, 'slug'),
-    isActive: bool(f, 'is_active'),
-    name: str(f, 'name'),
-
-    eyebrow: str(f, 'eyebrow'),
-    title: str(f, 'title'),
-    description: str(f, 'description'),
-    ctaText: str(f, 'cta_text'),
-    ctaUrl: str(f, 'cta_url'),
-    heroImageUrl: str(f, 'hero_image_url'),
-    statNumber,
-    statLabel: str(f, 'stat_label'),
-
-    showValue: !!(valueH2 || valueText1 || valueText2 || benefit1 || benefit2 || benefit3),
-    valueH2,
-    valueText1,
-    valueText2,
-    benefit1,
-    benefit2,
-    benefit3,
-
-    caseIds: strArray(f, 'case_ids'),
-
-    showContactForm: bool(f, 'show_contact_form'),
-    contactForm: contactFormFromFields(f, 'snake_case'),
-  };
+    showValue,
+    contactForm: contactFormFromFields(record.fields, 'snake_case'),
+  } as unknown as CustomerTypePageState;
 }
-

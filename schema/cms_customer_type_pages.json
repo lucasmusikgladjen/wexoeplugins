@@ -1,0 +1,50 @@
+{
+  "table": "cms_customer_type_pages",
+  "table_id": "tblZufoWVNKPuJdMK",
+  "base": "ssot",
+  "primary_key": "slug",
+  "cache_ttl": 86400,
+  "required": ["slug"],
+  "fields": {
+    "slug":              { "type": "text" },
+    "internal_notes":    { "type": "text", "php_only": true },
+    "is_active":         { "type": "bool" },
+    "country_ids":       { "type": "link", "entity": "core_countries", "php_only": true },
+    "customer_type_ids": { "type": "link", "entity": "core_customer_types", "php_only": true },
+
+    "name":           { "type": "text" },
+    "eyebrow":        { "type": "text" },
+    "title":          { "type": "text" },
+    "description":    { "type": "text" },
+    "cta_text":       { "type": "text" },
+    "cta_url":        { "type": "text" },
+    "hero_image_url": { "type": "text" },
+    "stat_number":    { "type": "int", "builder_as": "string" },
+    "stat_label":     { "type": "text" },
+
+    "value_h2":     { "type": "text" },
+    "value_text_1": { "type": "text" },
+    "value_text_2": { "type": "text" },
+    "benefit_1":    { "type": "text" },
+    "benefit_2":    { "type": "text" },
+    "benefit_3":    { "type": "text" },
+
+    "case_ids": { "type": "link", "entity": "cms_cases" },
+
+    "show_contact_form":                 { "type": "bool" },
+    "contact_form_eyebrow":              { "type": "text",  "block": "contact_form" },
+    "contact_form_title":                { "type": "text",  "block": "contact_form" },
+    "contact_form_subtitle":             { "type": "text",  "block": "contact_form" },
+    "contact_form_layout":               { "type": "text",  "block": "contact_form" },
+    "contact_form_theme":                { "type": "text",  "block": "contact_form" },
+    "contact_form_show_company":         { "type": "bool",  "block": "contact_form" },
+    "contact_form_show_phone":           { "type": "bool",  "block": "contact_form" },
+    "contact_form_show_dropdown":        { "type": "bool",  "block": "contact_form" },
+    "contact_form_dropdown_label":       { "type": "text",  "block": "contact_form" },
+    "contact_form_options":              { "type": "lines", "block": "contact_form" },
+    "contact_form_cta_text":             { "type": "text",  "block": "contact_form" },
+    "contact_form_message_label":        { "type": "text",  "block": "contact_form" },
+    "contact_form_trust_signals":        { "type": "lines", "block": "contact_form" },
+    "contact_form_show_contact_person":  { "type": "bool",  "block": "contact_form" }
+  }
+}
