@@ -25,13 +25,18 @@ import {
 } from './case-types';
 import { ProductAreaState, LinkedProduct, LinkedSolution } from './product-area-types';
 import { PageState, Tab } from './types';
+import { CmsPageState, PageSection, TabsSection, TabItem } from './cms-page-types';
 import { contactFormToFields } from './contact-form-mapper';
+import { sectionToPayload } from './claude-transform';
 import type { WriteMode } from './schema/to-fields';
 import type {
   PaTransformResult,
   LpTransformResult,
   LpTransformTab,
   LpTransformDownload,
+  CmsPageTransformResult,
+  CmsPageTransformSection,
+  CmsPageTransformTab,
 } from './claude-transform';
 
 type Out = Record<string, unknown>;
@@ -581,4 +586,96 @@ export function buildLandingTransform(state: PageState, mode: WriteMode): LpTran
   });
 
   return { landingPage: buildLpParentFields(state, mode), tabs, downloads };
+}
+
+// ─── CMS Page (multi-record: 15 polymorfa sektioner + section-tabs) ────────
+//
+// Återanvänder sectionToPayload (samma snake_case-fältmappning som tidigare)
+// och applicerar deterministisk mode-semantik per värdetyp. Routen
+// (cms-page-actions.ts) äger section/section-tab-diffing + section_ids/
+// tabs_tab_ids-länkning. Ingen section_type-switch-clearing behövs — PHP-
+// renderaren branchar på section_type och ignorerar stale fält.
+
+/** Sektion-/tab-fält efter värdetyp: bool→alltid, array→link (create utelämnar
+ *  tom), number (*_limit)→ >0 ? number : (update ? null), sträng→text. */
+function emitField(out: Out, key: string, value: unknown, mode: WriteMode): void {
+  if (typeof value === 'boolean') {
+    out[key] = value;
+  } else if (Array.isArray(value)) {
+    const a = value.filter((x): x is string => typeof x === 'string');
+    if (mode === 'update' || a.length > 0) out[key] = a;
+  } else if (typeof value === 'number') {
+    if (value > 0) out[key] = value;
+    else if (mode === 'update') out[key] = null;
+  } else {
+    const s = value == null ? '' : String(value);
+    if (mode === 'update') out[key] = s;
+    else if (s !== '') out[key] = s;
+  }
+}
+
+function buildCmsSectionFields(sec: PageSection, index: number, mode: WriteMode): Record<string, unknown> {
+  const payload = sectionToPayload(sec, index) ?? {};
+  const fields: Record<string, unknown> = { section_type: sec.type, order: index + 1 };
+  for (const [key, value] of Object.entries(payload)) {
+    // _clientIndex/_recordId hör till wrappern; `type` → section_type (satt ovan).
+    if (key === '_clientIndex' || key === '_recordId' || key === 'type') continue;
+    emitField(fields, key, value, mode);
+  }
+  return fields;
+}
+
+function buildCmsTabFields(tab: TabItem, index: number, mode: WriteMode): Record<string, unknown> {
+  // name/order/is_active måste alltid finnas (backend korrelerar på dem).
+  const o: Record<string, unknown> = { name: tab.name ?? '', order: index + 1, is_active: tab.isActive === true };
+  putText(o, 'eyebrow', tab.eyebrow, mode);
+  putText(o, 'h2', tab.h2, mode);
+  putText(o, 'body', tab.body, mode);
+  putText(o, 'bullets', tab.bullets, mode);
+  putText(o, 'image_url', tab.imageUrl, mode);
+  putText(o, 'image_alt', tab.imageAlt, mode);
+  putText(o, 'cta_text', tab.ctaText, mode);
+  putText(o, 'cta_url', tab.ctaUrl, mode);
+  putText(o, 'cta2_text', tab.cta2Text, mode);
+  putText(o, 'cta2_url', tab.cta2Url, mode);
+  return o;
+}
+
+export function buildCmsPageTransform(state: CmsPageState, mode: WriteMode): CmsPageTransformResult {
+  // Page-fält. section_ids sätts av routen; country/division/internal_notes
+  // skickas alltid (även [] / '') — speglar tidigare backfill i transformCmsPage.
+  const page: Record<string, unknown> = {};
+  putText(page, 'slug', state.slug, mode);
+  putText(page, 'internal_label', state.internalLabel, mode);
+  putText(page, 'h1', state.h1, mode);
+  putText(page, 'seo_title', state.seoTitle, mode);
+  putText(page, 'seo_description', state.seoDescription, mode);
+  putText(page, 'og_image_url', state.ogImageUrl, mode);
+  putBool(page, 'is_published', state.isPublished);
+  putText(page, 'page_theme', state.pageTheme, mode);
+  putText(page, 'max_width', state.maxWidth, mode);
+  page.country_ids = state.countryIds;
+  page.division_ids = state.divisionIds;
+  page.internal_notes = state.internalNotes;
+
+  const sections: CmsPageTransformSection[] = state.sections.map((sec, i) => ({
+    _clientIndex: i,
+    _recordId: sec.recordId || null,
+    fields: buildCmsSectionFields(sec, i, mode),
+  }));
+
+  const sectionTabs: CmsPageTransformTab[] = [];
+  state.sections.forEach((sec, sectionIndex) => {
+    if (sec.type !== 'tabs') return;
+    (sec as TabsSection).tabs.forEach((tab, tabIndex) => {
+      sectionTabs.push({
+        _clientIndex: tabIndex,
+        _sectionClientIndex: sectionIndex,
+        _recordId: tab.recordId || null,
+        fields: buildCmsTabFields(tab, tabIndex, mode),
+      });
+    });
+  });
+
+  return { page, sections, sectionTabs };
 }

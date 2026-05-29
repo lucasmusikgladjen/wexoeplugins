@@ -40,12 +40,12 @@ import {
   CmsPageState,
   TabsSection,
 } from '../cms-page-types';
-import {
-  transformCmsPage,
+import type {
   CmsPageTransformResult,
   CmsPageTransformSection,
   CmsPageTransformTab,
 } from '../claude-transform';
+import { buildCmsPageTransform } from '../deterministic-transform';
 import type { RelationSyncResult } from './types';
 
 type Result = {
@@ -55,12 +55,6 @@ type Result = {
 
 function emptyRelationResult(): RelationSyncResult {
   return { created: [], updated: [], deleted: [], unlinked: [], errors: [] };
-}
-
-function requireAnthropicKey(): string {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) throw new Error('ANTHROPIC_API_KEY ej konfigurerad.');
-  return key;
 }
 
 /** Group transform.sectionTabs by parent section's _clientIndex. */
@@ -86,13 +80,9 @@ export async function cmsPageCreate(
   ctx: { apiKey: string },
 ): Promise<Result> {
   const airtableKey = ctx.apiKey;
-  const anthropicKey = requireAnthropicKey();
 
-  const transformed: CmsPageTransformResult = await transformCmsPage(
-    anthropicKey,
-    state,
-    'create',
-  );
+  // FAS 2: deterministisk transform — inga Anthropic-anrop.
+  const transformed: CmsPageTransformResult = buildCmsPageTransform(state, 'create');
 
   const sectionsResult = emptyRelationResult();
   const tabsResult = emptyRelationResult();
@@ -180,7 +170,6 @@ export async function cmsPageUpdate(
   ctx: { apiKey: string },
 ): Promise<{ relations: Record<string, RelationSyncResult> }> {
   const airtableKey = ctx.apiKey;
-  const anthropicKey = requireAnthropicKey();
 
   // 0) Läs existerande page (för section_ids) + existerande sektioner
   //    (för deras tabs_tab_ids).
@@ -212,11 +201,8 @@ export async function cmsPageUpdate(
     existingSections.map((s) => [s.id, s.tabsTabIds]),
   );
 
-  const transformed: CmsPageTransformResult = await transformCmsPage(
-    anthropicKey,
-    state,
-    'update',
-  );
+  // FAS 2: deterministisk transform — inga Anthropic-anrop.
+  const transformed: CmsPageTransformResult = buildCmsPageTransform(state, 'update');
 
   const sectionsResult = emptyRelationResult();
   const tabsResult = emptyRelationResult();
