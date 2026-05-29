@@ -598,7 +598,7 @@ KRITISKT:
 - Använd exakta Airtable-fältnamn från schemat (snake_case för cms_product_pages-familjen).
 - Inkludera ALDRIG "product_ids", "solution_ids", "division_ids", "section_ids", "country_ids" i productArea.fields — backend hanterar alla länkar.
 - Inkludera ALDRIG "product_page_ids" i products.fields — backend länkar.
-- Inkludera ALDRIG "article_ids", "supplier_ids", "case_page_ids" i products.fields — backend hanterar.
+- Inkludera ALDRIG "article_ids", "supplier_ids", "case_ids" i products.fields — backend hanterar.
 - Inkludera ALDRIG "product_page_ids" i solutions.fields — backend länkar.
 - Sätt ALLTID order = _clientIndex + 1 på varje product och solution.
 - Inkludera ALLTID boolean-fält (is_active, horizontal, use_side_menu, show_request, default_open, reversed, shown_top, show_contact_form, contact_form_show_company, contact_form_show_phone, contact_form_show_dropdown, contact_form_show_contact_person).
