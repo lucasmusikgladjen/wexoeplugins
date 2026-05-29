@@ -1173,7 +1173,10 @@ export async function transformPartner(
 
 // ─── CMS Page payload builder ─────────────────────────────────────────────
 
-function sectionToPayload(sec: PageSection, index: number): Record<string, unknown> {
+// Exporterad så FAS 2:s deterministiska transform (deterministic-transform.ts)
+// kan återanvända exakt samma section→snake_case-fältmappning utan att
+// duplicera 15 sektionstyper. Flyttas hit-över när claude-transform raderas.
+export function sectionToPayload(sec: PageSection, index: number): Record<string, unknown> {
   // Universella fält + typ-diskriminator för Claude.
   const base: Record<string, unknown> = {
     _clientIndex: index,

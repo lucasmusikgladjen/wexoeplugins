@@ -12,15 +12,14 @@ import {
   AirtableRecord,
 } from '@/lib/airtable';
 import {
-  transformLandingPage,
   clearsForTabType,
   clearsForSidebarType,
   LpTransformDownload,
 } from '@/lib/claude-transform';
+import { buildLandingTransform } from '@/lib/deterministic-transform';
 import { invalidateWexoeCoreCache } from '@/lib/wexoe-cache';
 import { getPageType } from '@/lib/page-types/registry';
 
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 
 
@@ -100,12 +99,6 @@ function validateDownloadRefs(args: {
 // ─── Main publish handler ──────────────────────────────────────────────────
 
 export async function POST(request: Request) {
-  if (!ANTHROPIC_API_KEY) {
-    return NextResponse.json(
-      { error: 'ANTHROPIC_API_KEY ej konfigurerad.' },
-      { status: 500 },
-    );
-  }
   if (!AIRTABLE_API_KEY) {
     return NextResponse.json(
       { error: 'AIRTABLE_API_KEY ej konfigurerad.' },
@@ -124,9 +117,9 @@ export async function POST(request: Request) {
     }
 
     if (state.recordId) {
-      return await updateExistingPage(AIRTABLE_API_KEY, ANTHROPIC_API_KEY, state);
+      return await updateExistingPage(AIRTABLE_API_KEY, state);
     }
-    return await createNewPage(AIRTABLE_API_KEY, ANTHROPIC_API_KEY, state);
+    return await createNewPage(AIRTABLE_API_KEY, state);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Okänt fel';
     console.error('[publish] Error:', message);
@@ -138,7 +131,6 @@ export async function POST(request: Request) {
 
 async function createNewPage(
   airtableKey: string,
-  anthropicKey: string,
   state: PageState,
 ) {
   // 0. Default-coworker injection — om alla contact_*-fält är tomma, slå upp
@@ -158,8 +150,8 @@ async function createNewPage(
     }
   }
 
-  // 1. Claude transforms state → Airtable-ready fields
-  const transformed = await transformLandingPage(anthropicKey, state, 'create');
+  // 1. Deterministisk transform: state → Airtable-redo fält (inga Claude-anrop).
+  const transformed = buildLandingTransform(state, 'create');
 
   // Preflight before the first Airtable write: malformed download → tab
   // references must not leave behind a partially-created LP/tab graph.
@@ -276,7 +268,6 @@ async function createNewPage(
 
 async function updateExistingPage(
   airtableKey: string,
-  anthropicKey: string,
   state: PageState,
 ) {
   if (!state.recordId) throw new Error('updateExistingPage called without recordId');
@@ -298,8 +289,8 @@ async function updateExistingPage(
   }
   const existingTabsById = new Map(existingTabs.map((t) => [t.id, t]));
 
-  // 2. Claude transforms state → Airtable-ready fields
-  const transformed = await transformLandingPage(anthropicKey, state, 'update');
+  // 2. Deterministisk transform: state → Airtable-redo fält (inga Claude-anrop).
+  const transformed = buildLandingTransform(state, 'update');
 
   // 3. PATCH the Landing Page record. Apply backend sidebar-type clears so
   //    switching from (e.g.) case → event wipes the old sidebar fields.

@@ -21,8 +21,9 @@
 
 import { AirtableRecord, BASE_ID } from './airtable';
 import { CustomerTypePageState } from './customer-type-types';
-import { contactFormFromFields } from './contact-form-mapper';
+import { contactFormFromFields, contactFormToFields } from './contact-form-mapper';
 import { stateFromRecord } from './schema/to-state';
+import { toFields, WriteMode } from './schema/to-fields';
 import { EntitySchema } from './schema/entity-schema';
 import schemaJson from '@/schema/cms_customer_type_pages.json';
 
@@ -57,4 +58,29 @@ export function customerTypePageStateFromRecord(
     showValue,
     contactForm: contactFormFromFields(record.fields, 'snake_case'),
   } as unknown as CustomerTypePageState;
+}
+
+/**
+ * state → Airtable-fält, DETERMINISTISKT (FAS 2 — ersätter Claude på save).
+ *
+ * Skalär-/numeriska fält härleds generiskt ur schemat (mode-medvetet); det
+ * delade kontaktformuläret skrivs via `contactFormToFields`. `case_ids`,
+ * `country_ids`, `customer_type_ids` och `internal_notes` skrivs aldrig av
+ * buildern (read-only/PHP-only) — de utelämnas.
+ */
+export function customerTypeToFields(
+  state: CustomerTypePageState,
+  mode: WriteMode,
+): Record<string, unknown> {
+  const scalar = toFields(
+    state as unknown as Record<string, unknown>,
+    customerTypeSchema,
+    mode,
+    { omit: ['case_ids'] }, // länkas i Airtable, read-only i buildern
+  );
+  const contact = contactFormToFields(state.contactForm, {
+    schema: 'snake_case',
+    nullForEmpty: mode === 'update',
+  });
+  return { ...scalar, ...contact };
 }

@@ -1,10 +1,10 @@
 /**
  * Partner-page (leverantörssida) — server-side sidtypsdefinition (Lager 3).
  *
- * Lager 3 + Claude-transform: state → Airtable-fält går alltid via Claude
- * (`transformPartner`), inte en handskriven mapper. Identisk struktur med
- * `customer-type.server.ts` — partner-sidan har också ett flatt schema
- * (en tabell, inga child-records).
+ * FAS 2: skrivvägen är DETERMINISTISK — `buildPartnerFields(state, mode)`
+ * producerar Airtable-fälten direkt (facts flattas till slot-fält, faqs
+ * serialiseras till JSON, why_benefits joinas till lines, ikoner valideras).
+ * Inga Anthropic-anrop. Flatt schema, inga child-records.
  *
  * Linkade fält (`partner_ids`, `country_ids`, `case_ids`, `category_ids`)
  * skrivs som ID-arrayer från Claude:s output. Linked target-records
@@ -21,7 +21,7 @@ import {
 import { loadPartnerPageState } from '../partner-loader';
 import { PartnerPageState, emptyPartnerPageState } from '../partner-types';
 import { PARTNER_ENTITIES } from '../wexoe-cache';
-import { transformPartner } from '../claude-transform';
+import { buildPartnerFields } from '../deterministic-transform';
 import type { PageTypeServerDef } from './types';
 
 export interface PartnerPageListItem {
@@ -31,22 +31,16 @@ export interface PartnerPageListItem {
   h1: string;
 }
 
-function requireAnthropicKey(): string {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) throw new Error('ANTHROPIC_API_KEY ej konfigurerad.');
-  return key;
-}
-
+// FAS 2: deterministisk skrivväg — inga Anthropic-anrop.
 async function partnerCreate(
   state: PartnerPageState,
   ctx: { apiKey: string },
 ): Promise<{ recordId: string }> {
-  const anthropicKey = requireAnthropicKey();
-  const { partnerPage } = await transformPartner(anthropicKey, state, 'create');
+  const fields = buildPartnerFields(state, 'create');
   const created = await createRecord(
     ctx.apiKey,
     PARTNER_TABLE_IDS.partnerPages,
-    partnerPage,
+    fields,
     PARTNER_BASE_ID,
   );
   return { recordId: created.id };
@@ -57,13 +51,12 @@ async function partnerUpdate(
   state: PartnerPageState,
   ctx: { apiKey: string },
 ): Promise<{ relations: Record<string, never> }> {
-  const anthropicKey = requireAnthropicKey();
-  const { partnerPage } = await transformPartner(anthropicKey, state, 'update');
+  const fields = buildPartnerFields(state, 'update');
   await updateRecord(
     ctx.apiKey,
     PARTNER_TABLE_IDS.partnerPages,
     recordId,
-    partnerPage,
+    fields,
     PARTNER_BASE_ID,
   );
   return { relations: {} };

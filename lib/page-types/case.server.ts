@@ -1,14 +1,12 @@
 /**
  * Case-page — server-side sidtypsdefinition (Lager 3).
  *
- * Lager 3 + Claude-transform: state → Airtable-fält går alltid via
- * `transformCase`, inte en handskriven mapper. Matchar konventionen för alla
- * sidtyper i buildern.
+ * FAS 2: skrivvägen är DETERMINISTISK — `buildCaseFields(state, mode)`
+ * producerar Airtable-fälten direkt. Inga Anthropic-anrop.
  *
  * Schemat är flatt (en tabell, inga child-records). Pseudo-arrays
- * (quick_stats, results, gallery_images) och linked-records (product_ids,
- * article_ids) hanteras inom samma record — Claude expanderar pseudo-arrays
- * och passar genom linked-record-arrayer.
+ * (quick_stats, results, gallery_images) expanderas till numrerade fält och
+ * linked-records (product_ids, article_ids) passeras som arrayer.
  */
 
 import { AirtableRecord, createRecord, updateRecord } from '../airtable';
@@ -20,7 +18,7 @@ import {
 import { loadCaseState } from '../case-loader';
 import { CaseState, emptyCaseState } from '../case-types';
 import { CASE_ENTITIES } from '../wexoe-cache';
-import { transformCase } from '../claude-transform';
+import { buildCaseFields } from '../deterministic-transform';
 import type { PageTypeServerDef } from './types';
 
 export interface CaseListItem {
@@ -31,18 +29,12 @@ export interface CaseListItem {
   customerName: string;
 }
 
-function requireAnthropicKey(): string {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) throw new Error('ANTHROPIC_API_KEY ej konfigurerad.');
-  return key;
-}
-
+// FAS 2: deterministisk skrivväg — inga Anthropic-anrop.
 async function caseCreate(
   state: CaseState,
   ctx: { apiKey: string },
 ): Promise<{ recordId: string }> {
-  const anthropicKey = requireAnthropicKey();
-  const { case: fields } = await transformCase(anthropicKey, state, 'create');
+  const fields = buildCaseFields(state, 'create');
   const created = await createRecord(ctx.apiKey, CASE_TABLE_ID, fields, CASE_BASE_ID);
   return { recordId: created.id };
 }
@@ -52,8 +44,7 @@ async function caseUpdate(
   state: CaseState,
   ctx: { apiKey: string },
 ): Promise<{ relations: Record<string, never> }> {
-  const anthropicKey = requireAnthropicKey();
-  const { case: fields } = await transformCase(anthropicKey, state, 'update');
+  const fields = buildCaseFields(state, 'update');
   await updateRecord(ctx.apiKey, CASE_TABLE_ID, recordId, fields, CASE_BASE_ID);
   return { relations: {} };
 }
