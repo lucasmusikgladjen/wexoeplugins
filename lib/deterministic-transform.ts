@@ -186,7 +186,7 @@ export function buildPartnerFields(state: PartnerPageState, mode: WriteMode): Ou
 /** Expanderar en pseudo-array till numrerade fält upp till `max`. Tomma
  *  positioner skrivs '' vid UPDATE (rensar borttagna items) och utelämnas
  *  vid CREATE. */
-function putPseudoArray<T extends Record<string, string>>(
+function putPseudoArray<T>(
   out: Out,
   prefix: string,
   items: T[],

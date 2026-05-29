@@ -42,7 +42,6 @@ import {
 } from '../cms-page-types';
 import type {
   CmsPageTransformResult,
-  CmsPageTransformSection,
   CmsPageTransformTab,
 } from '../claude-transform';
 import { buildCmsPageTransform } from '../deterministic-transform';
