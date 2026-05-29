@@ -20,6 +20,18 @@
  *
  * Write-sidan returnerar råa värden. Callers ansvarar själva för
  * empty→null-konvertering om sidtypen vill den semantiken.
+ *
+ * FAS 3 — delat block via JSON-kolumn: utöver de flata `contact_form_*`-fälten
+ * speglas hela blocket till en enda JSON-kolumn (`contact_form_json`). Detta är
+ * expand-contract:
+ *   1. (NU) Lägg JSON-kolumnen + dual-write (`emitJson: true`). Flata fält är
+ *      fortfarande källa-till-sanning; PHP läser oförändrat.
+ *   2. Read-prefer: `contactFormFromFields` föredrar JSON-spegeln när den finns,
+ *      annars de flata fälten (bakåtkompat för records skrivna innan kolumnen).
+ *   3. (SENARE, gateat) Byt PHP-läsning till JSON, radera de 15 flata fälten,
+ *      replikera till övriga tabeller.
+ * JSON-payloaden är ContactFormState serialiserad (camelCase) — oberoende av
+ * varje tabells flat-fält-naming, så samma blob kan delas av alla sidtyper.
  */
 
 import { AirtableFields, asString, asBool } from './airtable-helpers';
@@ -34,6 +46,8 @@ export type ContactFormSchema = 'title_case' | 'snake_case';
 
 interface SchemaSpec {
   prefix: string;
+  /** Fältnamn för den serialiserade JSON-spegeln (FAS 3, delat block). */
+  jsonField: string;
   /** Map från ContactFormState-fält → Airtable-fältnamn (utan prefix). */
   keys: {
     eyebrow: string;
@@ -56,6 +70,7 @@ interface SchemaSpec {
 const SCHEMAS: Record<ContactFormSchema, SchemaSpec> = {
   title_case: {
     prefix: 'Contact Form ',
+    jsonField: 'Contact Form JSON',
     keys: {
       eyebrow: 'Eyebrow',
       title: 'Title',
@@ -75,6 +90,7 @@ const SCHEMAS: Record<ContactFormSchema, SchemaSpec> = {
   },
   snake_case: {
     prefix: 'contact_form_',
+    jsonField: 'contact_form_json',
     keys: {
       eyebrow: 'eyebrow',
       title: 'title',
@@ -97,31 +113,104 @@ const SCHEMAS: Record<ContactFormSchema, SchemaSpec> = {
 /** @deprecated Kept for callers that still reference the constant directly. */
 export const CONTACT_FORM_FIELD_PREFIX = SCHEMAS.title_case.prefix;
 
+/**
+ * Normaliserar ett löst camelCase-objekt (från JSON-spegeln *eller* från de
+ * flata fälten) till en giltig `ContactFormState`. Toggles faller tillbaka på
+ * `emptyContactFormState()`-defaults när nyckeln saknas, så "Show Company =
+ * true" består för records utan fältet. Enda coercion-vägen för båda källorna.
+ */
+export function coerceContactForm(raw: unknown): ContactFormState {
+  const empty = emptyContactFormState();
+  const o = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const layoutRaw = asString(o.layout);
+  const themeRaw = asString(o.theme);
+  return {
+    eyebrow: asString(o.eyebrow),
+    title: asString(o.title),
+    subtitle: asString(o.subtitle),
+    layout: (layoutRaw === 'centered' ? 'centered' : 'split') as ContactFormLayout,
+    theme: (themeRaw === 'light' ? 'light' : 'dark') as ContactFormTheme,
+    showCompany: asBool(o.showCompany, empty.showCompany),
+    showPhone: asBool(o.showPhone, empty.showPhone),
+    showDropdown: asBool(o.showDropdown, empty.showDropdown),
+    dropdownLabel: asString(o.dropdownLabel),
+    options: asString(o.options),
+    ctaText: asString(o.ctaText),
+    messageLabel: asString(o.messageLabel),
+    trustSignals: asString(o.trustSignals),
+    showContactPerson: asBool(o.showContactPerson, empty.showContactPerson),
+  };
+}
+
+/**
+ * Serialiserar blocket till JSON-spegeln (camelCase, stabil nyckelordning).
+ * Oberoende av per-tabell flat-fält-naming — samma blob delas av alla sidtyper.
+ */
+export function contactFormToJson(state: ContactFormState): string {
+  const payload: ContactFormState = {
+    eyebrow: state.eyebrow,
+    title: state.title,
+    subtitle: state.subtitle,
+    layout: state.layout,
+    theme: state.theme,
+    showCompany: state.showCompany,
+    showPhone: state.showPhone,
+    showDropdown: state.showDropdown,
+    dropdownLabel: state.dropdownLabel,
+    options: state.options,
+    ctaText: state.ctaText,
+    messageLabel: state.messageLabel,
+    trustSignals: state.trustSignals,
+    showContactPerson: state.showContactPerson,
+  };
+  return JSON.stringify(payload);
+}
+
+/**
+ * Parsar JSON-spegeln → `ContactFormState`. Returnerar `null` när värdet saknas
+ * eller inte är giltig JSON, så callers kan falla tillbaka på de flata fälten.
+ */
+export function contactFormFromJson(raw: unknown): ContactFormState | null {
+  if (typeof raw !== 'string' || raw.trim() === '') return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== 'object') return null;
+  return coerceContactForm(parsed);
+}
+
 export function contactFormFromFields(
   fields: AirtableFields,
   schema: ContactFormSchema = 'title_case',
 ): ContactFormState {
-  const empty = emptyContactFormState();
-  const { prefix, keys } = SCHEMAS[schema];
+  const { prefix, keys, jsonField } = SCHEMAS[schema];
+
+  // FAS 3: föredra JSON-spegeln när den finns (delat-block-källan efter
+  // migrering). Faller tillbaka på de flata fälten för records skrivna innan
+  // kolumnen fanns.
+  const fromJson = contactFormFromJson(fields[jsonField]);
+  if (fromJson) return fromJson;
+
   const f = (k: keyof SchemaSpec['keys']) => fields[`${prefix}${keys[k]}`];
-  const layoutRaw = asString(f('layout'));
-  const themeRaw = asString(f('theme'));
-  return {
-    eyebrow: asString(f('eyebrow')),
-    title: asString(f('title')),
-    subtitle: asString(f('subtitle')),
-    layout: (layoutRaw === 'centered' ? 'centered' : 'split') as ContactFormLayout,
-    theme: (themeRaw === 'light' ? 'light' : 'dark') as ContactFormTheme,
-    showCompany: asBool(f('showCompany'), empty.showCompany),
-    showPhone: asBool(f('showPhone'), empty.showPhone),
-    showDropdown: asBool(f('showDropdown'), empty.showDropdown),
-    dropdownLabel: asString(f('dropdownLabel')),
-    options: asString(f('options')),
-    ctaText: asString(f('ctaText')),
-    messageLabel: asString(f('messageLabel')),
-    trustSignals: asString(f('trustSignals')),
-    showContactPerson: asBool(f('showContactPerson'), empty.showContactPerson),
-  };
+  return coerceContactForm({
+    eyebrow: f('eyebrow'),
+    title: f('title'),
+    subtitle: f('subtitle'),
+    layout: f('layout'),
+    theme: f('theme'),
+    showCompany: f('showCompany'),
+    showPhone: f('showPhone'),
+    showDropdown: f('showDropdown'),
+    dropdownLabel: f('dropdownLabel'),
+    options: f('options'),
+    ctaText: f('ctaText'),
+    messageLabel: f('messageLabel'),
+    trustSignals: f('trustSignals'),
+    showContactPerson: f('showContactPerson'),
+  });
 }
 
 export interface ContactFormToFieldsOptions {
@@ -129,17 +218,21 @@ export interface ContactFormToFieldsOptions {
   /** Konvertera tomma textfält till `null` (Airtable-konvention för att
    *  rensa fält på UPDATE). Booleans påverkas inte. */
   nullForEmpty?: boolean;
+  /** FAS 3: skriv även JSON-spegeln (`contact_form_json`) som delat-block-källa.
+   *  Dual-write — de flata fälten skrivs fortfarande och är källa-till-sanning
+   *  tills PHP byter till JSON-läsning. */
+  emitJson?: boolean;
 }
 
 export function contactFormToFields(
   state: ContactFormState,
   options: ContactFormToFieldsOptions = {},
 ): Record<string, unknown> {
-  const { prefix, keys } = SCHEMAS[options.schema ?? 'title_case'];
+  const { prefix, keys, jsonField } = SCHEMAS[options.schema ?? 'title_case'];
   const text = (v: string): string | null =>
     options.nullForEmpty && v === '' ? null : v;
   const k = (key: keyof SchemaSpec['keys']) => `${prefix}${keys[key]}`;
-  return {
+  const out: Record<string, unknown> = {
     [k('eyebrow')]: text(state.eyebrow),
     [k('title')]: text(state.title),
     [k('subtitle')]: text(state.subtitle),
@@ -155,4 +248,8 @@ export function contactFormToFields(
     [k('trustSignals')]: text(state.trustSignals),
     [k('showContactPerson')]: state.showContactPerson,
   };
+  if (options.emitJson) {
+    out[jsonField] = contactFormToJson(state);
+  }
+  return out;
 }

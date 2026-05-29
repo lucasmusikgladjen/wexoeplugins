@@ -8,9 +8,11 @@
  *
  *   - `mode` / `recordId` — meta (inte Airtable-fält).
  *   - `showValue` — beräknad UI-flagga (om något value/benefit-fält har innehåll).
- *   - `contactForm` — nästlat block; sätts via `contactFormFromFields`
- *     (blir ett eget block-schema i FAS 3). De 14 `contact_form_*`-fälten är
- *     `block`-flaggade i JSON och hoppas därför över av `stateFromRecord`.
+ *   - `contactForm` — nästlat delat block; sätts via `contactFormFromFields`,
+ *     som i FAS 3 föredrar JSON-spegeln `contact_form_json` och annars faller
+ *     tillbaka på de flata fälten. De 14 `contact_form_*`-fälten + JSON-kolumnen
+ *     är `block`/`php_only`-flaggade i schemat och hoppas därför över av
+ *     `stateFromRecord` (blocket hanteras separat).
  *
  * `stat_number` lagras som number i Airtable men redigeras som sträng i state —
  * det styrs av `builder_as: "string"` i schemat (ingen specialkod här).
@@ -81,6 +83,7 @@ export function customerTypeToFields(
   const contact = contactFormToFields(state.contactForm, {
     schema: 'snake_case',
     nullForEmpty: mode === 'update',
+    emitJson: true, // FAS 3: dual-write JSON-spegeln (flata fält kvar som SoT)
   });
   return { ...scalar, ...contact };
 }
