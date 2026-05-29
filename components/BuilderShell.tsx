@@ -231,7 +231,7 @@ export default function BuilderShell({
             title="Dra för att ändra panelbredd"
           />
           {quickNav && quickNav.length > 0 && (
-            <div className="flex px-3 py-2 gap-0.5 flex-shrink-0 overflow-x-auto border-b border-gray-100">
+            <div className="flex flex-wrap px-3 py-2 gap-0.5 flex-shrink-0 border-b border-gray-100">
               {quickNav.map((s) => (
                 <button
                   key={s.id}
