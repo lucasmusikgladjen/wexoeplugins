@@ -80,7 +80,7 @@ return [
         'why_benefits' => ['source' => 'why_benefits', 'type' => 'lines'],
 
         // Success cases — länk till cms_cases. Feature-pluginet renderar max 3.
-        'case_ids' => ['source' => 'case_ids', 'type' => 'link', 'entity' => 'cases'],
+        'case_ids' => ['source' => 'case_ids', 'type' => 'link', 'entity' => 'cms_cases'],
         'cases_view_all_text' => 'cases_view_all_text',
         'cases_view_all_url' => 'cases_view_all_url',
 

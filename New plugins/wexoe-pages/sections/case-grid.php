@@ -2,7 +2,7 @@
 /**
  * Section: case_grid (section_type = "case_grid")
  *
- * Grid med case-kort. Datakälla: cms_case_pages (entity 'case_pages').
+ * Grid med case-kort. Datakälla: cms_cases (entity 'cms_cases').
  * Pin-then-scope: cg_case_manual_ids först, fyll på via scope (country,
  * division, customer_type) upp till cg_limit. cg_columns styr grid-bredd.
  *
@@ -11,7 +11,7 @@
  *
  * Korten: 2px-radius, 1px-border, ingen heavy shadow. Standardiserad text-
  * höjd (116px) klampar 2-rad titel + 4-rad desc så alla kort matchar.
- * Industry-badge i bildens övre vänster (case_pages.card_industry).
+ * Industry-badge i bildens övre vänster (cms_cases.card_industry).
  * Result-rad: grön ✓-cirkel + plain text med `<strong>` på nyckeltalet
  * (card_result tolkas som inline-markdown).
  * Partners: uppercase navy 700-text, separator-line mellan multipla, inga
@@ -38,9 +38,9 @@ return function ($section, $page, $ctx) {
 
     $cases = wexoe_pages_pin_then_scope(
         $manual_ids,
-        'case_pages',
+        'cms_cases',
         function () use ($scope) {
-            $repo = \Wexoe\Core\Core::entity('case_pages');
+            $repo = \Wexoe\Core\Core::entity('cms_cases');
             if ($repo === null) return [];
             $all = $repo->all(['is_active' => true]);
             $country_id = wexoe_pages_resolve_link_id_for_scope($scope, 'country');
@@ -104,13 +104,13 @@ return function ($section, $page, $ctx) {
             <?php if (!empty($cases)): ?>
                 <ul class="wxp-cg__grid">
                     <?php foreach ($cases as $case):
-                        $title = (string) ($case['card_title'] ?? $case['h1'] ?? $case['slug'] ?? '');
+                        $title = (string) ($case['card_title'] ?? $case['title'] ?? $case['slug'] ?? '');
                         if ($title === '') continue;
                         $desc = (string) ($case['card_description'] ?? '');
                         $result = (string) ($case['card_result'] ?? '');
                         $industry = (string) ($case['card_industry'] ?? '');
                         $image = (string) ($case['card_image_url'] ?? '');
-                        $href = !empty($case['legacy_external_url']) ? (string) $case['legacy_external_url'] : ('/' . ($case['slug'] ?? ''));
+                        $href = \Wexoe\Core\Helpers\Permalink::for_record('cms_cases', $case);
                         // Samla partner-namn (kan vara flera).
                         $partner_names = [];
                         if (!empty($case['partner_ids']) && is_array($case['partner_ids'])) {

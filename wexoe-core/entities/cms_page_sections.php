@@ -108,7 +108,7 @@ return [
         'cg_eyebrow' => 'cg_eyebrow',
         'cg_h2' => 'cg_h2',
         'cg_body' => 'cg_body',
-        'cg_case_manual_ids' => ['source' => 'cg_case_manual_ids', 'type' => 'link', 'entity' => 'case_pages'],
+        'cg_case_manual_ids' => ['source' => 'cg_case_manual_ids', 'type' => 'link', 'entity' => 'cms_cases'],
         'cg_scope_country' => 'cg_scope_country',
         'cg_scope_division' => 'cg_scope_division',
         'cg_scope_customer_type' => 'cg_scope_customer_type',

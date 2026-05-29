@@ -155,7 +155,7 @@ class Renderer {
             : [];
         if (empty($ids)) return [];
 
-        $repo = \Wexoe\Core\Core::entity('cases');
+        $repo = \Wexoe\Core\Core::entity('cms_cases');
         if (!$repo) return [];
 
         $records = $repo->find_by_ids($ids);
@@ -479,8 +479,7 @@ class Renderer {
         $image       = trim((string) ($case['lead_image_url'] ?? ''));
         $title       = trim((string) ($case['title'] ?? ''));
         $description = trim((string) ($case['subtitle'] ?? ''));
-        $case_slug   = trim((string) ($case['slug'] ?? ''));
-        $link_url    = $case_slug !== '' ? '/case/' . rawurlencode($case_slug) . '/' : '';
+        $link_url    = \Wexoe\Core\Helpers\Permalink::for_record('cms_cases', $case);
         $link_text   = 'Läs case';
 
         if ($title === '' && $image === '' && $description === '') return '';

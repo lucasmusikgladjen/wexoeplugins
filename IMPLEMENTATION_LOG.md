@@ -8,6 +8,71 @@ Detta dokument loggar varje konkret åtgärd som tas under implementationen av p
 
 ---
 
+## PR 2 — Case-konsolidering: `cms_case_pages` + `cases` → `cms_cases` (2026-05-29)
+
+**Branch (båda repon):** `claude/ecstatic-heisenberg-IG3SH`
+**Bakgrund:** Case-modellen var triplicerad. Tre läs-entiteter existerade: `case_pages` (tabell `cms_case_pages` `tbl3uMV6IpRIZeucA` — 9 kort-records som länkar ut via `legacy_external_url`), samt `cases` OCH `cms_cases` som *båda* pekade på samma rikare tabell `cms_cases` (`tblxH3ECSMvDTYrIQ`, 4 builder-skapade full-page-records). Buildern och `wexoe-case`-pluginet använder redan `cms_cases`. Beslut: konsolidera allt till den enda kanoniska entiteten **`cms_cases`**, migrera de 9 korten dit, peka om alla konsumenter, och döp om reciprok-fält till snake_case (`*_ids`) nu.
+
+### Airtable-mutationer (`Wexoe NY` `appokKSTaBdCa8YiW`)
+
+**Nya fält på `cms_cases` (`tblxH3ECSMvDTYrIQ`):**
+- Kort-lager: `card_title` (fldXRsJ4q67NgNFUs), `card_description` (fldZxBkBJmdkIjDpH), `card_result` (fldRKQsT5Y2M1OGpI), `card_image_url` (fld6tepAeXn0gZ3FJ), `card_cta_text` (fldi0ho3L334R2tPh), `card_industry` (fldAHqax1LumCS7rU), `legacy_external_url` (fldwQN8KY6yisn6Hw), `order` (fldqvumxGdsNskqWT).
+- Scope-länkar: `country_ids` (fldUzFvGIVt7DTewe → core_countries), `customer_type_ids` (fldfJX5voIBhC1uHf → core_customer_types), `partner_ids` (fld4AImoSBem8oDwn → core_partners), `customer_type_page_ids` (fldUdo93AjejvKwYx → cms_customer_type_pages).
+
+**9 records migrerade** `cms_case_pages` → `cms_cases` (card_*/legacy/order + kopierade country/partner/customer_type_page-länkar; backlänkar auto-populerade via Airtables symmetriska länkar). Old → new record-id:
+| slug | gammalt (cms_case_pages) | nytt (cms_cases) |
+|---|---|---|
+| m100-motorstartare | rec96OqooK6XuihFx | recwBkq471hLCou3A |
+| dtu-datacenter | rec98zlaCJTnlrZmn | recOP3YNgGe4W06J4 |
+| slc500-migration | recDTxdd23cUiwQho | recogNVvtA9KBWHzY |
+| polarbrod-natverk | recIw9Nr3uHwUEL64 | recFFJMJlJSGWGG7R |
+| maskinbyggare-fjarraccess | recKadnINNGr4kLpp | recnCOqP9AA8iDAHL |
+| egan-fjarraccess | recPX3JQM0QHs0AGN | rec32ODuwQXYup9Tt |
+| installator-rm-certifiering | recRRw9w3AxQ82BSe | recaZU0mEOD9IFbH8 |
+| polarbrod-pe-teknik | recmYUmhzoo1wrxrz | recz6jXUDkPrpmc08 |
+| pontum-rockwell | rectuKgZveRNG8qJI | rechIDc98ngCqc1qA |
+
+**Reciprok-fält omdöpta till `case_ids` (→ cms_cases), snake_case:**
+- `core_countries.case_ids` (fld9hz50RKRdcY6UU), `core_customer_types.case_ids` (fldcPwxY2EraqCaEb), `core_partners.case_ids` (fldKYQEbep8QFbxMS) — nya reciproker av cms_cases-scope-länkarna.
+- `cms_customer_type_pages.case_ids` (fldcDeRmGuSBnjYLc) — ny reciprok; **gamla** `case_ids` (→ cms_case_pages) omdöpt till `legacy_case_page_ids` (fldm8RjqJKFbwN1RN) för att frigöra namnet.
+- `cms_products.case_ids` (fldheJbRGUnyVwi4E, var auto-namnet "cms_cases") — reciprok av cms_cases.product_ids.
+- `cms_articles.case_ids` (fldvMXBIGjNPNwlzY, var "cms_cases") — reciprok av cms_cases.article_ids.
+- `cms_page_sections.cg_case_manual_ids` (fldEm4ITFjnjhqN5Y) — **nytt** länkfält → cms_cases (tomt; case-grid manuellt urval); **gamla** (→ cms_case_pages) omdöpt till `legacy_cg_case_manual_ids` (fldbOSQjQmDBsTGWP).
+
+**Verifiering:** backlänkar bekräftade efter migration — Sverige (`rec7N339jnJ17sfTy`) `case_ids` = alla 9, Rockwell (`recfJUCWX8ycPxjC5`) = 3 (m100/slc500/pontum), panelbyggare (`recejwjfVP9322RLF`) = m100. `cms_product_pages` har ingen case-länk (kontrollerat — ingen missad konsument); `cms_case_pages` hade exakt 6 länkrelationer, alla hanterade.
+
+### Kod — `wexoeplugins`
+- `wexoe-core/entities/cms_cases.php`: utbyggd med `order`, scope-länkar (country/customer_type/customer_type_page/partner) och kort-lagret (card_* + legacy_external_url). Docblock: nu kanonisk case-entitet.
+- Konsument-entiteter pekar om till `cms_cases`: `customer_type_pages.php` (`case_ids`), `cms_page_sections.php` (`cg_case_manual_ids`), `partner_pages.php` (`case_ids`).
+- Feature-plugins: `wexoe-customer-type-page.php`, `wexoe-pages/sections/case-grid.php` (+ title-fallback `card_title ?? title ?? slug`), `wexoe-partner-page/src/Renderer.php` — alla `Core::entity()` / `Permalink::for_record()` → `cms_cases`.
+- `wexoe-core/src/Helpers/Permalink.php`: patterns reducerade till enbart `cms_cases`.
+- **Raderade filer:** `entities/case_pages.php`, `entities/cases.php`, `write-entities/case_pages.php`.
+- `php -l` rent på alla rörda filer.
+
+### Kod — `wexoebuilder`
+- `lib/wexoe-cache-entities.ts`: `CUSTOMER_TYPE_PAGE_ENTITIES` och `PARTNER_ENTITIES` `case_pages`/`cases` → `cms_cases` (matchar PHP-entiteterna för cache-invalidering).
+- `lib/permalink.ts`: patterns + `caseUrl()` → `cms_cases`.
+- Schema-MD uppdaterade (`airtable-schema-cms-page.md`, `-pa.md`, `-customer-type.md`) + kommentarer i `airtable.ts`, `customer-type-{types,mapper}.ts`, customer-type editor/preview.
+- **Behållet medvetet:** linked-source-pickern `cases` (i `lib/linked-sources.ts`) — den nyckeln följer picker-konventionen med korta namn (syskon: `products`→cms_products, `articles`→cms_articles, `product_areas`→cms_product_pages), pekar redan client-side på `tblxH3ECSMvDTYrIQ`, och går *inte* via PHP-entiteten. Att döpa om den skulle bryta syskonkonventionen.
+
+### Designbeslut
+- **`cms_cases` blev kanonisk** (inte `cases`): cms_-prefix enligt naming-lås, och både buildern (`/api/case`, case-mapper) och `wexoe-case`-pluginet använder redan namnet.
+- **Bidirektionell migration:** genom att kopiera *case-sidans* länkfält till de nya recorden auto-populerades alla `core_*`/konsument-backlänkar — inga per-konsument-record-skrivningar behövdes.
+
+### ⚠️ Manuella TODOs efter merge (Airtable MCP saknar `delete_field`/`delete_table`)
+1. **Radera tabellen `cms_case_pages` (`tbl3uMV6IpRIZeucA`)** i Airtable-UI. Det tar automatiskt bort dessa nu tomma/legacy länkfält som pekar på den:
+   - `core_countries.case_page_ids` (fldpxDOqsY7myVjFA)
+   - `core_customer_types.case_page_ids` (fldQkL9YUyoCVMZsy)
+   - `core_partners.case_page_ids` (fldbMD2eZuBlf20Ji)
+   - `cms_products.case_page_ids` (fldbd7lSPQn8KZi1D)
+   - `cms_customer_type_pages.legacy_case_page_ids` (fldm8RjqJKFbwN1RN)
+   - `cms_page_sections.legacy_cg_case_manual_ids` (fldbOSQjQmDBsTGWP)
+2. Kontrollera att inga Airtable-vyer/automationer refererar `cms_case_pages` innan radering.
+3. Rensa `wexoe-core`-cache (eller vänta ut 24h TTL) så frontend läser de nya länkarna.
+4. Re-installera plugin-zip i WP (ingen auto-deploy).
+
+---
+
 ## Wexoe NY: efter-migration link-rewiring (2026-05-16)
 
 **Branch:** `claude/migrate-airtable-wexoe-nv1T5`
