@@ -1,147 +1,92 @@
-# CLAUDE.md — orientering för en ny LLM-session
+# CLAUDE.md — Wexoe monorepo (ingång)
 
-Du är i `wexoeplugins`. Den här filen är *bara* ingången — den ger bred kontext och pekar vidare.
+> Senast verifierad mot kod: 2026-05-31 (monorepo-restrukturering).
 
-> **Nyligen ändrat (2026-05-31):**
-> - Feature-plugins-mappen heter numera **`plugins/`** (tidigare `New plugins/` — mellanslaget togs bort). Sökvägar i äldre commits/loggar kan visa det gamla namnet.
-> - Spar-vägen i buildern är **deterministisk sedan FAS 2** (rena funktioner, inga Claude-anrop). Om du hittar en text — i kod-kommentar, guide eller prompt — som påstår att buildern skriver till Airtable "via Claude"/"Claude-transform", är den **inaktuell**: lita på koden och rätta texten. (`IMPLEMENTATION_LOG.md` och `ARKITEKTURPLAN.md`-loggen beskriver historik i dåtid — det är korrekt och ska inte ändras.)
+Detta är **monorepot** för hela Wexoe-systemet. Den här filen är en router —
+den ger bred kontext och pekar vidare. Läs den först, gå sen till rätt app/doc.
 
----
+## Vad systemet är
 
-## 1. Vad systemet är
+Wexoe driver sin publika sajt på WordPress (Enfold) men har flyttat allt
+innehåll till Airtable. En Next.js-builder låter marknadsförare redigera sidor
+med live-preview och skriver till Airtable; WordPress-plugins läser från Airtable
+(via `wexoe-core`) och renderar.
 
-Wexoe driver sin publika sajt på WordPress (Enfold-tema) men har flyttat allt innehåll ut ur WP. Datan ligger i Airtable. WP-plugins läser från Airtable och renderar via shortcodes.
+```
+apps/builder (Next.js)  →  Airtable  →  apps/wordpress/wexoe-core  →  feature-plugins  →  WP-sidor
+   (skriver, deterministiskt)  (CMS)        (enda Airtable-auktoriteten)    (shortcodes)
+```
 
-Två separata repon utgör systemet:
+## Monorepo-layout
 
-| Repo | Roll |
+```
+apps/
+  builder/        # Next.js/TS-buildern (Vercel; Root Directory = apps/builder). Egen CLAUDE.md.
+  wordpress/      # WP-plugins. wexoe-core = datalager; plugins/ = feature-plugins per sidtyp.
+packages/
+  schema/         # ⭐ SANNINGSKÄLLAN. entities/<table>.json (fält EN gång) + enums/ (section_type m.fl.)
+tools/
+  schema-sync.mjs        # kopierar packages/schema → committade kopior (apps/builder + wexoe-core)
+  guardian/guardian.mjs  # ⭐ VÄKTAREN — validerar paritet/enum/schema/strängar + genererar manifest
+docs/             # ARKITEKTURPLAN, MONOREPO-PLAN, NEW_PAGE_TYPE, SKAPA-SIDA, DOCS-MAP (genererad), decisions/
+manifest.json     # ⭐ GENERERAD systemkarta (av guardian)
+.claude/          # SessionStart-hook + slash-kommandon (/add-section, /add-page-type, /tdd)
+```
+
+## Sanningskällor (single source) — så här hänger det ihop
+
+- **Fält** definieras EN gång i `packages/schema/entities/<table>.json`. Kör
+  `npm run schema:sync` → kopior i `apps/builder/schema/` (buildern importerar
+  `@/schema/*`) och `apps/wordpress/wexoe-core/schema/` (WP-pluginet läser i
+  drift; måste vara committad så den följer med i en zip). **Redigera bara
+  originalet.** Väktaren failar om kopiorna driftar.
+- **`section_type`-menyn** definieras EN gång i
+  `packages/schema/enums/section-types.json`. PHP-dispatchern + builderns
+  SectionType valideras mot den.
+- **"Var bor allt"** → läs `docs/DOCS-MAP.md` (genererad) eller `manifest.json`.
+  Leta inte igenom trädet för hand.
+
+## Innan du är klar: kör väktaren
+
+```
+npm run check      # schema-synk-koll + guardian (paritet/enum/strängar). Grön = klart.
+npm run guardian   # bygg om manifest.json + docs/DOCS-MAP.md efter strukturändring
+```
+En ändring som lägger till/ändrar en sektion eller sidtyp är inte klar förrän
+`npm run check` är grön. (CI kör samma grind: `.github/workflows/ci.yml`.)
+
+## Hårda regler
+
+1. **Spar är deterministiskt.** state→Airtable sker via rena funktioner
+   (`apps/builder/lib/deterministic-transform.ts`), **inga Claude-anrop på spar**.
+   Claude finns bara på input/copy (`/api/parse`, `/api/copy`). Påståenden om
+   "Claude-transform på spar" i äldre text är inaktuella — rätta dem.
+2. **Bara `wexoe-core` pratar med Airtable** från WP-sidan. Feature-plugins går
+   via `\Wexoe\Core\Core`. Duplicera aldrig Core-helpers lokalt.
+3. **Redigera aldrig schema-kopiorna** (`apps/builder/schema/`,
+   `wexoe-core/schema/`) — bara `packages/schema/entities/`. Kör `schema:sync`.
+4. **Naming låst:** snake_case, engelska, prefix `core_`/`cms_`/`inbox_`. Se
+   `docs/` (UTVECKLINGSGUIDE / ARKITEKTURPLAN).
+5. **State-typer heter `<Type>State`** (standardiserat). Inga Airtable-fältnamn i UI-kod.
+
+## Vart pekar resten?
+
+| Vad | Var |
 |---|---|
-| **wexoeplugins** (denna) | WordPress-pluginen. `wexoe-core` är datalager + helpers. Feature-plugins per sidtyp renderar HTML. |
-| **wexoebuilder** (separat repo, samma org) | Next.js-app där marknadsförare redigerar sidor med live-preview. Skriver till Airtable. |
+| Bygg-sidan (Next.js): page-type-ramverk, deterministisk save | `apps/builder/CLAUDE.md` |
+| Core-API, schemaformat, plugin-anatomi | `apps/wordpress/UTVECKLINGSGUIDE.md` |
+| Skapa ny sidtyp (flöde / teknisk referens) | `docs/SKAPA-SIDA.md` · `docs/NEW_PAGE_TYPE.md` · `/add-page-type` |
+| Lägg till en sektion | `/add-section` |
+| TDD ur kravspec | `/tdd` |
+| Arkitektur-refaktorn (modularisering, faser) | `docs/ARKITEKTURPLAN.md` |
+| Denna infrastruktur-utrullning (faser, status) | `docs/MONOREPO-PLAN.md` |
+| Migrationshistorik / Airtable-datafixar | `docs/IMPLEMENTATION_LOG.md` |
 
-```
-wexoebuilder  →  Airtable  →  wexoe-core  →  feature-plugins  →  WP-sidor
-  (Next.js)     (SSOT+CMS)    (transients)    (shortcodes)
-```
+## Verktyg & verifiering i denna miljö
 
-Du jobbar bara i denna repo. Buildern lever sitt eget liv i `wexoebuilder/` med egen CLAUDE.md.
-
----
-
-## 2. wexoe-core: hjärtat
-
-**Endast** `wexoe-core` får prata med Airtable. Feature-plugins ringer alltid via fasaden `\Wexoe\Core\Core`:
-
-```php
-$page = Core::entity('cms_landing_pages')->find('fjarraccess');   // läs
-$result = Core::submission('user_submissions')->create_mapped([…]); // skriv
-$class = Core::renderer('contact-form');                            // delad markup
-Core::log('warning', '…', ['context' => …]);
-```
-
-Detaljer (alla metoder, schemaformat, helpers, cache-flow) finns i `UTVECKLINGSGUIDE.md` § 3–8. Öppna den när du faktiskt skriver kod mot Core.
-
-Två slags scheman:
-- `wexoe-core/entities/*.php` — **läs**-scheman (mappning + typer + cache-TTL)
-- `wexoe-core/write-entities/*.php` — **skriv**-scheman (bara fältmappning)
-
----
-
-## 3. Airtable-baser
-
-| Bas | ID | Status |
-|---|---|---|
-| Wexoe NY | `appokKSTaBdCa8YiW` | **Kanonisk.** All ny data, alla nya tabeller skrivs hit. |
-| Wexoe (legacy) | `appXoUcK68dQwASjF` | **Fasas ut.** Skriv aldrig hit. Läs bara om du måste audita migration. |
-
-SSOT-tabeller (`core_*` / `cms_*`) sätter `'base_id' => Plugin::SSOT_BASE_ID` i schemat för att tvinga Wexoe NY även när plugin-konfigen pekar mot en annan bas.
-
-**Migrationsstatus:** slutförd (legacy-basen utfasad). Datat är på plats. *Vissa* entity-filer heter fortfarande sina legacy-namn (`landing_pages.php`, `lp_tabs.php`, `audience_heroes.php`) trots att Airtable-tabellen bytt namn. Det är medvetet — döp inte om filer reflexmässigt; fråga om det är oklart. `IMPLEMENTATION_LOG.md` har migrationshistoriken; den framåtblickande arkitekturplanen ligger i `ARKITEKTURPLAN.md`. Lita på koden/Airtable först om något skiljer sig.
-
----
-
-## 4. Naming (låst — diskutera inte alternativ)
-
-- **snake_case**, **engelska**, överallt — Airtable display-namn, PHP-fält, TS-state.
-- **Prefix:** `core_` SSOT, `cms_` redigerbart innehåll, `inbox_` formulär-inflöden, `pim_` / `ext_` framtid.
-- **Plural** för kollektioner (`core_partners`), **singular** för singletons (`core_company`).
-- **Type-suffix:** `*_url`, `*_email`, `*_at` (datetime), `*_count` (int), `*_id` / `*_ids` (link), `*_html`, `*_markdown`, `*_json`.
-- **Bool-prefix:** `is_*`, `has_*`, `show_*`.
-- **kebab-case** bara i slug-*värden*, aldrig fältnamn.
-
-Fullständig tabell i `UTVECKLINGSGUIDE.md` § 2.
-
----
-
-## 5. Hårda regler (gör aldrig)
-
-1. **Aldrig** kalla Airtable från ett feature-plugin direkt. Gå via `Core::entity()` / `Core::submission()` / `Core::writer()`.
-2. **Aldrig** skriva till legacy-basen `appXoUcK68dQwASjF`.
-3. **Aldrig** ändra naming-konventionerna i § 4 — om något känns fel, fråga.
-4. **Aldrig** aktivera ett plugin halvvägs — kolla `class_exists('\\Wexoe\\Core\\Core')` i shortcode-funktionen och returnera synligt fel om Core saknas (mönster i `UTVECKLINGSGUIDE.md` § 3.7 och § 6).
-5. **Aldrig** duplicera Core-funktionalitet (markdown, color, youtube, contact-form-rendering) lokalt i ett feature-plugin. Använd helpern.
-
----
-
-## 6. Verktyg i den här miljön
-
-- **Airtable MCP** är tillgänglig och får användas fritt — läsa scheman, skapa/uppdatera tabeller och records i Wexoe NY. Skriv aldrig till legacy-basen. Servrarnas instruktioner längst upp i prompten beskriver flowet (`search_bases` → `list_tables_for_base` → `get_table_schema` → `list_records_for_table` / `update_records_for_table`).
-- **Ingen CI, inga test-svit, inga linters** i denna repo idag. `php -l` är vettigt på filer du rört. Faktisk verifiering sker manuellt: användaren zippar plugin-mappen och laddar upp via WP-admin.
-- **Ingen automatisk deploy.** En commit/push gör *inget* live — användaren måste manuellt re-installera pluginet. Du behöver inte vara extra försiktig "för att det går till prod", men du måste vara extra tydlig om vad användaren behöver göra efter merge.
-
----
-
-## 7. Vanliga uppgifter (icke uttömmande)
-
-- Lägga till/justera fält i `wexoe-core/entities/*.php` när Airtable-tabellen ändrats.
-- Bygga eller ändra ett feature-plugin under `plugins/wexoe-*/`.
-- Skapa en helt ny sidtyp — följ flowet i **`SKAPA-SIDA.md`** (marknadsförar-guide) eller den tekniska referensen i **`NEW_PAGE_TYPE.md`**.
-- Bugfix i `wexoe-core/src/` (Normalizer, Cache, AirtableClient, …).
-- Datafixar i Airtable via MCP (typ link-rewiring efter migration — se `IMPLEMENTATION_LOG.md` för precedens).
-
-För större migrations- eller datafix-åtgärder: **appenda till `IMPLEMENTATION_LOG.md`** med symptom + åtgärd + resultat. Vanliga feature-PRs behöver inte loggas där.
-
----
-
-## 8. Mappstruktur (kort)
-
-```
-wexoe-core/
-  wexoe-core.php             # bootstrap
-  src/                       # Core, AirtableClient, Cache, EntityRepository,
-                             #   WriteRepository, Normalizer, SchemaRegistry,
-                             #   Helpers/, Renderers/, ContactForm/, Admin/
-  entities/                  # läs-scheman (en fil per entitet)
-  write-entities/            # skriv-scheman
-
-plugins/
-  wexoe-landing-page/        # en mapp per feature-plugin
-  wexoe-pages/               # dispatcher-mönster: cms_pages + cms_page_sections
-    sections/                # en fil per section_type
-  wexoe-alb-blocks/          # Avia Layout Builder-integrering
-  wexoe-audience-hero/  wexoe-customer-type-page/  wexoe-contact-page/
-  wexoe-product-area/  automation-pillar/  (med flera)
-```
-
-Full anatomi av ett plugin: `UTVECKLINGSGUIDE.md` § 6. Dispatcher-mönstret för sidor med många sektioner: § 7.
-
----
-
-## 9. Var fortsätter jag läsa?
-
-| Fil | Använd när |
-|---|---|
-| `UTVECKLINGSGUIDE.md` | Du ska skriva kod mot Core eller bygga/ändra ett feature-plugin. Auktoritativ teknisk referens. |
-| `SKAPA-SIDA.md` | Användaren vill skapa en ny sidtyp och behöver flow-instruktioner (4 faser, en LLM-session per fas). |
-| `NEW_PAGE_TYPE.md` | Du är LLM:en i en av faserna i SKAPA-SIDA-flowet och behöver tekniska detaljer. |
-| `ARKITEKTURPLAN.md` | Den kanoniska, framåtblickande arkitektur-refaktorn (modularisering). Spegelidentisk i båda repona. Arbeta mot den och bocka av progress. |
-| `IMPLEMENTATION_LOG.md` | Du vill veta om en datafix redan gjorts, eller du själv ska logga en migration. |
-| `wexoe-core/src/Core.php` | Doc-kommentarerna är auktoritativa när dokumentation och kod skiljer sig åt. |
-
-`wexoebuilder/CLAUDE.md` finns i det *andra* repot — du har inte access till det härifrån, men nämn det för användaren om en uppgift kräver builder-ändringar.
-
----
-
-## 10. Git
-
-Du jobbar på branchen som user/harness anger (typiskt `claude/<task>-XXXX`). Commit-meddelanden på svenska eller engelska följer existerande stil: `feat(wexoe-pages): …`, `fix(airtable): …`, `chore: …`, `docs: …`, `refactor(...)`.
+- **Node 22 + PHP 8.x** finns. `npm run check` körs utan beroenden (Node stdlib).
+- Builder-deps installeras av SessionStart-hooken (`.claude/hooks/session-start.sh`)
+  → `tsc`/`lint`/`vitest` funkar. PHP: `php -l` direkt; Pest/PHPCS via composer (FAS 6).
+- **Ingen auto-deploy från WP-sidan.** En push gör inget live — användaren zippar
+  plugin-mappen (via online-GitHub-zipper) och laddar upp i WP-admin. Schema-kopian
+  i `wexoe-core/schema/` följer med i zippen automatiskt (committad).

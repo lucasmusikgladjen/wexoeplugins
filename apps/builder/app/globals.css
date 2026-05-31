@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+@import "tailwindcss";
+
+:root {
+  --lp-main: #11325D;
+  --lp-secondary: #F28C28;
+  --lp-green: #10B981;
+  --lp-light-bg: #F5F6F8;
+  --lp-white: #ffffff;
+  --lp-text: #333333;
+  --lp-text-light: #666666;
+  --lp-border: #e5e7eb;
+  --lp-hover: rgba(17, 50, 93, 0.05);
+  --font-dm-sans: 'DM Sans', system-ui, sans-serif;
+}
+
+@theme inline {
+  --color-lp-main: var(--lp-main);
+  --color-lp-secondary: var(--lp-secondary);
+  --color-lp-green: var(--lp-green);
+  --color-lp-light-bg: var(--lp-light-bg);
+  --color-lp-border: var(--lp-border);
+  --color-lp-hover: var(--lp-hover);
+  --color-lp-text: var(--lp-text);
+  --color-lp-text-light: var(--lp-text-light);
+}
+
+body {
+  font-family: var(--font-dm-sans);
+  background: var(--lp-light-bg);
+  color: var(--lp-text);
+  margin: 0;
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Editor panel — scroll functionality without a visible scrollbar. */
+.editor-panel {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.editor-panel::-webkit-scrollbar {
+  display: none;
+}
+
+/* Inline markdown links inside the preview — keep the surrounding color but
+ * give links a visible underline so the user knows they're clickable. */
+.preview-section a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+.preview-section a:hover {
+  text-decoration-thickness: 2px;
+}
+.preview-section code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.92em;
+}
+
+/* Preview section hover/active states */
+.preview-section {
+  cursor: pointer;
+  transition: outline 0.15s ease, box-shadow 0.15s ease;
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+}
+.preview-section:hover {
+  outline-color: rgba(17, 50, 93, 0.2);
+}
+.preview-section.active {
+  outline-color: rgba(17, 50, 93, 0.5);
+  box-shadow: inset 0 0 0 999px rgba(17, 50, 93, 0.03);
+}
+
+/* Shared preview canvas size for all builders. */
+.builder-preview-canvas {
+  width: min(100% - 2rem, 1120px);
+}

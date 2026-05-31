@@ -1,0 +1,23 @@
+# Monorepo-root gitignore. App-specifika regler ligger i apps/*/.gitignore.
+
+# dependencies
+node_modules/
+/.pnp
+.pnp.*
+
+# env
+.env*
+
+# os / editor
+.DS_Store
+*.pem
+
+# logs
+npm-debug.log*
+*.log
+
+# php — vendor ignoreras, men committa composer.lock för reproducerbar CI
+apps/wordpress/**/vendor/
+
+# vercel
+.vercel

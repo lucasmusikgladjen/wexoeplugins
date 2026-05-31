@@ -1,0 +1,22 @@
+{
+  "$comment": "ENUM-KÄLLAN för cms_page_sections.section_type. Definieras EN gång här. PHP-dispatchern (apps/wordpress/plugins/wexoe-pages/wexoe-pages.php) och builderns SectionType-union ska härledas/valideras mot denna. Airtable singleSelect speglar listan — väktaren (tools/guardian) varnar vid avvikelse. Lägg till en sektionstyp = en rad här + renderer + preview (väktaren listar exakt vad).",
+  "enum": "section_type",
+  "table": "cms_page_sections",
+  "types": [
+    { "type": "hero", "label": "Hero", "render": "hero.php" },
+    { "type": "text_image", "label": "Text + bild", "render": "text-image.php" },
+    { "type": "text_only", "label": "Endast text", "render": "text-only.php" },
+    { "type": "company_data_strip", "label": "Företagsdata-rad", "render": "company-data-strip.php" },
+    { "type": "news_text_split", "label": "Nyhet text-split", "render": "news-text-split.php" },
+    { "type": "case_grid", "label": "Case-rutnät", "render": "case-grid.php" },
+    { "type": "news_grid", "label": "Nyhetsrutnät", "render": "news-grid.php" },
+    { "type": "catalog", "label": "Katalog", "render": "catalog.php" },
+    { "type": "tabs", "label": "Flikar", "render": "tabs.php" },
+    { "type": "team_grid", "label": "Team-rutnät", "render": "team-grid.php" },
+    { "type": "partner_list", "label": "Partnerlista", "render": "partner-list.php" },
+    { "type": "faq", "label": "FAQ", "render": "faq.php" },
+    { "type": "testimonial", "label": "Testimonial", "render": "testimonial.php" },
+    { "type": "cta_banner", "label": "CTA-banner", "render": "cta-banner.php" },
+    { "type": "contact_form", "label": "Kontaktformulär", "render": "contact-form.php" }
+  ]
+}

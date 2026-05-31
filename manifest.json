@@ -1,0 +1,116 @@
+{
+  "generatedAt": "2026-05-31",
+  "generatedBy": "tools/guardian/guardian.mjs",
+  "entities": [
+    "cms_customer_type_pages"
+  ],
+  "sections": [
+    {
+      "type": "hero",
+      "phpRender": "apps/wordpress/plugins/wexoe-pages/sections/hero.php"
+    },
+    {
+      "type": "text_image",
+      "phpRender": "apps/wordpress/plugins/wexoe-pages/sections/text-image.php"
+    },
+    {
+      "type": "text_only",
+      "phpRender": "apps/wordpress/plugins/wexoe-pages/sections/text-only.php"
+    },
+    {
+      "type": "company_data_strip",
+      "phpRender": "apps/wordpress/plugins/wexoe-pages/sections/company-data-strip.php"
+    },
+    {
+      "type": "news_text_split",
+      "phpRender": "apps/wordpress/plugins/wexoe-pages/sections/news-text-split.php"
+    },
+    {
+      "type": "case_grid",
+      "phpRender": "apps/wordpress/plugins/wexoe-pages/sections/case-grid.php"
+    },
+    {
+      "type": "news_grid",
+      "phpRender": "apps/wordpress/plugins/wexoe-pages/sections/news-grid.php"
+    },
+    {
+      "type": "catalog",
+      "phpRender": "apps/wordpress/plugins/wexoe-pages/sections/catalog.php"
+    },
+    {
+      "type": "tabs",
+      "phpRender": "apps/wordpress/plugins/wexoe-pages/sections/tabs.php"
+    },
+    {
+      "type": "team_grid",
+      "phpRender": "apps/wordpress/plugins/wexoe-pages/sections/team-grid.php"
+    },
+    {
+      "type": "partner_list",
+      "phpRender": "apps/wordpress/plugins/wexoe-pages/sections/partner-list.php"
+    },
+    {
+      "type": "faq",
+      "phpRender": "apps/wordpress/plugins/wexoe-pages/sections/faq.php"
+    },
+    {
+      "type": "testimonial",
+      "phpRender": "apps/wordpress/plugins/wexoe-pages/sections/testimonial.php"
+    },
+    {
+      "type": "cta_banner",
+      "phpRender": "apps/wordpress/plugins/wexoe-pages/sections/cta-banner.php"
+    },
+    {
+      "type": "contact_form",
+      "phpRender": "apps/wordpress/plugins/wexoe-pages/sections/contact-form.php"
+    }
+  ],
+  "pageTypes": [
+    {
+      "id": "landing",
+      "module": null,
+      "server": null,
+      "ui": null,
+      "legacy": true
+    },
+    {
+      "id": "product",
+      "module": "product-area",
+      "server": "apps/builder/lib/page-types/product-area.server.ts",
+      "ui": "apps/builder/lib/page-types/product-area.ui.tsx"
+    },
+    {
+      "id": "customer-type",
+      "module": "customer-type",
+      "server": "apps/builder/lib/page-types/customer-type.server.ts",
+      "ui": "apps/builder/lib/page-types/customer-type.ui.tsx"
+    },
+    {
+      "id": "page",
+      "module": "cms-page",
+      "server": "apps/builder/lib/page-types/cms-page.server.ts",
+      "ui": "apps/builder/lib/page-types/cms-page.ui.tsx"
+    },
+    {
+      "id": "case",
+      "module": "case",
+      "server": "apps/builder/lib/page-types/case.server.ts",
+      "ui": "apps/builder/lib/page-types/case.ui.tsx"
+    },
+    {
+      "id": "partner",
+      "module": "partner",
+      "server": "apps/builder/lib/page-types/partner.server.ts",
+      "ui": "apps/builder/lib/page-types/partner.ui.tsx"
+    }
+  ],
+  "copyHandlers": [
+    "landing",
+    "product-area",
+    "customer-type",
+    "case",
+    "page",
+    "partner"
+  ]
+}

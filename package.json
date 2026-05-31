@@ -1,0 +1,21 @@
+{
+  "name": "wexoe-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Wexoe monorepo — apps/builder (Next.js), apps/wordpress (WP-plugins), packages/schema (single source).",
+  "scripts": {
+    "schema:sync": "node tools/schema-sync.mjs",
+    "schema:check": "node tools/schema-sync.mjs --check",
+    "guardian": "node tools/guardian/guardian.mjs",
+    "check": "node tools/schema-sync.mjs --check && node tools/guardian/guardian.mjs --check",
+    "builder:dev": "npm --prefix apps/builder run dev",
+    "builder:build": "npm --prefix apps/builder run build",
+    "builder:lint": "npm --prefix apps/builder run lint",
+    "test:builder": "npm --prefix apps/builder test",
+    "test:wordpress": "cd apps/wordpress && ./vendor/bin/pest",
+    "test": "npm run test:builder && npm run test:wordpress"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

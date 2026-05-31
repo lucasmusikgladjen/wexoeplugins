@@ -1,0 +1,70 @@
+name: CI
+
+# Minimal CI för monorepot. Tre jobb:
+#   guardian  — sanningsvakten (schema-synk + paritet/enum/strängar). Alltid på.
+#   builder   — Next.js/TS: typecheck + lint.
+#   wordpress — PHP: lint (php -l) på alla .php. (PHPCS/Pest läggs till i FAS 6.)
+#
+# Guardian är den hårda grinden: den kräver inga beroenden (Node stdlib) och
+# failar om en touchpoint saknas eller en schemakopia driftat.
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+  workflow_dispatch: {}
+
+jobs:
+  guardian:
+    name: Guardian (sanningsvakt)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: npm run check (schema-synk + guardian)
+        run: npm run check
+
+  builder:
+    name: Builder (tsc + lint + vitest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/builder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/builder/package-lock.json
+      - run: npm ci
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Lint
+        run: npm run lint
+      - name: Test (Vitest)
+        run: npm test
+
+  wordpress:
+    name: WordPress (php -l + PHPCS + Pest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/wordpress
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+      - name: PHP-lint alla .php
+        run: |
+          find . -name '*.php' -not -path './vendor/*' -print0 \
+            | xargs -0 -n1 -P4 php -l > /dev/null
+          echo "php -l: inga syntaxfel"
+      - name: Composer install
+        run: composer install --no-interaction --no-progress
+      - name: Test (Pest)
+        run: ./vendor/bin/pest
