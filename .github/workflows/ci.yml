@@ -66,23 +66,5 @@ jobs:
           echo "php -l: inga syntaxfel"
       - name: Composer install
         run: composer install --no-interaction --no-progress
-      - name: Test (Pest — inkl. headless sektionsrendering)
+      - name: Test (Pest)
         run: ./vendor/bin/pest
-
-  # Airtable-audit: jämför packages/schema mot den FAKTISKA basen. Körs bara om
-  # AIRTABLE_API_KEY-secret:en finns (annars skippar scriptet själv, exit 0) —
-  # så forks/PR:er utan secret bryts inte. Sätt secret:en i repo-inställningarna
-  # för att aktivera grinden mot drift mellan schema och Airtable.
-  airtable-audit:
-    name: Airtable-audit (schema ↔ live bas)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Audit schema mot Airtable
-        env:
-          AIRTABLE_API_KEY: ${{ secrets.AIRTABLE_API_KEY }}
-          AIRTABLE_BASE_ID: ${{ secrets.AIRTABLE_BASE_ID }}
-        run: npm run audit:airtable

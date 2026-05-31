@@ -18,6 +18,10 @@
  *   6. wordpress: php -l        syntax på alla .php (om php finns)
  *   7. wordpress: pest          beteende-tester (om vendor/bin/pest finns)
  *
+ * Airtable-auditen (tools/airtable-audit.mjs) ingår MEDVETET inte här — den
+ * kräver en hemlig nyckel + nätverk och körs bara i CI (se docs/AIRTABLE-AUDIT.md).
+ * verify ska kunna köras offline, var som helst, utan secrets.
+ *
  * Körning:
  *   node tools/verify.mjs            människoläsbar checklista + sammanfattning
  *   node tools/verify.mjs --json     maskinläsbar { ok, steps[] } för en agent
@@ -96,16 +100,6 @@ const STEPS = [
     label: 'WordPress: pest',
     when: () => (has('apps/wordpress/vendor/bin/pest') ? true : 'pest ej installerat (kör composer install i apps/wordpress)'),
     cmd: ['./vendor/bin/pest', [], WORDPRESS],
-  },
-  {
-    id: 'airtable-audit',
-    label: 'Airtable-audit (schema ↔ live bas)',
-    // Bara en hård grind när en nyckel finns; annars hoppad (precis som
-    // auditen själv skippar). Så lokalt/CI utan secret blir den inte en falsk
-    // grön — den syns som "hoppad: nyckel saknas".
-    when: () => (process.env.AIRTABLE_API_KEY ? true : 'AIRTABLE_API_KEY saknas (audit körs lokalt/CI med secret)'),
-    skipInQuick: true,
-    cmd: ['node', ['tools/airtable-audit.mjs'], ROOT],
   },
 ];
 

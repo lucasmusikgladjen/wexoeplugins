@@ -1,0 +1,50 @@
+name: Airtable-audit
+
+# Jämför sanningskällan (packages/schema) mot den FAKTISKA Airtable-basen.
+# Detta är driften väktaren INTE kan se: schemat säger att ett fält finns,
+# men någon har döpt om/tagit bort det i Airtable → spar failar tyst i drift.
+#
+# Den här workflowen körs HELT i GitHub — du behöver aldrig köra något själv.
+# Tre triggers:
+#   1. schedule   — varje måndag 06:00 UTC. Fångar drift även när ingen pushar
+#                   (t.ex. någon ändrar ett fältnamn direkt i Airtable).
+#   2. push/PR    — bara när schemat ändras (packages/schema/**). Då vill vi
+#                   genast veta om ändringen stämmer med basen.
+#   3. manuellt   — "Run workflow"-knappen i fliken Actions (ett klick, ingen
+#                   terminal). Använd när du nyss ändrat något i Airtable och
+#                   vill dubbelkolla.
+#
+# Kräver en repo-secret: AIRTABLE_API_KEY (se docs/AIRTABLE-AUDIT.md för exakt
+# hur du skapar och klistrar in den). Utan secret hoppar auditen tyst (grön) —
+# så workflowen skäller aldrig på den som inte satt upp den än.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # måndagar 06:00 UTC
+  push:
+    branches: [main]
+    paths:
+      - 'packages/schema/**'
+      - 'tools/airtable-audit.mjs'
+      - '.github/workflows/airtable-audit.yml'
+  pull_request:
+    paths:
+      - 'packages/schema/**'
+      - 'tools/airtable-audit.mjs'
+      - '.github/workflows/airtable-audit.yml'
+  workflow_dispatch: {} # manuell knapp i Actions-fliken
+
+jobs:
+  audit:
+    name: Schema ↔ live Airtable-bas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Audit schema mot Airtable
+        env:
+          AIRTABLE_API_KEY: ${{ secrets.AIRTABLE_API_KEY }}
+          AIRTABLE_BASE_ID: ${{ secrets.AIRTABLE_BASE_ID }}
+        run: npm run audit:airtable

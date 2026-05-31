@@ -15,19 +15,22 @@
  *   A-enum     section_type-singleSelect i cms_page_sections matchar
  *              packages/schema/enums/section-types.json exakt
  *
- * Kräver en Airtable PAT med schema-läs-scope:
- *   AIRTABLE_API_KEY=pat...   (samma nyckel som buildern använder)
+ * KÖRS I CI, inte för hand. GitHub kör den åt dig (schemalagt + vid
+ * schemaändringar) — se .github/workflows/airtable-audit.yml och den pedagogiska
+ * guiden docs/AIRTABLE-AUDIT.md. Den ingår MEDVETET inte i `npm run verify`,
+ * eftersom verify ska kunna köras offline utan hemligheter.
+ *
+ * Kräver en Airtable PAT med schema-läs-scope (data.records:read +
+ * schema.bases:read), satt som GitHub-secret:
+ *   AIRTABLE_API_KEY=pat...   (samma sorts nyckel som buildern använder)
  * Använder Airtables Metadata-API: GET /v0/meta/bases/{baseId}/tables
  *
- * Körning:
- *   node tools/airtable-audit.mjs           människoläsbar rapport
- *   node tools/airtable-audit.mjs --json     maskinläsbar { ok, findings[] }
+ * UTAN nyckel: skippar elegant (exit 0, status "skipped"). Så workflowen blir
+ * inte röd för någon som saknar secret:en — den aktiveras tyst när secret:en
+ * finns. Inga npm-beroenden (Node stdlib + global fetch i Node 18+).
  *
- * UTAN nyckel: skippar elegant (exit 0, status "skipped") — exakt som builderns
- * cache-invalidering skippar tyst utan webhook-secret. Så `npm run verify` och
- * CI kan anropa den ovillkorligt; den blir en hård grind först när en nyckel
- * finns (lokalt hos dig, eller som CI-secret). Inga npm-beroenden (Node stdlib +
- * global fetch i Node 18+).
+ * (Går att köra för hand med AIRTABLE_API_KEY=... node tools/airtable-audit.mjs,
+ *  men det är inte tänkt arbetssätt — CI äger den här grinden.)
  */
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -167,7 +170,7 @@ function report(status, extra = {}) {
 // ── Main ────────────────────────────────────────────────────────────────
 const apiKey = process.env.AIRTABLE_API_KEY;
 if (!apiKey) {
-  report('skipped', { reason: 'AIRTABLE_API_KEY saknas (sätt den lokalt eller som CI-secret för att aktivera)' });
+  report('skipped', { reason: 'AIRTABLE_API_KEY saknas — sätt den som GitHub-secret för att aktivera (se docs/AIRTABLE-AUDIT.md)' });
 }
 if (typeof fetch !== 'function') {
   report('skipped', { reason: 'global fetch saknas (kräver Node 18+)' });
