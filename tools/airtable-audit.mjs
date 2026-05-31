@@ -34,7 +34,7 @@
  */
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const jsonOut = process.argv.includes('--json');
@@ -49,21 +49,46 @@ const BASE_IDS = {
   legacy: 'appXoUcK68dQwASjF',
 };
 
+// Airtable-fälttyper grupperade efter vad de levererar till konsumenterna.
+// text/richtext/image/url/lines mappar alla till "string" i PHP/builder (se
+// packages/schema/README.md:s typtabell), så de delar samma text-lika mängd.
+const TEXT_LIKE = [
+  'singleLineText', 'multilineText', 'richText', 'url', 'email',
+  'phoneNumber', 'singleSelect', 'multipleSelects', 'date', 'dateTime',
+  'barcode', 'formula', 'rollup', 'lookup', 'multipleLookupValues',
+];
+const NUMBER_LIKE = ['number', 'autoNumber', 'rating', 'count', 'currency', 'percent', 'duration', 'formula', 'rollup'];
+const ATTACHMENT_LIKE = ['multipleAttachments']; // Airtable har bara multiple, även för en bilaga
+
 // Schema-typ → mängd kompatibla Airtable-fälttyper (Metadata-API:ts namn).
+// MÅSTE täcka ALLA dokumenterade schematyper (packages/schema/README.md). En
+// schematyp som saknas här ger ett hårt A-types-fel (i stället för att tyst
+// hoppas över) — annars skulle typdrift för en ny/feltypad typ smyga förbi.
 const TYPE_COMPAT = {
-  text: new Set([
-    'singleLineText', 'multilineText', 'richText', 'url', 'email',
-    'phoneNumber', 'singleSelect', 'multipleSelects', 'date', 'dateTime',
-    'barcode', 'formula', 'rollup', 'lookup', 'multipleLookupValues',
-  ]),
-  int: new Set(['number', 'autoNumber', 'rating', 'count', 'currency', 'percent', 'duration', 'formula', 'rollup']),
-  bool: new Set(['checkbox', 'formula']),
-  link: new Set(['multipleRecordLinks']),
+  text:        new Set(TEXT_LIKE),
+  richtext:    new Set(TEXT_LIKE),
+  image:       new Set(TEXT_LIKE), // URL-sträng, inte attachment (se README-typtabell)
+  url:         new Set(TEXT_LIKE),
+  lines:       new Set(TEXT_LIKE),
+  int:         new Set(NUMBER_LIKE),
+  float:       new Set(NUMBER_LIKE),
+  bool:        new Set(['checkbox', 'formula']),
+  link:        new Set(['multipleRecordLinks']),
+  attachment:  new Set(ATTACHMENT_LIKE),
+  attachments: new Set(ATTACHMENT_LIKE),
 };
 
-const findings = []; // { level: 'error'|'warning', rule, message }
-const err = (rule, message) => findings.push({ level: 'error', rule, message });
-const warn = (rule, message) => findings.push({ level: 'warning', rule, message });
+// En findings-sänka: { findings, err, warn }. Varje audit-funktion får sin egen
+// (rena funktioner, inga modul-globaler) och returnerar findings[] så de kan
+// enhetstestas isolerat. { level: 'error'|'warning', rule, message }.
+function makeSink() {
+  const findings = [];
+  return {
+    findings,
+    err: (rule, message) => findings.push({ level: 'error', rule, message }),
+    warn: (rule, message) => findings.push({ level: 'warning', rule, message }),
+  };
+}
 
 function loadSchemas() {
   if (!existsSync(SCHEMA_DIR)) return [];
@@ -84,55 +109,69 @@ async function fetchBaseTables(baseId, apiKey) {
   return data.tables; // [{ id, name, fields: [{ id, name, type, options }], ... }]
 }
 
-function auditEntity(schema, table) {
+// Returnerar findings[] för en entitet (ren funktion — testbar isolerat).
+export function auditEntity(schema, table) {
+  const { findings, err, warn } = makeSink();
   const tableLabel = `${schema.table} (${schema.table_id})`;
 
   // A-fields + A-types — varje schema-fält ska finnas med kompatibel typ.
+  // Airtable-kolumnnamnet är `def.source` om satt (dokumenterad alias-override
+  // i packages/schema/README.md), annars JSON-nyckeln själv.
   const airtableFields = new Map(table.fields.map((f) => [f.name, f]));
+  const expectedAirtableNames = new Set(); // det vi faktiskt slår upp i Airtable
   for (const [fieldName, def] of Object.entries(schema.fields || {})) {
-    const af = airtableFields.get(fieldName);
+    const airtableName = def.source || fieldName;
+    expectedAirtableNames.add(airtableName);
+    const label = airtableName === fieldName ? `'${fieldName}'` : `'${fieldName}' (source '${airtableName}')`;
+
+    const af = airtableFields.get(airtableName);
     if (!af) {
-      err('A-fields', `${tableLabel}: fält '${fieldName}' finns i schemat men saknas i Airtable`);
+      err('A-fields', `${tableLabel}: fält ${label} finns i schemat men saknas i Airtable`);
       continue;
     }
     const compat = TYPE_COMPAT[def.type];
-    if (compat && !compat.has(af.type)) {
-      err(
-        'A-types',
-        `${tableLabel}: fält '${fieldName}' är '${af.type}' i Airtable men schemat säger '${def.type}'`,
-      );
+    if (!compat) {
+      // Okänd schematyp → fel, inte tyst skip. Tvingar TYPE_COMPAT att hållas i
+      // synk med README:s typtabell när en ny typ införs.
+      err('A-types', `${tableLabel}: fält ${label} har schematyp '${def.type}' som audit:n inte känner (lägg till i TYPE_COMPAT)`);
+    } else if (!compat.has(af.type)) {
+      err('A-types', `${tableLabel}: fält ${label} är '${af.type}' i Airtable men schemat säger '${def.type}'`);
     }
   }
 
-  // Föräldralösa Airtable-fält (finns i Airtable men inte i schemat) — varning,
-  // inte fel: kan vara legacy-kolumner eller fält bara WP/automation läser.
-  const schemaFieldNames = new Set(Object.keys(schema.fields || {}));
+  // Föräldralösa Airtable-fält (finns i Airtable men inte bland de förväntade
+  // namnen) — varning, inte fel: kan vara legacy-kolumner eller fält bara
+  // WP/automation läser. Jämför mot de RESOLVADE namnen (inkl. source-alias),
+  // annars flaggas en aliasad kolumn felaktigt som föräldralös.
   for (const af of table.fields) {
-    if (!schemaFieldNames.has(af.name)) {
+    if (!expectedAirtableNames.has(af.name)) {
       warn('A-fields', `${tableLabel}: Airtable-fält '${af.name}' (${af.type}) finns inte i schemat (legacy? eller saknas i packages/schema)`);
     }
   }
+
+  return findings;
 }
 
-function auditSectionTypeEnum(tables) {
-  if (!existsSync(ENUM_FILE)) return;
-  const enumData = JSON.parse(readFileSync(ENUM_FILE, 'utf8'));
-  const enumSlugs = (enumData.types || []).map((t) => t.type).sort();
+// Returnerar findings[] för section_type-enum:en (ren funktion). enumSlugs läses
+// av anroparen och skickas in så funktionen inte rör disk → enkel att testa.
+export function auditSectionTypeEnum(tables, enumSlugsInput) {
+  const { findings, err, warn } = makeSink();
+  const enumSlugs = [...enumSlugsInput].sort();
 
   // Hitta cms_page_sections-tabellen och dess section_type-singleSelect.
   const table = tables.find((t) => t.name === 'cms_page_sections');
   if (!table) {
     warn('A-enum', "cms_page_sections-tabellen hittades inte i basen — hoppar enum-jämförelse (är section_type-fältet i en annan bas?)");
-    return;
+    return findings;
   }
   const field = table.fields.find((f) => f.name === 'section_type');
   if (!field) {
     warn('A-enum', "cms_page_sections saknar fältet 'section_type' i Airtable");
-    return;
+    return findings;
   }
   if (field.type !== 'singleSelect') {
     warn('A-enum', `cms_page_sections.section_type är '${field.type}' i Airtable, väntade 'singleSelect'`);
-    return;
+    return findings;
   }
   const airtableChoices = (field.options?.choices || []).map((c) => c.name).sort();
   const missingInAirtable = enumSlugs.filter((s) => !airtableChoices.includes(s));
@@ -143,9 +182,10 @@ function auditSectionTypeEnum(tables) {
   for (const s of extraInAirtable) {
     warn('A-enum', `section_type '${s}' är ett val i Airtable men saknas i packages/schema/enums/section-types.json`);
   }
+  return findings;
 }
 
-function report(status, extra = {}) {
+function report(status, findings, extra = {}) {
   if (jsonOut) {
     const ok = status !== 'failed';
     process.stdout.write(JSON.stringify({ ok, status, findings, ...extra }, null, 2) + '\n');
@@ -167,49 +207,63 @@ function report(status, extra = {}) {
   process.exit(0);
 }
 
-// ── Main ────────────────────────────────────────────────────────────────
-const apiKey = process.env.AIRTABLE_API_KEY;
-if (!apiKey) {
-  report('skipped', { reason: 'AIRTABLE_API_KEY saknas — sätt den som GitHub-secret för att aktivera (se docs/AIRTABLE-AUDIT.md)' });
-}
-if (typeof fetch !== 'function') {
-  report('skipped', { reason: 'global fetch saknas (kräver Node 18+)' });
-}
-
-const schemas = loadSchemas();
-if (schemas.length === 0) report('failed', {});
-
-try {
-  // Hämta varje unik bas en gång.
-  const neededBases = [...new Set(schemas.map((s) => BASE_IDS[s.base] || BASE_IDS.ssot))];
-  const tablesByBase = {};
-  for (const baseId of neededBases) {
-    tablesByBase[baseId] = await fetchBaseTables(baseId, apiKey);
+async function main() {
+  const apiKey = process.env.AIRTABLE_API_KEY;
+  if (!apiKey) {
+    report('skipped', [], { reason: 'AIRTABLE_API_KEY saknas — sätt den som GitHub-secret för att aktivera (se docs/AIRTABLE-AUDIT.md)' });
+  }
+  if (typeof fetch !== 'function') {
+    report('skipped', [], { reason: 'global fetch saknas (kräver Node 18+)' });
   }
 
-  for (const schema of schemas) {
-    const baseId = BASE_IDS[schema.base] || BASE_IDS.ssot;
-    const tables = tablesByBase[baseId];
-    const table = tables.find((t) => t.id === schema.table_id);
-    if (!table) {
-      err('A-table', `${schema.table}: table_id '${schema.table_id}' finns inte i bas ${baseId}`);
-      continue;
+  const schemas = loadSchemas();
+  if (schemas.length === 0) report('failed', []);
+
+  const enumSlugs = existsSync(ENUM_FILE)
+    ? (JSON.parse(readFileSync(ENUM_FILE, 'utf8')).types || []).map((t) => t.type)
+    : [];
+
+  const findings = [];
+  try {
+    // Hämta varje unik bas en gång.
+    const neededBases = [...new Set(schemas.map((s) => BASE_IDS[s.base] || BASE_IDS.ssot))];
+    const tablesByBase = {};
+    for (const baseId of neededBases) {
+      tablesByBase[baseId] = await fetchBaseTables(baseId, apiKey);
     }
-    auditEntity(schema, table);
-  }
 
-  // Enum-jämförelsen lever i ssot-basen (där cms_page_sections bor).
-  auditSectionTypeEnum(tablesByBase[BASE_IDS.ssot] || []);
+    for (const schema of schemas) {
+      const baseId = BASE_IDS[schema.base] || BASE_IDS.ssot;
+      const tables = tablesByBase[baseId];
+      const table = tables.find((t) => t.id === schema.table_id);
+      if (!table) {
+        findings.push({ level: 'error', rule: 'A-table', message: `${schema.table}: table_id '${schema.table_id}' finns inte i bas ${baseId}` });
+        continue;
+      }
+      findings.push(...auditEntity(schema, table));
+    }
 
-  const hasErrors = findings.some((f) => f.level === 'error');
-  report(hasErrors ? 'failed' : 'passed', { entities: schemas.length });
-} catch (e) {
-  // Nätverks-/auth-fel är inte en schema-avvikelse → rapportera men exit 1 så
-  // en trasig nyckel inte tyst maskeras.
-  if (jsonOut) {
-    process.stdout.write(JSON.stringify({ ok: false, status: 'error', error: String(e.message || e), findings }, null, 2) + '\n');
-  } else {
-    console.error(`\n✗ Airtable-audit kunde inte köras: ${e.message || e}`);
+    // Enum-jämförelsen lever i ssot-basen (där cms_page_sections bor).
+    findings.push(...auditSectionTypeEnum(tablesByBase[BASE_IDS.ssot] || [], enumSlugs));
+
+    const hasErrors = findings.some((f) => f.level === 'error');
+    report(hasErrors ? 'failed' : 'passed', findings, { entities: schemas.length });
+  } catch (e) {
+    // Nätverks-/auth-fel är inte en schema-avvikelse → rapportera men exit 1 så
+    // en trasig nyckel inte tyst maskeras.
+    if (jsonOut) {
+      process.stdout.write(JSON.stringify({ ok: false, status: 'error', error: String(e.message || e), findings }, null, 2) + '\n');
+    } else {
+      console.error(`\n✗ Airtable-audit kunde inte köras: ${e.message || e}`);
+    }
+    process.exit(1);
   }
-  process.exit(1);
+}
+
+// Kör bara main() när filen körs direkt (node tools/airtable-audit.mjs), inte
+// när den importeras av ett test. Standard-idiom för testbara CLI-moduler.
+// (process.argv[1] saknas vid `node -e`/import → kör då inte main.)
+const invokedDirectly = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (invokedDirectly) {
+  await main();
 }
