@@ -27,13 +27,13 @@ jobs:
     steps:
       # 1. Hämta wexoeplugins (källan med de nya schema-filerna).
       - name: Checkout wexoeplugins
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # 2. Skapa en kortlivad nyckel som får skriva till builder-repot.
       #    Kräver en GitHub App (engångs-setup) — se .github/SCHEMA_SYNC_SETUP.md.
       - name: Mint cross-repo token
         id: app
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ vars.SCHEMA_SYNC_APP_ID }}
           private-key: ${{ secrets.SCHEMA_SYNC_APP_PRIVATE_KEY }}
@@ -56,7 +56,7 @@ jobs:
 
       # 4. Hämta builder-repot (dit kopian ska) till mappen "builder/".
       - name: Checkout wexoebuilder
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: lucasmusikgladjen/wexoebuilder
           token: ${{ steps.app.outputs.token }}
