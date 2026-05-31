@@ -27,12 +27,18 @@ Monorepo-skapandet kan **inte** göras av en Claude-session i den nuvarande
 miljön: GitHub-verktygen + git-push är låsta till de två befintliga repona, och
 containern är ephemeral (inget överlever utan push till ett existerande remote).
 
-**Därför kräver FAS 0 en människa.** Två vägar:
-- **(A) Du skapar repot + ger Claude scope mot det.** Då kör Claude FAS 0–8 själv.
-- **(B) Du kör FAS 0:s git-script** (nedan) lokalt; Claude tar vid från FAS 1
-  när repot finns och är klonat i en session med scope mot det.
+**Därför kräver FAS 0 en människa.** Tre vägar (i ökande Claude-andel):
+- **(A) Nytt tomt repo via terminal + subtree** (§0.1). Du kör ~5 git-steg, ger
+  Claude scope mot nya repot, Claude kör FAS 1–8. Renast namn, mest terminal.
+- **(B) Claude bygger om ETT befintligt repo till monorepot.** Claude *får* pusha
+  till `wexoeplugins`/`wexoebuilder`. Claude flyttar in plugins-koden i
+  `apps/wordpress/`, drar in den andra kodbasen i `apps/builder/` (historik
+  bevarad), bygger `packages/` m.m. Du gör bara: **(1)** GitHub Settings → Rename
+  → `wexoe` (gammal länk redirectar), **(2)** peka om Vercel till `apps/builder`.
+  **Noll terminal, noll token-strul.** Rekommenderas givet online-arbetsflöde.
+- **(C) Du kör git-stegen lokalt** utifrån scripten här; Claude skriver all kod.
 
-Allt från FAS 1 och framåt förutsätter att monorepot existerar och är klonat.
+Allt från FAS 1 och framåt förutsätter att monorepot existerar och Claude har scope mot det.
 
 ---
 
@@ -57,7 +63,7 @@ wexoe/                              # nytt repo (namn TBD av människa)
 │   │   ├── guardian.ts
 │   │   ├── rules/                  #   en regel per check (paritet/enum/schema/strängar)
 │   │   └── manifest.schema.json
-│   └── package-plugin.sh           # zippar ett plugin + materialiserar schema in i artefakten
+│   └── schema-sync.ts              # kopierar packages/schema/entities → wexoe-core/schema (committat)
 ├── docs/
 │   ├── ARKITEKTURPLAN.md           # flyttad hit (en kopia, inte två)
 │   ├── MONOREPO-PLAN.md            # denna fil
@@ -77,10 +83,16 @@ wexoe/                              # nytt repo (namn TBD av människa)
 
 **Två hårda deploy-sanningar som planen respekterar:**
 1. **WP-pluginet körs isolerat på WordPress-servern** — `packages/schema` finns
-   inte där. Därför materialiseras schema-JSON *in i* `wexoe-core/schema/` vid
-   paketering (`tools/package-plugin.sh`) och vid dev (SessionStart-hook). Den
-   mappen är `.gitignored` → den är aldrig en andra källa, kan aldrig drifta.
-   Detta är *kopiering till en deploy-artefakt*, inte codegen.
+   inte där. Pluginet måste vara självförsörjande, så schema-JSON måste ligga
+   *committat inuti* `wexoe-core/schema/` (den följer då automatiskt med när
+   mappen laddas ner/zippas via en online-GitHub-zipper — inget script körs vid
+   zip). `packages/schema/entities/` är **originalet** (redigeras för hand);
+   `wexoe-core/schema/` är en **committad spegelkopia** som uppdateras av
+   `npm run schema:sync` **vid kodändring/push**, aldrig vid zip. Väktaren (FAS 4)
+   failar rött om kopian inte matchar originalet → kan aldrig drifta osett.
+   Detta är samma modell som dagens `sync-schema.yml`, fast inom ett repo och
+   väktarskyddad. (Inte codegen: en LLM redigerar bara originalet; synken är en
+   ren filkopia.)
 2. **Buildern (Vercel)** importerar `@wexoe/schema` som workspace-paket → samma
    filsystem, ingen kopia. Vercel: Root Directory `apps/builder`, install körs i
    monorepo-roten så workspace-länken finns; "Ignored Build Step" så att rena
@@ -140,29 +152,35 @@ git remote add origin $NEW && git push -u origin main
 > Idag: 1/26 entiteter i JSON. Mål: **alla** i `packages/schema`, en källa.
 > Detta gör "FAS 1" i `ARKITEKTURPLAN.md` klar på riktigt (inte pilot).
 
-### 1.1 Flytta källan
-- `apps/wordpress/wexoe-core/schema/*.json` → `packages/schema/entities/`.
-- `packages/schema/README.md` = nuvarande schema-format-spec (flyttas hit).
-- Lägg `apps/wordpress/wexoe-core/schema/` i `.gitignore`.
+### 1.1 Sätt upp källan
+- `packages/schema/entities/` = **originalet** (flytta dit dagens
+  `cms_customer_type_pages.json` + alla nya i FAS 1.3).
+- `packages/schema/README.md` = schema-format-spec (flyttas hit).
+- `apps/wordpress/wexoe-core/schema/` förblir **committad** (INTE gitignored) —
+  WP-zippen måste innehålla den. Den hålls i synk av `npm run schema:sync`.
 
-### 1.2 Peka om läsarna
-- **PHP:** `wexoe-core/src/Schema.php::from_json()` läser från en bas-path som
-  i dev/zip pekar på den materialiserade `wexoe-core/schema/`. Lägg
-  `tools/package-plugin.sh` + ett `npm run schema:materialize` (kopiera
-  `packages/schema/entities/*.json` → `wexoe-core/schema/`).
+### 1.2 Peka om läsarna + synk-scriptet
+- **`tools/schema-sync.ts`** + `npm run schema:sync`: kopierar
+  `packages/schema/entities/*.json` → `apps/wordpress/wexoe-core/schema/`.
+  Körs vid varje schemaändring; båda committas ihop. (Kan även köras av
+  SessionStart-hook + valideras av väktaren.)
+- **PHP:** `wexoe-core/src/Schema.php::from_json()` läser oförändrat ur den
+  committade `wexoe-core/schema/` — ingen kodändring behövs där.
 - **Builder:** `apps/builder/lib/schema/to-state.ts` importerar via `@wexoe/schema`.
-- Radera `wexoeplugins/.github/workflows/sync-schema.yml` (ingen spegling behövs i monorepo).
+- Radera gamla `.github/workflows/sync-schema.yml` (cross-repo-speglingen onödig i monorepo).
 
 ### 1.3 Migrera de 25 kvarvarande entiteterna (mekaniskt, en i taget)
 För varje `wexoe-core/entities/<t>.php` som är en handskriven array:
 1. Skriv `packages/schema/entities/<t>.json` (samma fält, format per README).
-2. Ersätt PHP-filen med shim: `return \Wexoe\Core\Schema::from_json('<t>');`.
-3. Kör väktaren (FAS 4) → grön betyder PHP-läsning oförändrad.
+2. Kör `npm run schema:sync` (kopierar till `wexoe-core/schema/`).
+3. Ersätt PHP-filen med shim: `return \Wexoe\Core\Schema::from_json('<t>');`.
+4. Kör väktaren (FAS 4) → grön betyder PHP-läsning oförändrad.
 > Ordning: börja med de enklaste flata (`core_*`), sist multi-fält
 > (`cms_page_sections`, `landing_pages`). `php -l` + guardian efter varje.
 
 ### 1.4 Acceptans
-- [ ] `packages/schema/entities/` innehåller alla entiteter; `entities/*.php` är shims.
+- [ ] `packages/schema/entities/` innehåller alla entiteter (originalet); `entities/*.php` är shims.
+- [ ] `wexoe-core/schema/` är committad och bit-identisk med originalet (väktaren grön).
 - [ ] Builder-read och PHP-read identiska före/efter (guardian + manuell spot-check).
 - [ ] 0 `write-entities/`-filer kvar som inte används (verifiera mot kod; radera oanvända).
 
@@ -305,7 +323,7 @@ Per sidtyp och per sektion/block, alla touchpoints:
 | # | Risk | Hantering |
 |---|---|---|
 | R1 | **Repo-skapande kan ej göras av Claude** (verktyg låsta, ephemeral container). | FAS 0 = människa. Resten kräver scope mot nya repot eller handoff. |
-| R2 | **WP-deploy-isolering:** `packages/schema` finns ej på WP-servern. | `wexoe-core/schema/` materialiseras (kopia) vid dev + zip; `.gitignored`, aldrig andra källa. |
+| R2 | **WP-deploy-isolering:** `packages/schema` finns ej på WP-servern; användaren zippar via online-GitHub-zipper (inget script vid zip). | `wexoe-core/schema/` är **committad** spegelkopia, synkad vid push (`npm run schema:sync`), väktarskyddad. Zippen får den gratis. Inget triggas vid zip. |
 | R3 | **Ingen `node_modules`/composer i Claude-containern** → kan ej köra tsc/vitest/pest/php här. | Verifiering sker i CI (FAS 5) + SessionStart-hook. State-typ-rename (FAS 3) är blind tills CI — gör den efter CI finns. |
 | R4 | **Vercel monorepo-bygg** hittar ej workspace-paketet. | Root Directory `apps/builder` + install i roten; verifiera @wexoe/schema-länk i första deployen. |
 | R5 | **Subtree-historik** stökig om gamla branches behövs. | Subtree bevarar `main`/default-historiken; öppna feature-branches i gamla repon arkiveras, inte migreras. |
