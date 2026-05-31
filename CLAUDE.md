@@ -46,14 +46,30 @@ manifest.json     # ⭐ GENERERAD systemkarta (av guardian)
 - **"Var bor allt"** → läs `docs/DOCS-MAP.md` (genererad) eller `manifest.json`.
   Leta inte igenom trädet för hand.
 
-## Innan du är klar: kör väktaren
+## Innan du är klar: kör verify
 
 ```
-npm run check      # schema-synk-koll + guardian (paritet/enum/strängar). Grön = klart.
+npm run verify     # ⭐ ALLA lokala grindar i en körning (= CI): schema-synk,
+                   #   guardian, tsc, lint, vitest, php -l, pest. Grön = klart.
+npm run verify:quick  # snabb loop under utveckling (hoppar tsc/lint)
+npm run check      # bara sanningsvakten (schema-synk-koll + guardian) — snabbast
 npm run guardian   # bygg om manifest.json + docs/DOCS-MAP.md efter strukturändring
 ```
-En ändring som lägger till/ändrar en sektion eller sidtyp är inte klar förrän
-`npm run check` är grön. (CI kör samma grind: `.github/workflows/ci.yml`.)
+`npm run verify` är den enda sanningen för "klart": den kör samma grindar som
+CI och avbryter INTE vid första felet — du ser hela bilden i en körning. Grönt
+lokalt = grönt i CI. En ändring som lägger till/ändrar en sektion eller sidtyp
+är inte klar förrän den är grön. (CI: `.github/workflows/ci.yml`.)
+
+**Maskinläsbart för agenter:** `node tools/verify.mjs --json` och
+`node tools/guardian/guardian.mjs --json` ger `{ ok, ... }`-JSON så du kan parsa
+fel programmatiskt istället för prosa.
+
+**Verifieringsverktyg (alla beroendefria, Node stdlib / PHP):**
+| Verktyg | Vad det bevisar | Var |
+|---|---|---|
+| `tools/verify.mjs` | Kör + samlar alla lokala grindar (en sanning för "klart") | lokalt + CI |
+| `tools/guardian/guardian.mjs` | Intern konsistens: paritet/enum/strängar/schema-synk | lokalt + CI |
+| `tools/airtable-audit.mjs` | Schemat matchar den FAKTISKA Airtable-basen (fält/typer/section_type-enum) — driften väktaren inte kan se | **bara CI** (kräver `AIRTABLE_API_KEY`-secret; se `docs/AIRTABLE-AUDIT.md`) |
 
 ## Hårda regler
 

@@ -13,6 +13,10 @@
  * Körning:
  *   node tools/guardian/guardian.mjs            → bygg manifest + DOCS-MAP, validera
  *   node tools/guardian/guardian.mjs --check    → bara validera (CI), exit 1 vid fel
+ *   node tools/guardian/guardian.mjs --json      → maskinläsbar utdata (en agent
+ *                                                  parsar errors[]/warnings[] direkt,
+ *                                                  ingen prosa att tolka). Kombineras
+ *                                                  med --check. Exit 1 vid fel.
  *
  * Inga beroenden (Node stdlib). En LLM kör detta och vet om arbetet är komplett.
  */
@@ -22,6 +26,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const checkOnly = process.argv.includes('--check');
+const jsonOut = process.argv.includes('--json');
 
 const P = {
   schemaSrc: join(ROOT, 'packages/schema/entities'),
@@ -190,7 +195,9 @@ const manifest = {
   copyHandlers: handlers,
 };
 
-if (!checkOnly) {
+// I --json-läge skriver vi aldrig filer (rena läs-/valideringskörningar) så att
+// en agent kan fråga "är allt grönt?" utan sidoeffekter på arbetsträdet.
+if (!checkOnly && !jsonOut) {
   writeFileSync(P.manifest, JSON.stringify(manifest, null, 2) + '\n');
   writeFileSync(P.docsMap, renderDocsMap(manifest));
 }
@@ -198,6 +205,37 @@ if (!checkOnly) {
 // ─────────────────────────────────────────────────────────────────────────
 // Rapport
 // ─────────────────────────────────────────────────────────────────────────
+// Splittra "R-xxx: meddelande" → { rule, message } så maskinläsare slipper
+// parsa prosa. Meddelanden utan prefix får rule:null.
+const split = (s) => {
+  const m = s.match(/^(R-[a-z]+):\s*(.*)$/s);
+  return m ? { rule: m[1], message: m[2] } : { rule: null, message: s };
+};
+
+if (jsonOut) {
+  const ok = errors.length === 0;
+  process.stdout.write(
+    JSON.stringify(
+      {
+        ok,
+        summary: {
+          entities: entities.length,
+          sections: enumSlugs.length,
+          pageTypes: pageTypes.length,
+          copyHandlers: handlers.length,
+          errors: errors.length,
+          warnings: warnings.length,
+        },
+        errors: errors.map(split),
+        warnings: warnings.map(split),
+      },
+      null,
+      2,
+    ) + '\n',
+  );
+  process.exit(ok ? 0 : 1);
+}
+
 for (const w of warnings) console.log(`  ⚠ ${w}`);
 if (errors.length) {
   console.error(`\n✗ Guardian: ${errors.length} fel:`);
