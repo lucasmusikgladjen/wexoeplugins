@@ -1,31 +1,17 @@
 <?php
 /**
- * Entity schema: core_testimonials
+ * Entity schema: core_testimonials (shim)
  *
- * SSOT — Kundreferenser/testimonials (collection).
- * Airtable-tabell: core_testimonials (tbl1pe0bWz5zdkqJF) i Wexoe NY.
+ * Faltlistan bor pa EXAKT ett stalle: schema/core_testimonials.json (committad synk-kopia av
+ * packages/schema/entities/core_testimonials.json). Den har filen ar en tunn shim som later
+ * Schema::from_json() oversatta JSON-schemat till den array-form
+ * SchemaRegistry/Normalizer forvantar sig — read-beteendet ar oforandrat och
+ * bevisat byte-identiskt (Normalizer doman-output ===). Samma JSON last av
+ * buildern (TS) sa att en faltandring gors pa ett stalle.
+ *
+ * Lagg till/andra falt i JSON-filen, inte har.
  */
 
 if (!defined('ABSPATH')) exit;
 
-return [
-    'base_id' => \Wexoe\Core\Plugin::SSOT_BASE_ID,
-    'table_id' => 'tbl1pe0bWz5zdkqJF',
-    'primary_key' => 'internal_name',
-    'cache_ttl' => 3600,
-    'required' => ['internal_name'],
-    'fields' => [
-        'internal_name' => 'internal_name',
-        'internal_notes' => 'internal_notes',
-        'quote' => 'quote',
-        'author_name' => 'author_name',
-        'author_title' => 'author_title',
-        'author_image_url' => 'author_image_url',
-        'order' => ['source' => 'order', 'type' => 'float'],
-        'is_active' => ['source' => 'is_active', 'type' => 'bool'],
-        'is_featured' => ['source' => 'is_featured', 'type' => 'bool'],
-        'customer_type_ids' => ['source' => 'customer_type_ids', 'type' => 'link', 'entity' => 'core_customer_types'],
-        'division_ids' => ['source' => 'division_ids', 'type' => 'link', 'entity' => 'core_divisions'],
-        'country_ids' => ['source' => 'country_ids', 'type' => 'link', 'entity' => 'core_countries'],
-    ],
-];
+return \Wexoe\Core\Schema::from_json('core_testimonials');

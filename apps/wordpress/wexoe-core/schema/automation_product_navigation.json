@@ -1,0 +1,49 @@
+{
+    "table": "cms_product_navigation",
+    "base": "ssot",
+    "table_id": null,
+    "cache_ttl": 86400,
+    "required": [
+        "name",
+        "type"
+    ],
+    "fields": {
+        "name": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "is_active": {
+            "type": "bool"
+        },
+        "order": {
+            "type": "float"
+        },
+        "type": {
+            "type": "type"
+        },
+        "url": {
+            "type": "text"
+        },
+        "icon": {
+            "type": "text"
+        },
+        "description": {
+            "type": "text"
+        },
+        "button_text": {
+            "type": "text"
+        },
+        "benefit_1": {
+            "type": "text"
+        },
+        "benefit_2": {
+            "type": "text"
+        },
+        "division_ids": {
+            "type": "link",
+            "entity": "core_divisions"
+        }
+    }
+}

@@ -1,0 +1,70 @@
+{
+    "table": "core_graphic_profile",
+    "base": "ssot",
+    "table_id": "tbl4c4HjiKVCcJI5v",
+    "primary_key": "slug",
+    "cache_ttl": 3600,
+    "required": [
+        "slug"
+    ],
+    "fields": {
+        "slug": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "is_default": {
+            "type": "bool"
+        },
+        "logo_primary_url": {
+            "type": "text"
+        },
+        "logo_dark_url": {
+            "type": "text"
+        },
+        "icon_light_url": {
+            "type": "text"
+        },
+        "icon_dark_url": {
+            "type": "text"
+        },
+        "favicon_url": {
+            "type": "text"
+        },
+        "color_primary": {
+            "type": "text"
+        },
+        "color_secondary": {
+            "type": "text"
+        },
+        "color_accent": {
+            "type": "text"
+        },
+        "color_background_light": {
+            "type": "text"
+        },
+        "color_background_dark": {
+            "type": "text"
+        },
+        "color_text_primary": {
+            "type": "text"
+        },
+        "color_text_secondary": {
+            "type": "text"
+        },
+        "font_heading": {
+            "type": "text"
+        },
+        "font_body": {
+            "type": "text"
+        },
+        "font_css_url": {
+            "type": "text"
+        },
+        "division_ids": {
+            "type": "link",
+            "entity": "core_divisions"
+        }
+    }
+}

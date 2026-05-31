@@ -1,36 +1,17 @@
 <?php
 /**
- * Entity schema: lp_downloads
+ * Entity schema: lp_downloads (shim)
  *
- * Nedladdningsbara resurser kopplade till LP Tabs.
- * Airtable-tabell: cms_landing_page_downloads (tbltAtilGKnQ2wc7I) i Wexoe NY.
+ * Faltlistan bor pa EXAKT ett stalle: schema/lp_downloads.json (committad synk-kopia av
+ * packages/schema/entities/lp_downloads.json). Den har filen ar en tunn shim som later
+ * Schema::from_json() oversatta JSON-schemat till den array-form
+ * SchemaRegistry/Normalizer forvantar sig — read-beteendet ar oforandrat och
+ * bevisat byte-identiskt (Normalizer doman-output ===). Samma JSON last av
+ * buildern (TS) sa att en faltandring gors pa ett stalle.
  *
- * Primärnyckel: 'name'.
+ * Lagg till/andra falt i JSON-filen, inte har.
  */
 
 if (!defined('ABSPATH')) exit;
 
-return [
-    'base_id' => \Wexoe\Core\Plugin::SSOT_BASE_ID,
-    'table_id' => 'tbltAtilGKnQ2wc7I',
-    'primary_key' => 'name',
-    'cache_ttl' => 86400,
-    'required' => ['name'],
-    'fields' => [
-        'name' => 'name',
-        'internal_notes' => 'internal_notes',
-        'is_active' => ['source' => 'is_active', 'type' => 'bool'],
-        'order' => ['source' => 'order', 'type' => 'float'],
-        'description' => 'description',
-        'thumbnail_url' => 'thumbnail_url',
-        'file_url' => 'file_url',
-        'button_text' => 'button_text',
-
-        // Back-link
-        'tab_ids' => [
-            'source' => 'tab_ids',
-            'type' => 'link',
-            'entity' => 'lp_tabs',
-        ],
-    ],
-];
+return \Wexoe\Core\Schema::from_json('lp_downloads');

@@ -1,0 +1,43 @@
+{
+    "table": "core_countries",
+    "base": "ssot",
+    "table_id": "tblCZ082jWGUBrUAK",
+    "primary_key": "code",
+    "cache_ttl": 3600,
+    "required": [
+        "name",
+        "code"
+    ],
+    "fields": {
+        "name": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "code": {
+            "type": "text"
+        },
+        "domain": {
+            "type": "text"
+        },
+        "url_prefix": {
+            "type": "text"
+        },
+        "currency": {
+            "type": "text"
+        },
+        "locale": {
+            "type": "text"
+        },
+        "default_language": {
+            "type": "text"
+        },
+        "order": {
+            "type": "int"
+        },
+        "is_active": {
+            "type": "bool"
+        }
+    }
+}

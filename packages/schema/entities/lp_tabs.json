@@ -1,0 +1,92 @@
+{
+    "table": "cms_landing_page_tabs",
+    "base": "ssot",
+    "table_id": "tblp8d32aj5BgGMvE",
+    "primary_key": "name",
+    "cache_ttl": 86400,
+    "required": [
+        "name"
+    ],
+    "fields": {
+        "name": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "is_active": {
+            "type": "bool"
+        },
+        "order": {
+            "type": "float"
+        },
+        "tab_type": {
+            "type": "text"
+        },
+        "ti_h2": {
+            "type": "text"
+        },
+        "ti_text": {
+            "type": "text"
+        },
+        "ti_benefits": {
+            "type": "lines"
+        },
+        "ti_image_url": {
+            "type": "text"
+        },
+        "ti_inverted": {
+            "type": "bool"
+        },
+        "fm_url": {
+            "type": "text"
+        },
+        "faq_items": {
+            "type": "text"
+        },
+        "calameo_1_title": {
+            "type": "text"
+        },
+        "calameo_1_src": {
+            "type": "text"
+        },
+        "calameo_2_title": {
+            "type": "text"
+        },
+        "calameo_2_src": {
+            "type": "text"
+        },
+        "calameo_3_title": {
+            "type": "text"
+        },
+        "calameo_3_src": {
+            "type": "text"
+        },
+        "download_ids": {
+            "type": "link",
+            "entity": "lp_downloads"
+        },
+        "compare_title": {
+            "type": "text"
+        },
+        "compare_col_a": {
+            "type": "text"
+        },
+        "compare_col_b": {
+            "type": "text"
+        },
+        "compare_rows": {
+            "type": "text"
+        },
+        "steps_title": {
+            "type": "text"
+        },
+        "steps": {
+            "type": "text"
+        },
+        "landing_page_ids": {
+            "type": "link",
+            "entity": "landing_pages"
+        }
+    }
+}

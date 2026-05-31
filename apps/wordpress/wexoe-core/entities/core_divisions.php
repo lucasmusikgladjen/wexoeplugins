@@ -1,26 +1,17 @@
 <?php
 /**
- * Entity schema: core_divisions
+ * Entity schema: core_divisions (shim)
  *
- * SSOT — Divisioner (taxonomi).
- * Airtable-tabell: core_divisions (tblyxs2zsoRBozxQS) i Wexoe NY.
+ * Faltlistan bor pa EXAKT ett stalle: schema/core_divisions.json (committad synk-kopia av
+ * packages/schema/entities/core_divisions.json). Den har filen ar en tunn shim som later
+ * Schema::from_json() oversatta JSON-schemat till den array-form
+ * SchemaRegistry/Normalizer forvantar sig — read-beteendet ar oforandrat och
+ * bevisat byte-identiskt (Normalizer doman-output ===). Samma JSON last av
+ * buildern (TS) sa att en faltandring gors pa ett stalle.
+ *
+ * Lagg till/andra falt i JSON-filen, inte har.
  */
 
 if (!defined('ABSPATH')) exit;
 
-return [
-    'base_id' => \Wexoe\Core\Plugin::SSOT_BASE_ID,
-    'table_id' => 'tblyxs2zsoRBozxQS',
-    'primary_key' => 'slug',
-    'cache_ttl' => 3600,
-    'required' => ['name', 'slug'],
-    'fields' => [
-        'name' => 'name',
-        'internal_notes' => 'internal_notes',
-        'slug' => 'slug',
-        'description' => 'description',
-        'order' => ['source' => 'order', 'type' => 'int'],
-        'is_active' => ['source' => 'is_active', 'type' => 'bool'],
-        'country_ids' => ['source' => 'country_ids', 'type' => 'link', 'entity' => 'core_countries'],
-    ],
-];
+return \Wexoe\Core\Schema::from_json('core_divisions');

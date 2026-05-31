@@ -11,4 +11,12 @@ if (!defined('ABSPATH')) {
     define('ABSPATH', sys_get_temp_dir() . '/wexoe-test-wp/');
 }
 
+// Schema::from_json() läser schema-kopian under WEXOE_CORE_PATH . 'schema/'.
+// I drift sätts WEXOE_CORE_PATH av wexoe-core.php (plugin_dir_path). I test
+// pekar vi den på wexoe-core/ så from_json hittar den committade synk-kopian
+// (annars fatalar Schema::schema_path() på en odefinierad konstant).
+if (!defined('WEXOE_CORE_PATH')) {
+    define('WEXOE_CORE_PATH', dirname(__DIR__) . '/wexoe-core/');
+}
+
 require __DIR__ . '/../vendor/autoload.php';

@@ -1,29 +1,17 @@
 <?php
 /**
- * Entity schema: core_partners
+ * Entity schema: core_partners (shim)
  *
- * SSOT — Samarbetspartners (collection).
- * Airtable-tabell: core_partners (tblZ5YIYFelxA0nBm) i Wexoe NY.
+ * Faltlistan bor pa EXAKT ett stalle: schema/core_partners.json (committad synk-kopia av
+ * packages/schema/entities/core_partners.json). Den har filen ar en tunn shim som later
+ * Schema::from_json() oversatta JSON-schemat till den array-form
+ * SchemaRegistry/Normalizer forvantar sig — read-beteendet ar oforandrat och
+ * bevisat byte-identiskt (Normalizer doman-output ===). Samma JSON last av
+ * buildern (TS) sa att en faltandring gors pa ett stalle.
+ *
+ * Lagg till/andra falt i JSON-filen, inte har.
  */
 
 if (!defined('ABSPATH')) exit;
 
-return [
-    'base_id' => \Wexoe\Core\Plugin::SSOT_BASE_ID,
-    'table_id' => 'tblZ5YIYFelxA0nBm',
-    'primary_key' => 'name',
-    'cache_ttl' => 3600,
-    'required' => ['name'],
-    'fields' => [
-        'name' => 'name',
-        'internal_notes' => 'internal_notes',
-        'logo_url' => 'logo_url',
-        'logo_transparent_url' => 'logo_transparent_url',
-        'url' => 'url',
-        'description' => 'description',
-        'order' => ['source' => 'order', 'type' => 'float'],
-        'is_active' => ['source' => 'is_active', 'type' => 'bool'],
-        'division_ids' => ['source' => 'division_ids', 'type' => 'link', 'entity' => 'core_divisions'],
-        'country_ids' => ['source' => 'country_ids', 'type' => 'link', 'entity' => 'core_countries'],
-    ],
-];
+return \Wexoe\Core\Schema::from_json('core_partners');

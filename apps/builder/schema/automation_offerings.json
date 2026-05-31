@@ -1,0 +1,56 @@
+{
+    "table": "cms_offerings",
+    "base": "ssot",
+    "table_id": null,
+    "cache_ttl": 86400,
+    "required": [
+        "name"
+    ],
+    "fields": {
+        "name": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "is_active": {
+            "type": "bool"
+        },
+        "order": {
+            "type": "float"
+        },
+        "division": {
+            "type": "text"
+        },
+        "heading": {
+            "type": "text"
+        },
+        "description": {
+            "type": "text"
+        },
+        "image_url": {
+            "type": "text"
+        },
+        "benefit_1": {
+            "type": "text"
+        },
+        "benefit_2": {
+            "type": "text"
+        },
+        "benefit_3": {
+            "type": "text"
+        },
+        "benefit_4": {
+            "type": "text"
+        },
+        "benefit_5": {
+            "type": "text"
+        },
+        "cta_text": {
+            "type": "text"
+        },
+        "cta_url": {
+            "type": "text"
+        }
+    }
+}

@@ -1,0 +1,76 @@
+{
+    "table": "core_company",
+    "base": "ssot",
+    "table_id": "tblwq9y74ertsNyYG",
+    "primary_key": "slug",
+    "cache_ttl": 3600,
+    "required": [
+        "slug"
+    ],
+    "fields": {
+        "slug": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "is_default": {
+            "type": "bool"
+        },
+        "country_ids": {
+            "type": "link",
+            "entity": "core_countries"
+        },
+        "company_name": {
+            "type": "text"
+        },
+        "tagline": {
+            "type": "text"
+        },
+        "org_number": {
+            "type": "text"
+        },
+        "vat_number": {
+            "type": "text"
+        },
+        "email": {
+            "type": "text"
+        },
+        "email_order": {
+            "type": "text"
+        },
+        "phone": {
+            "type": "text"
+        },
+        "phone_emergency": {
+            "type": "text"
+        },
+        "address_line_1": {
+            "type": "text"
+        },
+        "address_postal_code": {
+            "type": "text"
+        },
+        "address_city": {
+            "type": "text"
+        },
+        "linkedin_url": {
+            "type": "text"
+        },
+        "facebook_url": {
+            "type": "text"
+        },
+        "instagram_url": {
+            "type": "text"
+        },
+        "youtube_url": {
+            "type": "text"
+        },
+        "hours_mon_thur": {
+            "type": "text"
+        },
+        "hours_friday": {
+            "type": "text"
+        }
+    }
+}

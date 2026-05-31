@@ -1,0 +1,35 @@
+{
+    "table": "core_divisions",
+    "base": "ssot",
+    "table_id": "tblyxs2zsoRBozxQS",
+    "primary_key": "slug",
+    "cache_ttl": 3600,
+    "required": [
+        "name",
+        "slug"
+    ],
+    "fields": {
+        "name": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "slug": {
+            "type": "text"
+        },
+        "description": {
+            "type": "text"
+        },
+        "order": {
+            "type": "int"
+        },
+        "is_active": {
+            "type": "bool"
+        },
+        "country_ids": {
+            "type": "link",
+            "entity": "core_countries"
+        }
+    }
+}

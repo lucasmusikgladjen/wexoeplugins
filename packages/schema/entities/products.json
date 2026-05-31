@@ -1,0 +1,66 @@
+{
+    "table": "cms_products",
+    "base": "ssot",
+    "table_id": "tblN23V7uAMpeZoO1",
+    "primary_key": "name",
+    "cache_ttl": 86400,
+    "required": [
+        "name"
+    ],
+    "fields": {
+        "name": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "is_active": {
+            "type": "bool"
+        },
+        "order": {
+            "type": "float"
+        },
+        "ecosystem_description": {
+            "type": "text"
+        },
+        "description": {
+            "type": "text"
+        },
+        "bullets": {
+            "type": "lines"
+        },
+        "image_url": {
+            "type": "text"
+        },
+        "button_1_text": {
+            "type": "text"
+        },
+        "button_1_url": {
+            "type": "text"
+        },
+        "button_2_text": {
+            "type": "text"
+        },
+        "button_2_url": {
+            "type": "text"
+        },
+        "horizontal": {
+            "type": "bool"
+        },
+        "header_side_menu": {
+            "type": "text"
+        },
+        "product_page_ids": {
+            "type": "link",
+            "entity": "product_areas"
+        },
+        "article_ids": {
+            "type": "link",
+            "entity": "articles"
+        },
+        "supplier_ids": {
+            "type": "link",
+            "entity": "core_partners"
+        }
+    }
+}

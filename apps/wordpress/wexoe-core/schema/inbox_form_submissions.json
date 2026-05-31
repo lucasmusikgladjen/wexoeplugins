@@ -1,0 +1,60 @@
+{
+    "table": "inbox_form_submissions",
+    "base": "ssot",
+    "table_id": null,
+    "primary_key": "submission_id",
+    "cache_ttl": 300,
+    "required": [
+        "submission_id"
+    ],
+    "fields": {
+        "submission_id": {
+            "type": "text"
+        },
+        "submitted_at": {
+            "type": "text"
+        },
+        "submission_type": {
+            "type": "text"
+        },
+        "source_plugin": {
+            "type": "text"
+        },
+        "page_slug": {
+            "type": "text"
+        },
+        "email": {
+            "type": "text"
+        },
+        "name": {
+            "type": "text"
+        },
+        "company": {
+            "type": "text"
+        },
+        "phone": {
+            "type": "text"
+        },
+        "message": {
+            "type": "text"
+        },
+        "newsletter_consent": {
+            "type": "bool"
+        },
+        "magnet_name": {
+            "type": "text"
+        },
+        "event_title": {
+            "type": "text"
+        },
+        "calculator_data": {
+            "type": "text"
+        },
+        "extra": {
+            "type": "text"
+        },
+        "sent_to_crm": {
+            "type": "bool"
+        }
+    }
+}

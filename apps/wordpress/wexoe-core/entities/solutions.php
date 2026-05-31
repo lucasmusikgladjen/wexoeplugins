@@ -1,33 +1,17 @@
 <?php
 /**
- * Entity schema: solutions
+ * Entity schema: solutions (shim)
  *
- * Mindre solution/concept-block som visas på produktområdessidor.
- * Airtable-tabell: cms_solutions_mini (tblxK7ikOgLFuze6m) i Wexoe NY.
+ * Faltlistan bor pa EXAKT ett stalle: schema/solutions.json (committad synk-kopia av
+ * packages/schema/entities/solutions.json). Den har filen ar en tunn shim som later
+ * Schema::from_json() oversatta JSON-schemat till den array-form
+ * SchemaRegistry/Normalizer forvantar sig — read-beteendet ar oforandrat och
+ * bevisat byte-identiskt (Normalizer doman-output ===). Samma JSON last av
+ * buildern (TS) sa att en faltandring gors pa ett stalle.
  *
- * Namnsuffixet "mini" reserverar `cms_solution_pages` för framtida fullsides-solutions.
- *
- * Konvention: snake_case överallt — passthrough.
+ * Lagg till/andra falt i JSON-filen, inte har.
  */
 
 if (!defined('ABSPATH')) exit;
 
-return [
-    'base_id' => \Wexoe\Core\Plugin::SSOT_BASE_ID,
-    'table_id' => 'tblxK7ikOgLFuze6m',
-    'primary_key' => 'name',
-    'cache_ttl' => 86400,
-    'required' => ['name'],
-    'fields' => [
-        'name' => 'name',
-        'internal_notes' => 'internal_notes',
-        'is_active' => ['source' => 'is_active', 'type' => 'bool'],
-        'order' => ['source' => 'order', 'type' => 'float'],
-        'category' => 'category',
-        'image_url' => 'image_url',
-        'url' => 'url',
-        'description' => 'description',
-        'cta_text' => 'cta_text',
-        'product_page_ids' => ['source' => 'product_page_ids', 'type' => 'link', 'entity' => 'product_areas'],
-    ],
-];
+return \Wexoe\Core\Schema::from_json('solutions');

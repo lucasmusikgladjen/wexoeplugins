@@ -1,40 +1,17 @@
 <?php
 /**
- * Entity schema: inbox_form_submissions
+ * Entity schema: inbox_form_submissions (shim)
  *
- * Inkomna formulär-submissions från publika sidor. Append-only.
- * Airtable-tabell: inbox_form_submissions i Wexoe NY (skapad i migrationen).
+ * Faltlistan bor pa EXAKT ett stalle: schema/inbox_form_submissions.json (committad synk-kopia av
+ * packages/schema/entities/inbox_form_submissions.json). Den har filen ar en tunn shim som later
+ * Schema::from_json() oversatta JSON-schemat till den array-form
+ * SchemaRegistry/Normalizer forvantar sig — read-beteendet ar oforandrat och
+ * bevisat byte-identiskt (Normalizer doman-output ===). Samma JSON last av
+ * buildern (TS) sa att en faltandring gors pa ett stalle.
  *
- * Ersätter gamla `User data`-tabellen i Wexoe-basen (som var tom).
- *
- * Skrivs av `wexoe-core/src/ContactForm/Handler.php` när användare submittar
- * publika kontaktformulär. Read-mostly från Airtables sida.
+ * Lagg till/andra falt i JSON-filen, inte har.
  */
 
 if (!defined('ABSPATH')) exit;
 
-return [
-    'base_id' => \Wexoe\Core\Plugin::SSOT_BASE_ID,
-    'table_id' => null, // Sätts efter MCP-skapande
-    'primary_key' => 'submission_id',
-    'cache_ttl' => 300, // Kort cache; inkommande data ska vara aktuell
-    'required' => ['submission_id'],
-    'fields' => [
-        'submission_id' => 'submission_id',
-        'submitted_at' => 'submitted_at',
-        'submission_type' => 'submission_type',
-        'source_plugin' => 'source_plugin',
-        'page_slug' => 'page_slug',
-        'email' => 'email',
-        'name' => 'name',
-        'company' => 'company',
-        'phone' => 'phone',
-        'message' => 'message',
-        'newsletter_consent' => ['source' => 'newsletter_consent', 'type' => 'bool'],
-        'magnet_name' => 'magnet_name',
-        'event_title' => 'event_title',
-        'calculator_data' => 'calculator_data',
-        'extra' => 'extra',
-        'sent_to_crm' => ['source' => 'sent_to_crm', 'type' => 'bool'],
-    ],
-];
+return \Wexoe\Core\Schema::from_json('inbox_form_submissions');

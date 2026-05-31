@@ -1,33 +1,17 @@
 <?php
 /**
- * Entity schema: core_coworkers
+ * Entity schema: core_coworkers (shim)
  *
- * SSOT — Medarbetare (collection).
- * Airtable-tabell: core_coworkers (tblYwMQlW9HFd41pg) i Wexoe NY.
+ * Faltlistan bor pa EXAKT ett stalle: schema/core_coworkers.json (committad synk-kopia av
+ * packages/schema/entities/core_coworkers.json). Den har filen ar en tunn shim som later
+ * Schema::from_json() oversatta JSON-schemat till den array-form
+ * SchemaRegistry/Normalizer forvantar sig — read-beteendet ar oforandrat och
+ * bevisat byte-identiskt (Normalizer doman-output ===). Samma JSON last av
+ * buildern (TS) sa att en faltandring gors pa ett stalle.
  *
- * Filtrera via `Wexoe\Core\Helpers\Collections::coworkers_for_scope($scope)`.
+ * Lagg till/andra falt i JSON-filen, inte har.
  */
 
 if (!defined('ABSPATH')) exit;
 
-return [
-    'base_id' => \Wexoe\Core\Plugin::SSOT_BASE_ID,
-    'table_id' => 'tblYwMQlW9HFd41pg',
-    'primary_key' => 'full_name',
-    'cache_ttl' => 3600,
-    'required' => ['full_name'],
-    'fields' => [
-        'full_name' => 'full_name',
-        'internal_notes' => 'internal_notes',
-        'title' => 'title',
-        'email' => 'email',
-        'phone' => 'phone',
-        'image_url' => 'image_url',
-        'linkedin_url' => 'linkedin_url',
-        'bio' => 'bio',
-        'order' => ['source' => 'order', 'type' => 'float'],
-        'is_active' => ['source' => 'is_active', 'type' => 'bool'],
-        'division_ids' => ['source' => 'division_ids', 'type' => 'link', 'entity' => 'core_divisions'],
-        'country_ids' => ['source' => 'country_ids', 'type' => 'link', 'entity' => 'core_countries'],
-    ],
-];
+return \Wexoe\Core\Schema::from_json('core_coworkers');

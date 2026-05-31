@@ -1,0 +1,47 @@
+{
+    "table": "cms_articles",
+    "base": "ssot",
+    "table_id": "tblhnz3MQG1JwfKrN",
+    "primary_key": "name",
+    "cache_ttl": 86400,
+    "required": [
+        "name"
+    ],
+    "fields": {
+        "name": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "is_active": {
+            "type": "bool"
+        },
+        "article_number": {
+            "type": "text"
+        },
+        "description": {
+            "type": "text"
+        },
+        "datasheet_url": {
+            "type": "text"
+        },
+        "webshop_url": {
+            "type": "text"
+        },
+        "image_url": {
+            "type": "text"
+        },
+        "variants": {
+            "type": "text"
+        },
+        "product_ids": {
+            "type": "link",
+            "entity": "products"
+        },
+        "supplier_ids": {
+            "type": "link",
+            "entity": "core_partners"
+        }
+    }
+}

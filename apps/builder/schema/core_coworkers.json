@@ -1,0 +1,50 @@
+{
+    "table": "core_coworkers",
+    "base": "ssot",
+    "table_id": "tblYwMQlW9HFd41pg",
+    "primary_key": "full_name",
+    "cache_ttl": 3600,
+    "required": [
+        "full_name"
+    ],
+    "fields": {
+        "full_name": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "title": {
+            "type": "text"
+        },
+        "email": {
+            "type": "text"
+        },
+        "phone": {
+            "type": "text"
+        },
+        "image_url": {
+            "type": "text"
+        },
+        "linkedin_url": {
+            "type": "text"
+        },
+        "bio": {
+            "type": "text"
+        },
+        "order": {
+            "type": "float"
+        },
+        "is_active": {
+            "type": "bool"
+        },
+        "division_ids": {
+            "type": "link",
+            "entity": "core_divisions"
+        },
+        "country_ids": {
+            "type": "link",
+            "entity": "core_countries"
+        }
+    }
+}

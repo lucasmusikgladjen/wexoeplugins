@@ -1,0 +1,49 @@
+{
+    "table": "cms_product_page_sections",
+    "base": "ssot",
+    "table_id": "tbl1r3T3ukIPJ0S3N",
+    "primary_key": "name",
+    "cache_ttl": 86400,
+    "required": [
+        "name"
+    ],
+    "fields": {
+        "name": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "is_active": {
+            "type": "bool"
+        },
+        "order": {
+            "type": "float"
+        },
+        "product_page_ids": {
+            "type": "link",
+            "entity": "product_areas"
+        },
+        "h2": {
+            "type": "text"
+        },
+        "text": {
+            "type": "text"
+        },
+        "bullets": {
+            "type": "lines"
+        },
+        "image_url": {
+            "type": "text"
+        },
+        "bg": {
+            "type": "text"
+        },
+        "reversed": {
+            "type": "bool"
+        },
+        "shown_top": {
+            "type": "bool"
+        }
+    }
+}

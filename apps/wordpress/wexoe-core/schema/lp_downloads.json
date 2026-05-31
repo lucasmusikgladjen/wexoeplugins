@@ -1,0 +1,40 @@
+{
+    "table": "cms_landing_page_downloads",
+    "base": "ssot",
+    "table_id": "tbltAtilGKnQ2wc7I",
+    "primary_key": "name",
+    "cache_ttl": 86400,
+    "required": [
+        "name"
+    ],
+    "fields": {
+        "name": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "is_active": {
+            "type": "bool"
+        },
+        "order": {
+            "type": "float"
+        },
+        "description": {
+            "type": "text"
+        },
+        "thumbnail_url": {
+            "type": "text"
+        },
+        "file_url": {
+            "type": "text"
+        },
+        "button_text": {
+            "type": "text"
+        },
+        "tab_ids": {
+            "type": "link",
+            "entity": "lp_tabs"
+        }
+    }
+}

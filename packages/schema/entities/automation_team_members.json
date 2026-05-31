@@ -1,0 +1,62 @@
+{
+    "table": "automation_team_members",
+    "table_id": "tblldarIcIpxlZ9GV",
+    "cache_ttl": 86400,
+    "required": [
+        "name"
+    ],
+    "fields": {
+        "name": {
+            "type": "text",
+            "source": "Name"
+        },
+        "title": {
+            "type": "text",
+            "source": "Title"
+        },
+        "description": {
+            "type": "text",
+            "source": "Description"
+        },
+        "image": {
+            "type": "attachment",
+            "source": "Image"
+        },
+        "email": {
+            "type": "text",
+            "source": "Email"
+        },
+        "phone": {
+            "type": "text",
+            "source": "Phone"
+        },
+        "tags": {
+            "type": "text",
+            "source": "Tags"
+        },
+        "responsibility": {
+            "type": "text",
+            "source": "Responsibility"
+        },
+        "module_name": {
+            "type": "text",
+            "source": "Module name"
+        },
+        "module_color": {
+            "type": "text",
+            "source": "ModuleColor"
+        },
+        "module_id": {
+            "type": "text",
+            "source": "ModuleId"
+        },
+        "visa": {
+            "type": "bool",
+            "source": "Visa"
+        },
+        "order": {
+            "type": "float",
+            "source": "Order"
+        }
+    }
+}

@@ -1,0 +1,255 @@
+{
+    "table": "cms_cases",
+    "base": "ssot",
+    "table_id": "tblxH3ECSMvDTYrIQ",
+    "primary_key": "slug",
+    "cache_ttl": 86400,
+    "required": [
+        "slug"
+    ],
+    "fields": {
+        "slug": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "is_active": {
+            "type": "bool"
+        },
+        "order": {
+            "type": "int"
+        },
+        "country_ids": {
+            "type": "link",
+            "entity": "core_countries"
+        },
+        "customer_type_ids": {
+            "type": "link",
+            "entity": "core_customer_types"
+        },
+        "customer_type_page_ids": {
+            "type": "link",
+            "entity": "customer_type_pages"
+        },
+        "partner_ids": {
+            "type": "link",
+            "entity": "core_partners"
+        },
+        "card_title": {
+            "type": "text"
+        },
+        "card_description": {
+            "type": "text"
+        },
+        "card_result": {
+            "type": "text"
+        },
+        "card_image_url": {
+            "type": "text"
+        },
+        "card_cta_text": {
+            "type": "text"
+        },
+        "card_industry": {
+            "type": "text"
+        },
+        "legacy_external_url": {
+            "type": "text"
+        },
+        "seo_title": {
+            "type": "text"
+        },
+        "seo_description": {
+            "type": "text"
+        },
+        "og_image_url": {
+            "type": "text"
+        },
+        "industry": {
+            "type": "text"
+        },
+        "title": {
+            "type": "text"
+        },
+        "subtitle": {
+            "type": "text"
+        },
+        "customer_name": {
+            "type": "text"
+        },
+        "location": {
+            "type": "text"
+        },
+        "project_year": {
+            "type": "text"
+        },
+        "project_type": {
+            "type": "text"
+        },
+        "reading_time": {
+            "type": "text"
+        },
+        "header_logos": {
+            "type": "lines"
+        },
+        "lead_image_url": {
+            "type": "text"
+        },
+        "lead_image_caption": {
+            "type": "text"
+        },
+        "lead_paragraph": {
+            "type": "text"
+        },
+        "show_stats_strip": {
+            "type": "bool"
+        },
+        "quick_stats": {
+            "type": "pseudo_array",
+            "prefix": "quick_stat",
+            "count": 4,
+            "fields": {
+                "value": "value",
+                "label": "label"
+            }
+        },
+        "challenge_eyebrow": {
+            "type": "text"
+        },
+        "challenge_title": {
+            "type": "text"
+        },
+        "challenge_text": {
+            "type": "text"
+        },
+        "challenge_bullets": {
+            "type": "lines"
+        },
+        "challenge_image_url": {
+            "type": "text"
+        },
+        "challenge_image_caption": {
+            "type": "text"
+        },
+        "show_pullquote": {
+            "type": "bool"
+        },
+        "pullquote_text": {
+            "type": "text"
+        },
+        "pullquote_attribution": {
+            "type": "text"
+        },
+        "solution_eyebrow": {
+            "type": "text"
+        },
+        "solution_title": {
+            "type": "text"
+        },
+        "solution_text": {
+            "type": "text"
+        },
+        "solution_image_url": {
+            "type": "text"
+        },
+        "solution_image_caption": {
+            "type": "text"
+        },
+        "products_title": {
+            "type": "text"
+        },
+        "products_meta": {
+            "type": "text"
+        },
+        "product_ids": {
+            "type": "link",
+            "entity": "products"
+        },
+        "article_ids": {
+            "type": "link",
+            "entity": "articles"
+        },
+        "results_eyebrow": {
+            "type": "text"
+        },
+        "results_title": {
+            "type": "text"
+        },
+        "results_text": {
+            "type": "text"
+        },
+        "results": {
+            "type": "pseudo_array",
+            "prefix": "result",
+            "count": 4,
+            "fields": {
+                "value": "value",
+                "label": "label"
+            }
+        },
+        "show_testimonial": {
+            "type": "bool"
+        },
+        "testimonial_quote": {
+            "type": "text"
+        },
+        "testimonial_photo_url": {
+            "type": "text"
+        },
+        "testimonial_author_name": {
+            "type": "text"
+        },
+        "testimonial_author_title": {
+            "type": "text"
+        },
+        "show_gallery": {
+            "type": "bool"
+        },
+        "gallery_title": {
+            "type": "text"
+        },
+        "gallery_images": {
+            "type": "pseudo_array",
+            "prefix": "gallery_image",
+            "count": 6,
+            "fields": {
+                "url": "url",
+                "caption": "caption"
+            }
+        },
+        "show_about_customer": {
+            "type": "bool"
+        },
+        "about_customer_logo_url": {
+            "type": "text"
+        },
+        "about_customer_title": {
+            "type": "text"
+        },
+        "about_customer_text": {
+            "type": "text"
+        },
+        "about_customer_link_label": {
+            "type": "text"
+        },
+        "about_customer_url": {
+            "type": "text"
+        },
+        "glance_challenge": {
+            "type": "text"
+        },
+        "glance_solution": {
+            "type": "text"
+        },
+        "glance_result": {
+            "type": "text"
+        },
+        "show_contact_form": {
+            "type": "bool"
+        },
+        "contact_form_json": {
+            "type": "text"
+        }
+    }
+}

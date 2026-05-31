@@ -1,45 +1,17 @@
 <?php
 /**
- * Entity schema: core_company
+ * Entity schema: core_company (shim)
  *
- * SSOT — Global företagsinformation (ett record per land + default).
- * Airtable-tabell: core_company (tblwq9y74ertsNyYG) i Wexoe NY.
+ * Faltlistan bor pa EXAKT ett stalle: schema/core_company.json (committad synk-kopia av
+ * packages/schema/entities/core_company.json). Den har filen ar en tunn shim som later
+ * Schema::from_json() oversatta JSON-schemat till den array-form
+ * SchemaRegistry/Normalizer forvantar sig — read-beteendet ar oforandrat och
+ * bevisat byte-identiskt (Normalizer doman-output ===). Samma JSON last av
+ * buildern (TS) sa att en faltandring gors pa ett stalle.
  *
- * Slå upp via `Wexoe\Core\Helpers\Singletons::company_for_country($code)` som
- * faller tillbaka på `is_default = true`-recordet.
- *
- * Konvention: snake_case överallt — Airtable display-namn matchar kod-fältnamn.
+ * Lagg till/andra falt i JSON-filen, inte har.
  */
 
 if (!defined('ABSPATH')) exit;
 
-return [
-    'base_id' => \Wexoe\Core\Plugin::SSOT_BASE_ID,
-    'table_id' => 'tblwq9y74ertsNyYG',
-    'primary_key' => 'slug',
-    'cache_ttl' => 3600,
-    'required' => ['slug'],
-    'fields' => [
-        'slug' => 'slug',
-        'internal_notes' => 'internal_notes',
-        'is_default' => ['source' => 'is_default', 'type' => 'bool'],
-        'country_ids' => ['source' => 'country_ids', 'type' => 'link', 'entity' => 'core_countries'],
-        'company_name' => 'company_name',
-        'tagline' => 'tagline',
-        'org_number' => 'org_number',
-        'vat_number' => 'vat_number',
-        'email' => 'email',
-        'email_order' => 'email_order',
-        'phone' => 'phone',
-        'phone_emergency' => 'phone_emergency',
-        'address_line_1' => 'address_line_1',
-        'address_postal_code' => 'address_postal_code',
-        'address_city' => 'address_city',
-        'linkedin_url' => 'linkedin_url',
-        'facebook_url' => 'facebook_url',
-        'instagram_url' => 'instagram_url',
-        'youtube_url' => 'youtube_url',
-        'hours_mon_thur' => 'hours_mon_thur',
-        'hours_friday' => 'hours_friday',
-    ],
-];
+return \Wexoe\Core\Schema::from_json('core_company');

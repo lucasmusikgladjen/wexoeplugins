@@ -1,31 +1,17 @@
 <?php
 /**
- * Entity schema: core_countries
+ * Entity schema: core_countries (shim)
  *
- * SSOT — Länder (taxonomi).
- * Airtable-tabell: core_countries (tblCZ082jWGUBrUAK) i Wexoe NY.
+ * Faltlistan bor pa EXAKT ett stalle: schema/core_countries.json (committad synk-kopia av
+ * packages/schema/entities/core_countries.json). Den har filen ar en tunn shim som later
+ * Schema::from_json() oversatta JSON-schemat till den array-form
+ * SchemaRegistry/Normalizer forvantar sig — read-beteendet ar oforandrat och
+ * bevisat byte-identiskt (Normalizer doman-output ===). Samma JSON last av
+ * buildern (TS) sa att en faltandring gors pa ett stalle.
  *
- * Land-kontext härleds av `Wexoe\Core\Helpers\Context` baserat på Domain → URL Prefix.
+ * Lagg till/andra falt i JSON-filen, inte har.
  */
 
 if (!defined('ABSPATH')) exit;
 
-return [
-    'base_id' => \Wexoe\Core\Plugin::SSOT_BASE_ID,
-    'table_id' => 'tblCZ082jWGUBrUAK',
-    'primary_key' => 'code',
-    'cache_ttl' => 3600,
-    'required' => ['name', 'code'],
-    'fields' => [
-        'name' => 'name',
-        'internal_notes' => 'internal_notes',
-        'code' => 'code',
-        'domain' => 'domain',
-        'url_prefix' => 'url_prefix',
-        'currency' => 'currency',
-        'locale' => 'locale',
-        'default_language' => 'default_language',
-        'order' => ['source' => 'order', 'type' => 'int'],
-        'is_active' => ['source' => 'is_active', 'type' => 'bool'],
-    ],
-];
+return \Wexoe\Core\Schema::from_json('core_countries');

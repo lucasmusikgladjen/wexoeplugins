@@ -1,0 +1,51 @@
+{
+    "table": "core_testimonials",
+    "base": "ssot",
+    "table_id": "tbl1pe0bWz5zdkqJF",
+    "primary_key": "internal_name",
+    "cache_ttl": 3600,
+    "required": [
+        "internal_name"
+    ],
+    "fields": {
+        "internal_name": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "quote": {
+            "type": "text"
+        },
+        "author_name": {
+            "type": "text"
+        },
+        "author_title": {
+            "type": "text"
+        },
+        "author_image_url": {
+            "type": "text"
+        },
+        "order": {
+            "type": "float"
+        },
+        "is_active": {
+            "type": "bool"
+        },
+        "is_featured": {
+            "type": "bool"
+        },
+        "customer_type_ids": {
+            "type": "link",
+            "entity": "core_customer_types"
+        },
+        "division_ids": {
+            "type": "link",
+            "entity": "core_divisions"
+        },
+        "country_ids": {
+            "type": "link",
+            "entity": "core_countries"
+        }
+    }
+}

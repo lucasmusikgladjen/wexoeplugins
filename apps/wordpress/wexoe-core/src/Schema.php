@@ -78,9 +78,23 @@ class Schema {
             return [];
         }
 
-        $schema = self::build_schema($json);
+        $schema = self::from_array($json);
         self::$cache[$table] = $schema;
         return $schema;
+    }
+
+    /**
+     * Bygg ett SchemaRegistry/Normalizer-redo schema direkt ur en redan
+     * avkodad JSON-array (in-memory). `from_json()` = läs fil + `from_array()`.
+     *
+     * Publik så att ekvivalenstester (och buildern, vid behov) kan bygga ett
+     * schema utan att gå via disk.
+     *
+     * @param array $json Avkodat JSON-objekt (samma form som en *.json-fil).
+     * @return array Schema-array i Normalizer-form.
+     */
+    public static function from_array(array $json) {
+        return self::build_schema($json);
     }
 
     /**
@@ -99,8 +113,12 @@ class Schema {
         }
         // "legacy" eller utelämnat → lämna base_id osatt (plugin-konfigens default).
 
-        if (isset($json['table_id'])) {
-            $schema['table_id'] = (string) $json['table_id'];
+        // table_id: en explicit `null` i JSON bevaras som `table_id => null`
+        // (legacy/pending-migration-entiteter, t.ex. automation_offerings).
+        // Detta matchar den handskrivna arrayen exakt — `isset()`-konsumenterna
+        // (EntityRepository/SchemaRegistry) behandlar null = saknad table_id.
+        if (array_key_exists('table_id', $json)) {
+            $schema['table_id'] = $json['table_id'] === null ? null : (string) $json['table_id'];
         }
         if (isset($json['primary_key'])) {
             $schema['primary_key'] = (string) $json['primary_key'];
@@ -137,6 +155,35 @@ class Schema {
 
         $type = isset($def['type']) ? (string) $def['type'] : 'text';
         $source = isset($def['source']) ? (string) $def['source'] : $key;
+
+        // pseudo_array: numrerade slot-fält ("{prefix}{sep}{i}{sep}{suffix}")
+        // kollapsas till en array av sektioner av Normalizer. Passa igenom
+        // prefix/count/separator/fields exakt så Normalizer hittar dem.
+        if ($type === 'pseudo_array') {
+            $field = [
+                'type' => 'pseudo_array',
+                'prefix' => isset($def['prefix']) ? (string) $def['prefix'] : '',
+                'count' => isset($def['count']) ? (int) $def['count'] : 0,
+            ];
+            // separator är valfri (Normalizer-default '_') — bevara bara om satt
+            // i JSON, så den handskrivna arrayen (utan separator) matchas exakt.
+            if (array_key_exists('separator', $def)) {
+                $field['separator'] = (string) $def['separator'];
+            }
+            $field['fields'] = (isset($def['fields']) && is_array($def['fields']))
+                ? $def['fields']
+                : [];
+            return $field;
+        }
+
+        // Diskriminator-fält: ett Airtable-fält vars JSON-typ bokstavligen är
+        // "type" (t.ex. section_type-liknande "type"-kolumnen på
+        // automation_product_navigation). Bevaras som {source, type:'type'}.
+        // Normalizer har ingen 'type'-gren → faller till textpassthrough,
+        // dvs samma domän-output som en ren sträng-spec.
+        if ($type === 'type') {
+            return ['source' => $source, 'type' => 'type'];
+        }
 
         // JSON-typ → Normalizer-typ.
         switch ($type) {

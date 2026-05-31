@@ -1,0 +1,155 @@
+{
+    "table": "cms_product_pages",
+    "base": "ssot",
+    "table_id": "tbl5PQR7FNHCogeya",
+    "primary_key": "slug",
+    "cache_ttl": 86400,
+    "required": [
+        "slug"
+    ],
+    "fields": {
+        "slug": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "is_active": {
+            "type": "bool"
+        },
+        "country_ids": {
+            "type": "link",
+            "entity": "core_countries"
+        },
+        "division_ids": {
+            "type": "link",
+            "entity": "core_divisions"
+        },
+        "name": {
+            "type": "text"
+        },
+        "h1": {
+            "type": "text"
+        },
+        "card_image_url": {
+            "type": "text"
+        },
+        "card_description": {
+            "type": "text"
+        },
+        "top_bg": {
+            "type": "text"
+        },
+        "hero_h2": {
+            "type": "text"
+        },
+        "hero_text": {
+            "type": "text"
+        },
+        "hero_cta_text": {
+            "type": "text"
+        },
+        "hero_cta_url": {
+            "type": "text"
+        },
+        "hero_benefits": {
+            "type": "lines"
+        },
+        "hero_image_url": {
+            "type": "text"
+        },
+        "hero_bg": {
+            "type": "text"
+        },
+        "hero_accent": {
+            "type": "text"
+        },
+        "npi_title": {
+            "type": "text"
+        },
+        "npi_description": {
+            "type": "text"
+        },
+        "npi_image_url": {
+            "type": "text"
+        },
+        "npi_link": {
+            "type": "text"
+        },
+        "toggle_bg": {
+            "type": "text"
+        },
+        "toggle_header_bg": {
+            "type": "text"
+        },
+        "toggle_accent": {
+            "type": "text"
+        },
+        "solutions_title": {
+            "type": "text"
+        },
+        "solutions_bg": {
+            "type": "text"
+        },
+        "solutions_card_bg": {
+            "type": "text"
+        },
+        "contact_name": {
+            "type": "text"
+        },
+        "contact_title": {
+            "type": "text"
+        },
+        "contact_email": {
+            "type": "text"
+        },
+        "contact_phone": {
+            "type": "text"
+        },
+        "contact_image_url": {
+            "type": "text"
+        },
+        "contact_text": {
+            "type": "text"
+        },
+        "contact_bg": {
+            "type": "text"
+        },
+        "docs_title": {
+            "type": "text"
+        },
+        "docs_iframe": {
+            "type": "text"
+        },
+        "docs_bg": {
+            "type": "text"
+        },
+        "use_side_menu": {
+            "type": "bool"
+        },
+        "show_request": {
+            "type": "bool"
+        },
+        "default_open": {
+            "type": "bool"
+        },
+        "show_contact_form": {
+            "type": "bool"
+        },
+        "contact_form_json": {
+            "type": "text"
+        },
+        "section_ids": {
+            "type": "link",
+            "entity": "product_page_sections"
+        },
+        "product_ids": {
+            "type": "link",
+            "entity": "products"
+        },
+        "solution_ids": {
+            "type": "link",
+            "entity": "solutions"
+        }
+    }
+}

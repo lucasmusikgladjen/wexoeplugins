@@ -1,0 +1,34 @@
+{
+    "table": "core_customer_types",
+    "base": "ssot",
+    "table_id": "tblLsYRMZz6JA6GBK",
+    "primary_key": "slug",
+    "cache_ttl": 3600,
+    "required": [
+        "name",
+        "slug"
+    ],
+    "fields": {
+        "name": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "slug": {
+            "type": "text"
+        },
+        "description": {
+            "type": "text"
+        },
+        "icon": {
+            "type": "text"
+        },
+        "order": {
+            "type": "int"
+        },
+        "is_active": {
+            "type": "bool"
+        }
+    }
+}

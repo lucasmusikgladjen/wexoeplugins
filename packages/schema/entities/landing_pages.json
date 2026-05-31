@@ -1,0 +1,170 @@
+{
+    "table": "cms_landing_pages",
+    "base": "ssot",
+    "table_id": "tblpPlk17FZIKawXY",
+    "primary_key": "slug",
+    "cache_ttl": 86400,
+    "required": [
+        "slug"
+    ],
+    "fields": {
+        "slug": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "is_active": {
+            "type": "bool"
+        },
+        "country_ids": {
+            "type": "link",
+            "entity": "core_countries"
+        },
+        "h1": {
+            "type": "text"
+        },
+        "seo_title": {
+            "type": "text"
+        },
+        "seo_description": {
+            "type": "text"
+        },
+        "og_image_url": {
+            "type": "text"
+        },
+        "hero_description": {
+            "type": "text"
+        },
+        "hero_image_url": {
+            "type": "text"
+        },
+        "hero_cta_text": {
+            "type": "text"
+        },
+        "hero_cta_url": {
+            "type": "text"
+        },
+        "hero_cta2_text": {
+            "type": "text"
+        },
+        "hero_cta2_url": {
+            "type": "text"
+        },
+        "content_h2": {
+            "type": "text"
+        },
+        "content_text": {
+            "type": "text"
+        },
+        "content_benefits": {
+            "type": "lines"
+        },
+        "sidebar_type": {
+            "type": "text"
+        },
+        "case_title": {
+            "type": "text"
+        },
+        "case_description": {
+            "type": "text"
+        },
+        "case_image_url": {
+            "type": "text"
+        },
+        "case_outcomes": {
+            "type": "lines"
+        },
+        "case_cta_text": {
+            "type": "text"
+        },
+        "case_cta_url": {
+            "type": "text"
+        },
+        "calc_title": {
+            "type": "text"
+        },
+        "calc_html": {
+            "type": "text"
+        },
+        "event_type": {
+            "type": "text"
+        },
+        "event_title": {
+            "type": "text"
+        },
+        "event_description": {
+            "type": "text"
+        },
+        "event_date": {
+            "type": "text"
+        },
+        "event_location": {
+            "type": "text"
+        },
+        "event_webhook": {
+            "type": "text"
+        },
+        "magnet_title": {
+            "type": "text"
+        },
+        "magnet_format": {
+            "type": "text"
+        },
+        "magnet_description": {
+            "type": "text"
+        },
+        "magnet_file_url": {
+            "type": "text"
+        },
+        "magnet_webhook": {
+            "type": "text"
+        },
+        "contact_name": {
+            "type": "text"
+        },
+        "contact_title": {
+            "type": "text"
+        },
+        "contact_email": {
+            "type": "text"
+        },
+        "contact_phone": {
+            "type": "text"
+        },
+        "contact_image_url": {
+            "type": "text"
+        },
+        "contact_quote": {
+            "type": "text"
+        },
+        "show_content": {
+            "type": "bool"
+        },
+        "show_sidebar": {
+            "type": "bool"
+        },
+        "show_contact": {
+            "type": "bool"
+        },
+        "show_tabs": {
+            "type": "bool"
+        },
+        "color_main": {
+            "type": "text"
+        },
+        "color_secondary": {
+            "type": "text"
+        },
+        "show_contact_form": {
+            "type": "bool"
+        },
+        "contact_form_json": {
+            "type": "text"
+        },
+        "tab_ids": {
+            "type": "link",
+            "entity": "lp_tabs"
+        }
+    }
+}

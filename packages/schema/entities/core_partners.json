@@ -1,0 +1,44 @@
+{
+    "table": "core_partners",
+    "base": "ssot",
+    "table_id": "tblZ5YIYFelxA0nBm",
+    "primary_key": "name",
+    "cache_ttl": 3600,
+    "required": [
+        "name"
+    ],
+    "fields": {
+        "name": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "logo_url": {
+            "type": "text"
+        },
+        "logo_transparent_url": {
+            "type": "text"
+        },
+        "url": {
+            "type": "text"
+        },
+        "description": {
+            "type": "text"
+        },
+        "order": {
+            "type": "float"
+        },
+        "is_active": {
+            "type": "bool"
+        },
+        "division_ids": {
+            "type": "link",
+            "entity": "core_divisions"
+        },
+        "country_ids": {
+            "type": "link",
+            "entity": "core_countries"
+        }
+    }
+}

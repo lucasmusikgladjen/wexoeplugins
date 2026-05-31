@@ -1,0 +1,48 @@
+{
+    "table": "cms_pages",
+    "base": "ssot",
+    "table_id": "tblglNKHehRWy3lEM",
+    "primary_key": "slug",
+    "cache_ttl": 86400,
+    "required": [
+        "slug"
+    ],
+    "fields": {
+        "slug": {
+            "type": "text"
+        },
+        "internal_label": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "h1": {
+            "type": "text"
+        },
+        "seo_title": {
+            "type": "text"
+        },
+        "seo_description": {
+            "type": "text"
+        },
+        "og_image_url": {
+            "type": "text"
+        },
+        "is_published": {
+            "type": "bool"
+        },
+        "country_ids": {
+            "type": "link",
+            "entity": "core_countries"
+        },
+        "division_ids": {
+            "type": "link",
+            "entity": "core_divisions"
+        },
+        "section_ids": {
+            "type": "link",
+            "entity": "cms_page_sections"
+        }
+    }
+}

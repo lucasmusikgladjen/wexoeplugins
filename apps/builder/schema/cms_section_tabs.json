@@ -1,0 +1,58 @@
+{
+    "table": "cms_section_tabs",
+    "base": "ssot",
+    "table_id": "tblxEtcLO4N9k83rn",
+    "primary_key": "name",
+    "cache_ttl": 86400,
+    "required": [
+        "name"
+    ],
+    "fields": {
+        "name": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "is_active": {
+            "type": "bool"
+        },
+        "order": {
+            "type": "float"
+        },
+        "eyebrow": {
+            "type": "text"
+        },
+        "h2": {
+            "type": "text"
+        },
+        "body": {
+            "type": "text"
+        },
+        "bullets": {
+            "type": "lines"
+        },
+        "image_url": {
+            "type": "text"
+        },
+        "image_alt": {
+            "type": "text"
+        },
+        "cta_text": {
+            "type": "text"
+        },
+        "cta_url": {
+            "type": "text"
+        },
+        "cta2_text": {
+            "type": "text"
+        },
+        "cta2_url": {
+            "type": "text"
+        },
+        "section_ids": {
+            "type": "link",
+            "entity": "cms_page_sections"
+        }
+    }
+}

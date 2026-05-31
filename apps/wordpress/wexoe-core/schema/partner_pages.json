@@ -1,0 +1,196 @@
+{
+    "table": "cms_partner_pages",
+    "base": "ssot",
+    "table_id": "tblQv5E8pSgwxy6wU",
+    "primary_key": "slug",
+    "cache_ttl": 86400,
+    "required": [
+        "slug"
+    ],
+    "fields": {
+        "slug": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "is_active": {
+            "type": "bool"
+        },
+        "country_ids": {
+            "type": "link",
+            "entity": "core_countries"
+        },
+        "partner_ids": {
+            "type": "link",
+            "entity": "core_partners"
+        },
+        "seo_title": {
+            "type": "text"
+        },
+        "seo_description": {
+            "type": "text"
+        },
+        "og_image_url": {
+            "type": "text"
+        },
+        "hero_eyebrow": {
+            "type": "text"
+        },
+        "h1": {
+            "type": "text"
+        },
+        "hero_tagline": {
+            "type": "text"
+        },
+        "hero_cta_text": {
+            "type": "text"
+        },
+        "hero_cta_url": {
+            "type": "text"
+        },
+        "hero_cta2_text": {
+            "type": "text"
+        },
+        "hero_cta2_url": {
+            "type": "text"
+        },
+        "hero_image_url": {
+            "type": "text"
+        },
+        "show_quick_facts": {
+            "type": "bool"
+        },
+        "facts_1_icon": {
+            "type": "text"
+        },
+        "facts_1_value": {
+            "type": "text"
+        },
+        "facts_1_label": {
+            "type": "text"
+        },
+        "facts_2_icon": {
+            "type": "text"
+        },
+        "facts_2_value": {
+            "type": "text"
+        },
+        "facts_2_label": {
+            "type": "text"
+        },
+        "facts_3_icon": {
+            "type": "text"
+        },
+        "facts_3_value": {
+            "type": "text"
+        },
+        "facts_3_label": {
+            "type": "text"
+        },
+        "facts_4_icon": {
+            "type": "text"
+        },
+        "facts_4_value": {
+            "type": "text"
+        },
+        "facts_4_label": {
+            "type": "text"
+        },
+        "show_about": {
+            "type": "bool"
+        },
+        "about_eyebrow": {
+            "type": "text"
+        },
+        "about_h2": {
+            "type": "text"
+        },
+        "about_text": {
+            "type": "text"
+        },
+        "about_image_url": {
+            "type": "text"
+        },
+        "about_badge_value": {
+            "type": "text"
+        },
+        "about_badge_label": {
+            "type": "text"
+        },
+        "show_why_wexoe": {
+            "type": "bool"
+        },
+        "why_h2": {
+            "type": "text"
+        },
+        "why_text": {
+            "type": "text"
+        },
+        "why_benefits": {
+            "type": "lines"
+        },
+        "case_ids": {
+            "type": "link",
+            "entity": "cms_cases"
+        },
+        "cases_view_all_text": {
+            "type": "text"
+        },
+        "cases_view_all_url": {
+            "type": "text"
+        },
+        "show_categories": {
+            "type": "bool"
+        },
+        "categories_eyebrow": {
+            "type": "text"
+        },
+        "categories_h2": {
+            "type": "text"
+        },
+        "categories_intro": {
+            "type": "text"
+        },
+        "category_ids": {
+            "type": "link",
+            "entity": "product_areas"
+        },
+        "show_faq": {
+            "type": "bool"
+        },
+        "faq_h2": {
+            "type": "text"
+        },
+        "faqs": {
+            "type": "text"
+        },
+        "show_contact_person": {
+            "type": "bool"
+        },
+        "contact_name": {
+            "type": "text"
+        },
+        "contact_title": {
+            "type": "text"
+        },
+        "contact_email": {
+            "type": "text"
+        },
+        "contact_phone": {
+            "type": "text"
+        },
+        "contact_image_url": {
+            "type": "text"
+        },
+        "contact_quote": {
+            "type": "text"
+        },
+        "show_contact_form": {
+            "type": "bool"
+        },
+        "contact_form_json": {
+            "type": "text"
+        }
+    }
+}

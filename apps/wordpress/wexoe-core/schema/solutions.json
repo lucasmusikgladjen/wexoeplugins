@@ -1,0 +1,43 @@
+{
+    "table": "cms_solutions_mini",
+    "base": "ssot",
+    "table_id": "tblxK7ikOgLFuze6m",
+    "primary_key": "name",
+    "cache_ttl": 86400,
+    "required": [
+        "name"
+    ],
+    "fields": {
+        "name": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "is_active": {
+            "type": "bool"
+        },
+        "order": {
+            "type": "float"
+        },
+        "category": {
+            "type": "text"
+        },
+        "image_url": {
+            "type": "text"
+        },
+        "url": {
+            "type": "text"
+        },
+        "description": {
+            "type": "text"
+        },
+        "cta_text": {
+            "type": "text"
+        },
+        "product_page_ids": {
+            "type": "link",
+            "entity": "product_areas"
+        }
+    }
+}

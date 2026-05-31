@@ -1,0 +1,429 @@
+{
+    "table": "cms_page_sections",
+    "base": "ssot",
+    "table_id": "tblWDvAe3s45P2Nok",
+    "primary_key": "internal_label",
+    "cache_ttl": 86400,
+    "required": [
+        "internal_label",
+        "section_type"
+    ],
+    "fields": {
+        "internal_label": {
+            "type": "text"
+        },
+        "internal_notes": {
+            "type": "text"
+        },
+        "is_active": {
+            "type": "bool"
+        },
+        "order": {
+            "type": "float"
+        },
+        "section_type": {
+            "type": "text"
+        },
+        "anchor_id": {
+            "type": "text"
+        },
+        "layout": {
+            "type": "text"
+        },
+        "background_color": {
+            "type": "text"
+        },
+        "top_padding": {
+            "type": "text"
+        },
+        "bottom_padding": {
+            "type": "text"
+        },
+        "page_ids": {
+            "type": "link",
+            "entity": "cms_pages"
+        },
+        "hero_eyebrow": {
+            "type": "text"
+        },
+        "hero_h1": {
+            "type": "text"
+        },
+        "hero_subtitle": {
+            "type": "text"
+        },
+        "hero_image_url": {
+            "type": "text"
+        },
+        "hero_variant": {
+            "type": "text"
+        },
+        "hero_bg_image_url": {
+            "type": "text"
+        },
+        "hero_cta_text": {
+            "type": "text"
+        },
+        "hero_cta_url": {
+            "type": "text"
+        },
+        "hero_cta2_text": {
+            "type": "text"
+        },
+        "hero_cta2_url": {
+            "type": "text"
+        },
+        "ti_eyebrow": {
+            "type": "text"
+        },
+        "ti_h2": {
+            "type": "text"
+        },
+        "ti_body": {
+            "type": "text"
+        },
+        "ti_bullets": {
+            "type": "lines"
+        },
+        "ti_image_url": {
+            "type": "text"
+        },
+        "ti_image_alt": {
+            "type": "text"
+        },
+        "ti_reversed": {
+            "type": "bool"
+        },
+        "ti_cta_text": {
+            "type": "text"
+        },
+        "ti_cta_url": {
+            "type": "text"
+        },
+        "ti_cta2_text": {
+            "type": "text"
+        },
+        "ti_cta2_url": {
+            "type": "text"
+        },
+        "to_eyebrow": {
+            "type": "text"
+        },
+        "to_h2": {
+            "type": "text"
+        },
+        "to_body": {
+            "type": "text"
+        },
+        "to_align": {
+            "type": "text"
+        },
+        "cds_h2": {
+            "type": "text"
+        },
+        "cds_body": {
+            "type": "text"
+        },
+        "cds_use_company_singleton": {
+            "type": "bool"
+        },
+        "cds_country_code": {
+            "type": "text"
+        },
+        "cds_items": {
+            "type": "lines"
+        },
+        "nts_eyebrow": {
+            "type": "text"
+        },
+        "nts_h2": {
+            "type": "text"
+        },
+        "nts_body": {
+            "type": "text"
+        },
+        "nts_cta_text": {
+            "type": "text"
+        },
+        "nts_cta_url": {
+            "type": "text"
+        },
+        "nts_news_manual_ids": {
+            "type": "link",
+            "entity": "articles"
+        },
+        "nts_scope_division": {
+            "type": "text"
+        },
+        "nts_scope_country": {
+            "type": "text"
+        },
+        "nts_limit": {
+            "type": "int"
+        },
+        "cg_eyebrow": {
+            "type": "text"
+        },
+        "cg_h2": {
+            "type": "text"
+        },
+        "cg_body": {
+            "type": "text"
+        },
+        "cg_case_manual_ids": {
+            "type": "link",
+            "entity": "cms_cases"
+        },
+        "cg_scope_country": {
+            "type": "text"
+        },
+        "cg_scope_division": {
+            "type": "text"
+        },
+        "cg_scope_customer_type": {
+            "type": "text"
+        },
+        "cg_limit": {
+            "type": "int"
+        },
+        "cg_columns": {
+            "type": "text"
+        },
+        "cg_cta_text": {
+            "type": "text"
+        },
+        "cg_cta_url": {
+            "type": "text"
+        },
+        "ng_eyebrow": {
+            "type": "text"
+        },
+        "ng_h2": {
+            "type": "text"
+        },
+        "ng_article_manual_ids": {
+            "type": "link",
+            "entity": "articles"
+        },
+        "ng_scope_country": {
+            "type": "text"
+        },
+        "ng_scope_division": {
+            "type": "text"
+        },
+        "ng_scope_topic": {
+            "type": "text"
+        },
+        "ng_limit": {
+            "type": "int"
+        },
+        "ng_columns": {
+            "type": "text"
+        },
+        "cat_eyebrow": {
+            "type": "text"
+        },
+        "cat_h2": {
+            "type": "text"
+        },
+        "cat_intro_body": {
+            "type": "text"
+        },
+        "cat_include_products": {
+            "type": "bool"
+        },
+        "cat_include_articles": {
+            "type": "bool"
+        },
+        "cat_scope_division": {
+            "type": "text"
+        },
+        "cat_scope_country": {
+            "type": "text"
+        },
+        "cat_facet_fields": {
+            "type": "lines"
+        },
+        "cat_placeholder": {
+            "type": "text"
+        },
+        "cat_empty_text": {
+            "type": "text"
+        },
+        "tabs_eyebrow": {
+            "type": "text"
+        },
+        "tabs_h2": {
+            "type": "text"
+        },
+        "tabs_intro_body": {
+            "type": "text"
+        },
+        "tabs_tab_ids": {
+            "type": "link",
+            "entity": "cms_section_tabs"
+        },
+        "tg_eyebrow": {
+            "type": "text"
+        },
+        "tg_h2": {
+            "type": "text"
+        },
+        "tg_body": {
+            "type": "text"
+        },
+        "tg_variant": {
+            "type": "text"
+        },
+        "tg_coworker_manual_ids": {
+            "type": "link",
+            "entity": "core_coworkers"
+        },
+        "tg_scope_country": {
+            "type": "text"
+        },
+        "tg_scope_division": {
+            "type": "text"
+        },
+        "tg_limit": {
+            "type": "int"
+        },
+        "pl_eyebrow": {
+            "type": "text"
+        },
+        "pl_h2": {
+            "type": "text"
+        },
+        "pl_body": {
+            "type": "text"
+        },
+        "pl_variant": {
+            "type": "text"
+        },
+        "pl_partner_manual_ids": {
+            "type": "link",
+            "entity": "core_partners"
+        },
+        "pl_scope_division": {
+            "type": "text"
+        },
+        "pl_scope_country": {
+            "type": "text"
+        },
+        "pl_limit": {
+            "type": "int"
+        },
+        "faq_eyebrow": {
+            "type": "text"
+        },
+        "faq_h2": {
+            "type": "text"
+        },
+        "faq_body": {
+            "type": "text"
+        },
+        "faq_items": {
+            "type": "lines"
+        },
+        "t_eyebrow": {
+            "type": "text"
+        },
+        "t_quote": {
+            "type": "text"
+        },
+        "t_author_name": {
+            "type": "text"
+        },
+        "t_author_title": {
+            "type": "text"
+        },
+        "t_author_image_url": {
+            "type": "text"
+        },
+        "t_testimonial_manual_ids": {
+            "type": "link",
+            "entity": "core_testimonials"
+        },
+        "t_scope_country": {
+            "type": "text"
+        },
+        "t_scope_division": {
+            "type": "text"
+        },
+        "t_scope_customer_type": {
+            "type": "text"
+        },
+        "t_featured_only": {
+            "type": "bool"
+        },
+        "cta_eyebrow": {
+            "type": "text"
+        },
+        "cta_h2": {
+            "type": "text"
+        },
+        "cta_body": {
+            "type": "text"
+        },
+        "cta_cta_text": {
+            "type": "text"
+        },
+        "cta_cta_url": {
+            "type": "text"
+        },
+        "cta_cta2_text": {
+            "type": "text"
+        },
+        "cta_cta2_url": {
+            "type": "text"
+        },
+        "cta_image_url": {
+            "type": "text"
+        },
+        "cf_eyebrow": {
+            "type": "text"
+        },
+        "cf_title": {
+            "type": "text"
+        },
+        "cf_subtitle": {
+            "type": "text"
+        },
+        "cf_layout": {
+            "type": "text"
+        },
+        "cf_show_company": {
+            "type": "bool"
+        },
+        "cf_show_phone": {
+            "type": "bool"
+        },
+        "cf_show_dropdown": {
+            "type": "bool"
+        },
+        "cf_dropdown_label": {
+            "type": "text"
+        },
+        "cf_options": {
+            "type": "lines"
+        },
+        "cf_cta_text": {
+            "type": "text"
+        },
+        "cf_message_label": {
+            "type": "text"
+        },
+        "cf_trust_signals": {
+            "type": "lines"
+        },
+        "cf_show_contact_person": {
+            "type": "bool"
+        },
+        "cf_contact_scope_country": {
+            "type": "text"
+        },
+        "cf_contact_scope_division": {
+            "type": "text"
+        }
+    }
+}

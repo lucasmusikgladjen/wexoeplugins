@@ -36,7 +36,32 @@
 
 ## Entiteter (packages/schema/entities → synkade kopior)
 
+- `articles`
+- `automation_offerings`
+- `automation_product_navigation`
+- `automation_team_members`
+- `cms_cases`
 - `cms_customer_type_pages`
+- `cms_page_sections`
+- `cms_pages`
+- `cms_section_tabs`
+- `core_company`
+- `core_countries`
+- `core_coworkers`
+- `core_customer_types`
+- `core_divisions`
+- `core_graphic_profile`
+- `core_partners`
+- `core_testimonials`
+- `inbox_form_submissions`
+- `landing_pages`
+- `lp_downloads`
+- `lp_tabs`
+- `partner_pages`
+- `product_areas`
+- `product_page_sections`
+- `products`
+- `solutions`
 
 ## Copy-handlers (app/api/copy/route.ts)
 

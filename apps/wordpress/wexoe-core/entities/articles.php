@@ -1,33 +1,17 @@
 <?php
 /**
- * Entity schema: articles
+ * Entity schema: articles (shim)
  *
- * Artiklar (produktvarianter) som hör till en produkt. Buildern visar dem som
- * read-only lista — aldrig editerbar och aldrig skriven av save-flödet.
+ * Faltlistan bor pa EXAKT ett stalle: schema/articles.json (committad synk-kopia av
+ * packages/schema/entities/articles.json). Den har filen ar en tunn shim som later
+ * Schema::from_json() oversatta JSON-schemat till den array-form
+ * SchemaRegistry/Normalizer forvantar sig — read-beteendet ar oforandrat och
+ * bevisat byte-identiskt (Normalizer doman-output ===). Samma JSON last av
+ * buildern (TS) sa att en faltandring gors pa ett stalle.
  *
- * Airtable-tabell: cms_articles (tblhnz3MQG1JwfKrN) i Wexoe NY.
- * Konvention: snake_case överallt — passthrough.
+ * Lagg till/andra falt i JSON-filen, inte har.
  */
 
 if (!defined('ABSPATH')) exit;
 
-return [
-    'base_id' => \Wexoe\Core\Plugin::SSOT_BASE_ID,
-    'table_id' => 'tblhnz3MQG1JwfKrN',
-    'primary_key' => 'name',
-    'cache_ttl' => 86400,
-    'required' => ['name'],
-    'fields' => [
-        'name' => 'name',
-        'internal_notes' => 'internal_notes',
-        'is_active' => ['source' => 'is_active', 'type' => 'bool'],
-        'article_number' => 'article_number',
-        'description' => 'description',
-        'datasheet_url' => 'datasheet_url',
-        'webshop_url' => 'webshop_url',
-        'image_url' => 'image_url',
-        'variants' => 'variants',
-        'product_ids' => ['source' => 'product_ids', 'type' => 'link', 'entity' => 'products'],
-        'supplier_ids' => ['source' => 'supplier_ids', 'type' => 'link', 'entity' => 'core_partners'],
-    ],
-];
+return \Wexoe\Core\Schema::from_json('articles');
