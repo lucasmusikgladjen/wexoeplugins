@@ -11,7 +11,7 @@ Mål: Ersätta dagens manuella `[wexoe_page slug="..."]`-shortcodes (i Enfold Co
 
 | Fråga | Beslut |
 |---|---|
-| Var bor koden? | Eget plugin `wexoe-alb-blocks` under `New plugins/`. Inte i child-theme (överlever temauppdateringar). |
+| Var bor koden? | Eget plugin `wexoe-alb-blocks` under `plugins/`. Inte i child-theme (överlever temauppdateringar). |
 | Beroenden | `wexoe-core` (data via `\Wexoe\Core\Core::entity()`), Enfold-temat aktivt (`current_theme_supports('avia_builder')` / `class_exists('aviaShortcodeTemplate')`). |
 | En modul per entitet eller en generisk? | **Generisk** modul `wexoe_content` med dropdown för typ + AJAX-laddad dropdown för post. Mindre underhåll, en symbol i builder. |
 | Frontend-rendering | Återanvänd befintliga render-funktioner från `wexoe-pages`, `wexoe-landing-page` m.fl. ALB-modulen mappar typ → existerande shortcode-handler eller render-funktion. |
@@ -168,7 +168,7 @@ Börja med A → migrera till B om listorna växer.
 
 #### Viktigt: bevara rått ID vid rendering
 
-Enfolds `select`-subtype är en platt `[value => label]`-array, så vi måste prefixa optionernas `value` (`{type}:{raw_id}`) för att (1) JS-filtret ska kunna avgöra vilken option som hör till vilken typ och (2) slug-kollisioner mellan entiteter (t.ex. både `cms_pages` och `landing_pages` kan ha `om-oss`) inte ska dela samma option. Konsekvensen är att det sparade `content_id`-attributet blir prefixat (`cms_pages:om-oss`), men de befintliga render-funktionerna (`wexoe_pages_render()` → `$pages_repo->find_by('slug', $slug)`, `wexoe_landing_page_shortcode()` → `find($slug)` i `New plugins/wexoe-pages/wexoe-pages.php` m.fl.) förväntar sig **rått** slug/ID. Lösning:
+Enfolds `select`-subtype är en platt `[value => label]`-array, så vi måste prefixa optionernas `value` (`{type}:{raw_id}`) för att (1) JS-filtret ska kunna avgöra vilken option som hör till vilken typ och (2) slug-kollisioner mellan entiteter (t.ex. både `cms_pages` och `landing_pages` kan ha `om-oss`) inte ska dela samma option. Konsekvensen är att det sparade `content_id`-attributet blir prefixat (`cms_pages:om-oss`), men de befintliga render-funktionerna (`wexoe_pages_render()` → `$pages_repo->find_by('slug', $slug)`, `wexoe_landing_page_shortcode()` → `find($slug)` i `plugins/wexoe-pages/wexoe-pages.php` m.fl.) förväntar sig **rått** slug/ID. Lösning:
 
 1. `shortcode_handler()` strippar prefixet innan render-callbacken anropas (se kodexemplet ovan) och verifierar att prefixet matchar `content_type` — detta är platsen där `content_id` översätts till det format som befintliga renderare redan stödjer.
 2. `wexoe_alb_initial_options()` returnerar `["{$type}:{$id}" => $label]` för alla typer plus en första tom rad så att stå-värdet inte renderar fel post.
@@ -195,7 +195,7 @@ add_action('wp_ajax_wexoe_alb_list', function () {
 ## 4. Genomförandeordning
 
 ### Fas 1 — Skelett (½ dag)
-1. Skapa pluginmappen `New plugins/wexoe-alb-blocks/` med bootstrap-fil och dependency checks (`wexoe-core` + Enfold).
+1. Skapa pluginmappen `plugins/wexoe-alb-blocks/` med bootstrap-fil och dependency checks (`wexoe-core` + Enfold).
 2. Registrera modulen via `ShortCode_Inserter` så ikonen syns i ALB-modalen.
 3. Hårdkoda en typ (`cms_pages`) och en select med statiska val. Verifiera att shortcode `[wexoe_content content_type="..." content_id="..."]` sparas och renderas.
 

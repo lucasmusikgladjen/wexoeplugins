@@ -144,8 +144,8 @@ Båda har `table_id => null` med kommentaren "Sätts efter MCP-skapande". Konsek
 **Åtgärd:** Lagt prominent `!!! LEGACY — PENDING MIGRATION !!!`-block i:
 - `wexoe-core/entities/automation_offerings.php` (top-of-file docblock)
 - `wexoe-core/entities/automation_product_navigation.php` (samma)
-- `New plugins/automation-pillar/wexoe-offerings-tabs.php` (plugin header + docblock)
-- `New plugins/automation-pillar/wexoe-product-nav.php` (samma)
+- `plugins/automation-pillar/wexoe-offerings-tabs.php` (plugin header + docblock)
+- `plugins/automation-pillar/wexoe-product-nav.php` (samma)
 
 Varje notis pekar på rätt steg för att avsluta migrationen när det blir aktuellt (skapa tabell via MCP enligt `MIGRATION-PLAN.md`, kopiera N records från specifik gammal tabell-ID, fyll i `table_id`).
 
@@ -191,7 +191,7 @@ Varje notis pekar på rätt steg för att avsluta migrationen när det blir aktu
 - `wexoe-core/entities/solutions.php` — pekar på `cms_solutions_mini` (tblxK7ikOgLFuze6m, omdöpt från cms_solutions_concepts).
 - `wexoe-core/entities/automation_offerings.php` — pekar på (planerad) `cms_offerings`.
 - `wexoe-core/entities/automation_product_navigation.php` — pekar på (planerad) `cms_product_navigation`.
-- `wexoe-core/entities/automation_team_members.php` — flaggad `@deprecated`. Pekar fortfarande på gamla `Coworkers` i Wexoe-basen. Migreras till `core_coworkers` när `New plugins/automation-pillar/wexoe-team-rack.php` uppdateras.
+- `wexoe-core/entities/automation_team_members.php` — flaggad `@deprecated`. Pekar fortfarande på gamla `Coworkers` i Wexoe-basen. Migreras till `core_coworkers` när `plugins/automation-pillar/wexoe-team-rack.php` uppdateras.
 - `wexoe-core/entities/cms_unique_pages.php` — snake_case-passthrough.
 - `wexoe-core/entities/core_company.php` — snake_case-passthrough. `company_name`-fält tillagt.
 - `wexoe-core/entities/core_countries.php` — snake_case-passthrough. `active` → `is_active`.
@@ -306,7 +306,7 @@ PR#25 (wexoeplugins) och PR#42 (wexoebuilder) review:ades av Codex och fyra type
 6. **`{Is Default}=TRUE()` formula i core/[entity]/route.ts.** Duplicate-default-guarden för core_graphic_profile filtrerade på den gamla PascalCase-fältnamnet. Bytt till `{is_default}=TRUE()`.
 
 **Filer ändrade i wexoeplugins (fix-PR `claude/fix-codex-review-and-continue-migration`):**
-- `New plugins/wexoe-landing-page/wexoe-landing-page.php` — hero_image_url, case_image_url, contact_image_url, show_contact_form
+- `plugins/wexoe-landing-page/wexoe-landing-page.php` — hero_image_url, case_image_url, contact_image_url, show_contact_form
 - `wexoe-core/entities/{audience_heroes,product_areas,products,solutions,articles}.php` — reverted till OLD base + PascalCase sources
 
 **Filer ändrade i wexoebuilder (fix-PR `claude/fix-codex-review-base-id-and-formula`):**
@@ -391,7 +391,7 @@ Plus API routes:
 
 #### E. Migrera `automation_team_members` till `core_coworkers`
 
-Plugin `New plugins/automation-pillar/wexoe-team-rack.php` använder fortfarande `Core::entity('automation_team_members')` som pekar på gamla Wexoe-basen. För att kunna släcka gamla basen:
+Plugin `plugins/automation-pillar/wexoe-team-rack.php` använder fortfarande `Core::entity('automation_team_members')` som pekar på gamla Wexoe-basen. För att kunna släcka gamla basen:
 
 1. Lägg till team-rack-specifika fält på `core_coworkers` om de behövs publikt (`team_rack_tag`, `module_color`, `module_id`)
 2. Uppdatera `wexoe-team-rack.php` att kalla `Core::entity('core_coworkers')` med nya fältnamn
@@ -491,7 +491,7 @@ OBS: Airtable MCP-servern saknar `delete_field`-endpoint. Gamla attachment-fält
 - `wexoe-core/src/Renderers/TeamGrid.php` — $img is_array-gren ersatt med `(string) ($c['image'] ?? '')` cast.
 - `wexoe-core/src/Renderers/PartnersMarquee.php` — $logo is_array-gren ersatt med `(string) ($p['logo'] ?? '')` cast.
 - `wexoe-core/src/Renderers/TestimonialCard.php` — $author_image is_array-gren ersatt med `(string) ($t['author_image'] ?? '')` cast.
-- `New plugins/wexoe-pages/wexoe-pages.php` — `wexoe_pages_attachment_url()`-helpern raderad; hero_image/text_image_a_image/text_image_b_image används direkt; contact_person image hämtas nu som plain string.
+- `plugins/wexoe-pages/wexoe-pages.php` — `wexoe_pages_attachment_url()`-helpern raderad; hero_image/text_image_a_image/text_image_b_image används direkt; contact_person image hämtas nu som plain string.
 
 **Filer ändrade i `wexoebuilder/`:**
 - `lib/core/mapper.ts` — `firstAttachmentUrl()` raderad; readGraphicProfile/readCustomerType/readCoworker/readPartner/readTestimonial använder `asString()`; `writeAttachment()` raderad; write-funktioner använder `cleanField()` direkt.
@@ -502,7 +502,7 @@ OBS: Airtable MCP-servern saknar `delete_field`-endpoint. Gamla attachment-fält
 - TS-state-properties behåller `imageUrl`-namn (inte `image`) — camelCase-konvention, matchar `HeroState`/`TextImageState`-interfaces.
 
 **Verifiering:**
-- `grep -r 'attachment' wexoe-core/entities/ wexoe-core/write-entities/ wexoe-core/src/Renderers/ 'New plugins/wexoe-pages/'` → 0 träffar.
+- `grep -r 'attachment' wexoe-core/entities/ wexoe-core/write-entities/ wexoe-core/src/Renderers/ 'plugins/wexoe-pages/'` → 0 träffar.
 - `grep -r 'firstAttachmentUrl\|writeAttachment\|attachUrl\|attachInput' lib/` → 0 träffar.
 - PHP-renderers: inga `is_array`-grenar för bild-variabler.
 - TS: `cleanField(s.logo_primary)` returnerar null för tom sträng — Airtable rensar fältet vid update.
@@ -620,9 +620,9 @@ OBS: Airtable MCP-servern saknar `delete_field`-endpoint. Gamla attachment-fält
 - `wexoe-core/entities/landing_pages.php` — lade till `contact_form_*` domain-keys.
 - `wexoe-core/entities/product_areas.php` — samma.
 - `wexoe-core/entities/audience_heroes.php` — samma.
-- `New plugins/wexoe-landing-page/wexoe-landing-page.php` — anrop till `wexoe_lp_render_contact_form_section()` sist i shortcode-render.
-- `New plugins/wexoe-product-area/wexoe-product-area.php` — `wexoe_pa_render_contact_form_section()` följer samma mönster.
-- `New plugins/wexoe-audience-hero/wexoe-audience-hero.php` — privat `render_contact_form_section()` på klass-instansen.
+- `plugins/wexoe-landing-page/wexoe-landing-page.php` — anrop till `wexoe_lp_render_contact_form_section()` sist i shortcode-render.
+- `plugins/wexoe-product-area/wexoe-product-area.php` — `wexoe_pa_render_contact_form_section()` följer samma mönster.
+- `plugins/wexoe-audience-hero/wexoe-audience-hero.php` — privat `render_contact_form_section()` på klass-instansen.
 
 **Designbeslut:**
 - Alla wrappers gör `class_exists('\\Wexoe\\Core\\Renderers\\ContactForm')` guard.
@@ -669,7 +669,7 @@ OBS: Airtable MCP-servern saknar `delete_field`-endpoint. Gamla attachment-fält
 
 **Filer ändrade:**
 - `src/Core.php` — ny `Core::renderer($type)`-facade.
-- `New plugins/wexoe-pages/wexoe-pages.php` — full sektion-rendering i fast ordning.
+- `plugins/wexoe-pages/wexoe-pages.php` — full sektion-rendering i fast ordning.
 
 **Manuella TODOs efter deploy:**
 - Verifiera team-grid med coworker i `/globals/coworkers`.
@@ -689,7 +689,7 @@ OBS: Airtable MCP-servern saknar `delete_field`-endpoint. Gamla attachment-fält
 - `wexoe-core/entities/cms_unique_pages.php`
 - `wexoe-core/write-entities/cms_unique_pages.php`
 - `wexoe-core/src/Constants.php`
-- `New plugins/wexoe-pages/wexoe-pages.php`
+- `plugins/wexoe-pages/wexoe-pages.php`
 - `lib/unique-page-types.ts`, `lib/unique-page-mapper.ts`, `components/UniquePageBuilder.tsx` m.fl.
 
 **Manuella TODOs efter deploy:**
@@ -783,7 +783,7 @@ OBS: Airtable MCP-servern saknar `delete_field`-endpoint. Gamla attachment-fält
 
 **Syfte:** Ersätta manuella `[wexoe_page slug="..."]`-shortcodes i Code Block med ett riktigt ALB-element ("Wexoe Content") som har två dropdowns: innehållstyp + post.
 
-**Filer skapade i `New plugins/wexoe-alb-blocks/`:**
+**Filer skapade i `plugins/wexoe-alb-blocks/`:**
 - `wexoe-alb-blocks.php` — bootstrap, dependency checks (`wexoe-core` + Enfold), `avia_load_shortcodes`-hook som pekar Enfold på vår `shortcodes/`-katalog, frontend shortcode-fallback, `admin_enqueue_scripts`.
 - `includes/content-types.php` — filtrerbar `wexoe_alb_content_types()`-registry, generisk `wexoe_alb_list_by_slug()`, render-dispatch `wexoe_alb_render()` (med core_ready-guard), fyra render-wrappers.
 - `shortcodes/wexoe_content/wexoe_content.php` — `Wexoe_Content_Block extends aviaShortcodeTemplate` (popup_elements, editor_element, shortcode_handler). Sökväg/filnamn följer Enfolds discovery-konvention.

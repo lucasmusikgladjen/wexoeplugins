@@ -26,7 +26,7 @@ Pair-läs med `wexoebuilder/CLAUDE.md` för bygg-sidan av samma system. För att
 ```
 
 ### Roller
-- **wexoebuilder** — Next.js-app där marknadsförare redigerar sidor. Skriver till Airtable via Claude API.
+- **wexoebuilder** — Next.js-app där marknadsförare redigerar sidor. Skriver till Airtable via en deterministisk transform (rena funktioner, ingen Claude på spar-vägen).
 - **Airtable** — vår CMS-datakälla. Två basar: `appokKSTaBdCa8YiW` (Wexoe NY, kanonisk) och `appXoUcK68dQwASjF` (Wexoe, legacy under utfasning).
 - **wexoe-core** — WordPress-plugin som är ENDA komponenten som pratar med Airtable från WP-sidan. Cachar i transients. Exponerar PHP-API till feature-plugins.
 - **Feature-plugins** — en per sidtyp. Renderar shortcode → läser data via Core → producerar HTML. Pratar ALDRIG med Airtable direkt.
@@ -311,7 +311,7 @@ return [
 
 ## 6. Anatomi av ett feature-plugin
 
-Typisk struktur för ett page-plugin (`New plugins/wexoe-xxx/wexoe-xxx.php`):
+Typisk struktur för ett page-plugin (`plugins/wexoe-xxx/wexoe-xxx.php`):
 
 ```php
 <?php
@@ -426,7 +426,7 @@ foreach ($tabs as $tab) {
 }
 ```
 
-Stale-field-clearing vid typbyten hanteras av buildern (via Claude-transform). Pluginet ska inte oroa sig — fält som inte är relevanta för den aktuella typen är tomma.
+Stale-field-clearing vid typbyten hanteras av buildern (deterministisk transform). Pluginet ska inte oroa sig — fält som inte är relevanta för den aktuella typen är tomma.
 
 ---
 
@@ -464,7 +464,7 @@ wexoe-core/
     core_partners.php
     ...
 
-New plugins/
+plugins/
   wexoe-landing-page/      # En mapp per feature-plugin
     wexoe-landing-page.php
   wexoe-audience-hero/

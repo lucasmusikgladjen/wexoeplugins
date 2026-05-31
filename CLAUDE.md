@@ -2,6 +2,10 @@
 
 Du är i `wexoeplugins`. Den här filen är *bara* ingången — den ger bred kontext och pekar vidare.
 
+> **Nyligen ändrat (2026-05-31):**
+> - Feature-plugins-mappen heter numera **`plugins/`** (tidigare `New plugins/` — mellanslaget togs bort). Sökvägar i äldre commits/loggar kan visa det gamla namnet.
+> - Spar-vägen i buildern är **deterministisk sedan FAS 2** (rena funktioner, inga Claude-anrop). Om du hittar en text — i kod-kommentar, guide eller prompt — som påstår att buildern skriver till Airtable "via Claude"/"Claude-transform", är den **inaktuell**: lita på koden och rätta texten. (`IMPLEMENTATION_LOG.md` och `ARKITEKTURPLAN.md`-loggen beskriver historik i dåtid — det är korrekt och ska inte ändras.)
+
 ---
 
 ## 1. Vad systemet är
@@ -90,7 +94,7 @@ Fullständig tabell i `UTVECKLINGSGUIDE.md` § 2.
 ## 7. Vanliga uppgifter (icke uttömmande)
 
 - Lägga till/justera fält i `wexoe-core/entities/*.php` när Airtable-tabellen ändrats.
-- Bygga eller ändra ett feature-plugin under `New plugins/wexoe-*/`.
+- Bygga eller ändra ett feature-plugin under `plugins/wexoe-*/`.
 - Skapa en helt ny sidtyp — följ flowet i **`SKAPA-SIDA.md`** (marknadsförar-guide) eller den tekniska referensen i **`NEW_PAGE_TYPE.md`**.
 - Bugfix i `wexoe-core/src/` (Normalizer, Cache, AirtableClient, …).
 - Datafixar i Airtable via MCP (typ link-rewiring efter migration — se `IMPLEMENTATION_LOG.md` för precedens).
@@ -110,7 +114,7 @@ wexoe-core/
   entities/                  # läs-scheman (en fil per entitet)
   write-entities/            # skriv-scheman
 
-New plugins/
+plugins/
   wexoe-landing-page/        # en mapp per feature-plugin
   wexoe-pages/               # dispatcher-mönster: cms_pages + cms_page_sections
     sections/                # en fil per section_type

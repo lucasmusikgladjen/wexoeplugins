@@ -3,7 +3,7 @@
  * Entity schema: automation_team_members
  *
  * LEGACY/PENDING-MIGRATION: pekar fortfarande på gamla `Coworkers`-tabellen i
- * Wexoe-basen. Används av `New plugins/automation-pillar/wexoe-team-rack.php`
+ * Wexoe-basen. Används av `plugins/automation-pillar/wexoe-team-rack.php`
  * som behöver migreras till `core_coworkers` innan gamla basen kan tas ned.
  *
  * MIGRATIONSTODO:

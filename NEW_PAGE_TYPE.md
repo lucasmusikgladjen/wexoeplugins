@@ -115,7 +115,7 @@ Pluginet renderar shortcoden på WordPress-sidan. Det är ofta den mest CSS-tung
 ### Mapp- och filstruktur
 
 ```
-New plugins/wexoe-<type>/
+plugins/wexoe-<type>/
   wexoe-<type>.php          # All kod i en fil — det är konventionen
 ```
 
@@ -289,7 +289,7 @@ Skapa INGEN PHP-plugin och ingen builder-editor i denna fas — bara tabell + sc
 
 ### Prompt — FAS 2 (PHP-plugin)
 
-Körs i en session med `wexoeplugins`-repot. Output: en zip-bar plugin-mapp under `New plugins/`.
+Körs i en session med `wexoeplugins`-repot. Output: en zip-bar plugin-mapp under `plugins/`.
 
 ```
 Tabellen och Core-schemat för <NAMN> är klart (entities/<entity_name>.php).
@@ -309,7 +309,7 @@ feature-plugin) och `NEW_PAGE_TYPE.md` § FAS 2.
 Studera ett existerande plugin som referens — `wexoe-audience-hero/` är
 en bra "enkel" referens; `wexoe-landing-page/` är mer komplex.
 
-Producera under `New plugins/wexoe-<type>/wexoe-<type>.php`:
+Producera under `plugins/wexoe-<type>/wexoe-<type>.php`:
 
 1. Plugin-header (Name, Description, Version, Author).
 2. `wexoe_<short>_core_ready()`-funktion.
@@ -334,7 +334,7 @@ Producera under `New plugins/wexoe-<type>/wexoe-<type>.php`:
 
 Krav:
 - `php -l` ska gå ren.
-- Leverera som en zip-bar mapp under `New plugins/`.
+- Leverera som en zip-bar mapp under `plugins/`.
 - Inkludera en kort README.md i mappen som visar shortcode-användning.
 ```
 
@@ -360,7 +360,7 @@ eller Product Area för Lager 3-referens.
 Avgör först:
 - Lager 1 (alla fält 1-till-1, ingen child-tabell) — default
 - Lager 2 (separat child-tabell, t.ex. tabs/products) — använd relations[]
-- Lager 3 (full override, Claude-transform behövs) — bara om något i
+- Lager 3 (full override, deterministisk transform) — bara om något i
   prototypen kräver det (polymorfa items, pipe-format, multi-tabell-skrivning
   med specifik ordning)
 
@@ -395,6 +395,6 @@ Visa förslag på state-struktur + section-uppdelning innan implementation.
 - `wexoe-core/entities/audience_heroes.php` — minsta läs-schema-referens
 - `wexoe-core/entities/landing_pages.php` — komplext schema med många typer
 - `wexoe-core/write-entities/user_submissions.php` — write-schema-referens
-- `New plugins/wexoe-audience-hero/wexoe-audience-hero.php` — enklaste plugin
-- `New plugins/wexoe-landing-page/wexoe-landing-page.php` — komplext plugin med polymorfa tabs
+- `plugins/wexoe-audience-hero/wexoe-audience-hero.php` — enklaste plugin
+- `plugins/wexoe-landing-page/wexoe-landing-page.php` — komplext plugin med polymorfa tabs
 - `wexoebuilder/NEW_PAGE_TYPE.md` — bygger-sidan av samma flöde
