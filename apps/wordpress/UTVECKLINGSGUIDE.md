@@ -13,7 +13,7 @@ Pair-läs med `wexoebuilder/CLAUDE.md` för bygg-sidan av samma system. För att
 ```
 ┌──────────────┐     write     ┌──────────┐  read    ┌──────────────┐  → wexoe-landing-page
 │ wexoebuilder │ ────────────► │ Airtable │ ◄─────── │  wexoe-core  │  → wexoe-audience-hero
-│ (Next.js)    │ ◄──────────── │  (CMS)   │          │  (transients)│  → wexoe-product-page
+│ (Next.js)    │ ◄──────────── │  (CMS)   │          │  (transients)│  → wexoe-product-area
 └──────────────┘    display    └──────────┘          └──────────────┘  → wexoe-pages
                                                             ▲          → wexoe-alb-blocks
                                                             │          → wexoe-contact-page
@@ -186,7 +186,7 @@ Lines::from_array(['a', 'b', 'c']);        // "a\nb\nc"
 
 ### 3.5 Renderers
 
-Core innehåller en delad renderer för kontaktformuläret — det är den enda komponent som faktiskt återanvänds av flera plugins (wexoe-landing-page, wexoe-audience-hero, wexoe-product-page, wexoe-pages).
+Core innehåller en delad renderer för kontaktformuläret — det är den enda komponent som faktiskt återanvänds av flera plugins (wexoe-landing-page, wexoe-audience-hero, wexoe-product-area, wexoe-pages).
 
 ```php
 $class = Core::renderer('contact-form');
@@ -469,8 +469,9 @@ plugins/
     wexoe-landing-page.php
   wexoe-audience-hero/
     wexoe-audience-hero.php
-  wexoe-product-page/
-    wexoe-product-page.php
+  wexoe-product-area/      # Plugin-basename behålls (active_plugins-kontrakt);
+    wexoe-product-area.php #   sidtypen heter product-page i builder/schema/entitet
+
   wexoe-pages/             # One-off-sidor — dispatcher + sections/
     wexoe-pages.php          # Bootstrap, shortcode, dispatcher, SEO
     sections/                # En fil per section_type-renderer

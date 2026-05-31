@@ -1,10 +1,10 @@
 <?php
 /**
- * Plugin Name: Wexoe Product Page
- * Description: Modular product pages driven by Airtable CMS data via Wexoe Core. Use [wexoe_product_area slug="plc"] to render. (Shortcode-namnet behålls oförändrat — det är ett publikt kontrakt i befintligt WP-innehåll.)
+ * Plugin Name: Wexoe Product Area
+ * Description: Modular product area pages driven by Airtable CMS data via Wexoe Core. Use [wexoe_product_area slug="plc"] to render.
  * Version: 3.0.1
  * Author: Wexoe
- * Text Domain: wexoe-product-page
+ * Text Domain: wexoe-product-area
  */
 
 if (!defined('ABSPATH')) exit;
@@ -310,6 +310,8 @@ function wexoe_pa_test_map_article_to_legacy($row) {
 }
 
 function wexoe_pa_test_fetch_product_area($slug) {
+    // Entiteten heter product_pages (matchar Airtable-tabellen cms_product_pages).
+    // Plugin-basename + shortcode behålls dock (active_plugins-/WP-innehålls-kontrakt).
     $repo = wexoe_pa_test_get_repo('product_pages');
     if (!$repo) return null;
     $row = $repo->find($slug);
@@ -4371,7 +4373,7 @@ function wexoe_pa_render_contact_form_section($data) {
             'main'   => $data['hero_bg'] ?? '',
             'accent' => $data['hero_accent'] ?? '',
         ],
-        'source_plugin'  => 'wexoe-product-page',
+        'source_plugin'  => 'wexoe-product-area',
         'page_slug'      => $data['slug'] ?? '',
         'contact_person' => $contact_person,
     ]));
