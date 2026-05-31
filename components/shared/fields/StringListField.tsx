@@ -10,7 +10,7 @@
  *
  * Konventioner:
  *   - Värdet är `string[]`. Tomma strängar tillåts under redigering men ska
- *     filtreras bort av callern vid spar (typiskt i Claude-transformen).
+ *     filtreras bort av callern vid spar (typiskt i den deterministiska transformen).
  *   - Add-knappen lägger till en tom rad sist och fokuserar inte automatiskt
  *     (för att inte stjäla fokus från andra fält i samma sektion).
  *   - Flytta upp/ner finns. Drag-and-drop saknas i v1 — pilarna räcker för

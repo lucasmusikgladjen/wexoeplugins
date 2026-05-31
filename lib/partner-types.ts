@@ -3,7 +3,7 @@
  *
  * Speglar Airtable `cms_partner_pages` (tblQv5E8pSgwxy6wU) i Wexoe NY,
  * som drivs av `[wexoe_partner slug="..."]`-shortcoden via
- * `wexoeplugins/New plugins/wexoe-partner-page`.
+ * `wexoeplugins/plugins/wexoe-partner-page`.
  *
  * Sektion-ordning matchar `wexoe-partner-page/src/Renderer.php`-rendringen,
  * inte editor-quicknav-ordningen (där `Inställningar` ligger sist enligt
@@ -16,11 +16,11 @@
  *
  * Quick-facts har 4 fasta slots i Airtable (facts_1_icon..facts_4_label).
  * State exponerar dem som en array av längd 4 för cleaner editor-kod;
- * mapper/Claude-transform packar tillbaka till slot-fält vid spar.
+ * mapper/deterministisk transform packar tillbaka till slot-fält vid spar.
  *
  * `faqs` lagras i Airtable som JSON-sträng `[{question, answer}, ...]` —
- * state har en strukturerad array med `clientId` för React-keys; Claude-
- * transformen serialiserar bort `clientId` vid spar.
+ * state har en strukturerad array med `clientId` för React-keys; den
+ * deterministiska transformen serialiserar bort `clientId` vid spar.
  *
  * `whyBenefits` lagras som en lines-textsträng i Airtable (en bullet per
  * rad). State är en `string[]` så editorn kan ha add/remove/move; Claude-
@@ -38,7 +38,7 @@ export { emptyFaqItem, newFaqClientId };
 
 /**
  * Quick-facts ikon-keys. Måste hållas i synk med
- * `wexoeplugins/New plugins/wexoe-partner-page/src/Renderer.php::$icons`.
+ * `wexoeplugins/plugins/wexoe-partner-page/src/Renderer.php::$icons`.
  * Pluginet utelämnar ikonen tyst vid okänd key — editorn ska bara
  * exponera dessa val plus tomsträng (= ingen ikon).
  */

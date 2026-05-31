@@ -3,8 +3,8 @@
  *
  * Drivs av createPageRoute() (Lager 3 — `create`/`update`-overrides bor i
  * `lib/page-types/product-area-actions.ts`). Routen får standardiserad
- * slug-validering, felformat och cache-invalidering, men skrivvägen är
- * fortfarande Claude-driven via productAreaCreate/Update.
+ * slug-validering, felformat och cache-invalidering; skrivvägen är
+ * deterministisk (rena funktioner, inga Claude-anrop) via productAreaCreate/Update.
  *
  * `?action=list-divisions` är borttagen — server-pages använder
  * loadDivisions() direkt istället för att gå via routen.

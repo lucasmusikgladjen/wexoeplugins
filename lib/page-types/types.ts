@@ -29,9 +29,9 @@
  *
  *   Lager 1 — Standard CRUD: bara `primary` (tableId + fromRecord + toFields).
  *     Ramverket stöder modellen men den är inte produktionsvalet — alla
- *     sidtyper går via Claude-transform i Lager 3, även de vars schema
- *     är 1-till-1 mellan state och Airtable. Lager 1 finns kvar för att
- *     hålla typen liten och för en eventuell prototyp-skiss.
+ *     sidtyper går via deterministisk transform i Lager 3, även de vars
+ *     schema är 1-till-1 mellan state och Airtable. Lager 1 finns kvar för
+ *     att hålla typen liten och för en eventuell prototyp-skiss.
  *
  *   Lager 2 — Declarative relations: `primary` + `relations[]`. Ramverket
  *     hanterar diff (skapa/uppdatera/ta bort eller unlink) per relation.
@@ -42,10 +42,12 @@
  *     med egna content-blocks i en separat tabell.
  *
  *   Lager 3 — Full override: skriv egen `create`/`update`/`delete` som
- *     anropar Claude-transform. Det här är standardvalet — alla nuvarande
- *     sidtyper (customer-type, cms-page, product-area, landing-page)
+ *     anropar den deterministiska transformen (rena funktioner, ingen
+ *     Claude). Det här är standardvalet — alla nuvarande sidtyper
+ *     (customer-type, cms-page, product-area, landing-page, case, partner)
  *     använder det. Ger ett enhetligt sätt att transformera state →
- *     Airtable-fält via en schema-MD som matas in i Claude.
+ *     Airtable-fält. (Tidigare gick detta via en Claude-transform med en
+ *     schema-MD per sidtyp; den togs bort i FAS 2.)
  *
  * ───────────────────────────────────────────────────────────────────────
  *  Failure-semantik
@@ -95,8 +97,8 @@ export interface PageTypeServerDef<TState, TListItem = unknown> {
    *
    *  Lämnas oexponerad när `create`/`update`-overrides används (Lager 3,
    *  vilket alla nuvarande sidtyper gör). Fältet finns kvar i typen för
-   *  bakåtkompat — nya sidtyper ska gå via Claude-transform + Lager 3,
-   *  inte hand-skriva en deterministisk mapper här. */
+   *  bakåtkompat — nya sidtyper ska gå via den deterministiska transformen
+   *  i Lager 3, inte exponera `stateToFields` här. */
   stateToFields?: (state: TState, mode: 'create' | 'update') => AirtableFields;
 
   /** Returnerar felmeddelande eller null. Körs på server före skrivning. */
@@ -115,8 +117,8 @@ export interface PageTypeServerDef<TState, TListItem = unknown> {
 
   /** Lager 3 — full override av create. När satt struntar factory:n i
    *  `stateToFields`+`relations` och anropar denna istället. Använd när
-   *  sidtypen har egna förhandsregler (default-injection, Claude-transform,
-   *  multi-tabell-create i specifik ordning) som inte passar i Lager 2.
+   *  sidtypen har egna förhandsregler (default-injection, deterministisk
+   *  transform, multi-tabell-create i specifik ordning) som inte passar i Lager 2.
    *  Slug-validering och cache-invalidering körs fortfarande av factory:n. */
   create?: (
     state: TState,

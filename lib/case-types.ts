@@ -7,7 +7,7 @@
  * Pseudo-arrays (quick_stats, results, gallery_images) lagras i Airtable
  * som numrerade fält (`quick_stat_1_value`, `quick_stat_1_label`, ...) upp
  * till N items. Här i state hålls de som riktiga arrayer; mappern expanderar
- * och Claude-transform omvänder vid spar.
+ * och den deterministiska transformen omvänder vid spar.
  *
  * Linkade records (product_ids, article_ids) är `multipleRecordLinks` till
  * cms_products resp. cms_articles. Brand/role/article_number läses inte här

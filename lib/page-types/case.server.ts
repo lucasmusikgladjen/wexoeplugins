@@ -57,7 +57,7 @@ export const caseServer: PageTypeServerDef<CaseState, CaseListItem> = {
   emptyState: emptyCaseState,
   fromRecord: caseStateFromRecord,
 
-  // Lager 3 — skriv-vägen går via Claude-transform.
+  // Lager 3 — skriv-vägen går via deterministisk transform (ingen Claude).
   create: caseCreate,
   update: caseUpdate,
 

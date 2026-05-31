@@ -223,8 +223,8 @@ export function pageStateFromRecords(args: {
 /**
  * Hämta ContactFormState från ett Airtable-record vars fält följer
  * `contact_form_*`-konventionen.
- * Landing Page behåller Claude som backend-translator; den här helpern
- * normaliserar bara reverse-load från Airtable till builder-state.
+ * Den här helpern normaliserar bara reverse-load från Airtable till
+ * builder-state. (Skriv-vägen är deterministisk sedan FAS 2 — ingen Claude.)
  */
 export function contactFormFromRecord(record: AirtableRecord): ContactFormState {
   return contactFormFromFields(record.fields, 'snake_case');

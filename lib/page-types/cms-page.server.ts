@@ -6,9 +6,9 @@
  *   - cms_page_sections (polymorf — 15 typer)
  *   - cms_section_tabs (sub-records för tabs-typen)
  *
- * Skriv-vägen är override:d i `cms-page-actions.ts` och anropar Claude för
- * transformeringen. Slug-validering, validate-hooken och cache-invalidering
- * körs fortfarande av factory:n.
+ * Skriv-vägen är override:d i `cms-page-actions.ts` och transformerar
+ * deterministiskt (rena funktioner, inga Claude-anrop). Slug-validering,
+ * validate-hooken och cache-invalidering körs fortfarande av factory:n.
  *
  * `emptyState`/`fromRecord` är required-by-type-stubs — `loadCmsPageState()`
  * är den enda korrekta load-vägen (hämtar page + sektioner + tabs i en sweep).

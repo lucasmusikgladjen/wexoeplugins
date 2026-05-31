@@ -3,7 +3,7 @@
  *
  * FAS 2: skrivvägen är DETERMINISTISK — `customerTypeToFields(state, mode)`
  * producerar Airtable-fälten direkt ur state + JSON-schemat. Inga
- * Anthropic-anrop, ingen latens, ingen risk att Claude tappar innehåll.
+ * Anthropic-anrop, ingen latens, ingen risk att tappa innehåll.
  * Schemat är flatt (en tabell, inga child-records); read och write delar
  * samma `schema/cms_customer_type_pages.json`.
  */
@@ -71,7 +71,7 @@ export const customerTypeServer: PageTypeServerDef<
   emptyState: emptyCustomerTypePageState,
   fromRecord: customerTypePageStateFromRecord,
 
-  // Lager 3 — skriv-vägen går via Claude-transform.
+  // Lager 3 — skriv-vägen går via deterministisk transform (ingen Claude).
   create: customerTypeCreate,
   update: customerTypeUpdate,
 

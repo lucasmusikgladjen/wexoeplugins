@@ -17,8 +17,8 @@
  * `stat_number` lagras som number i Airtable men redigeras som sträng i state —
  * det styrs av `builder_as: "string"` i schemat (ingen specialkod här).
  *
- * Skriv-vägen (state → Airtable) går fortfarande via Claude-transform; den
- * ersätts av en deterministisk `toFields` i FAS 2.
+ * Skriv-vägen (state → Airtable) går via en deterministisk `toFields`
+ * (schema-driven; Claude togs bort från spar-vägen i FAS 2).
  */
 
 import { AirtableRecord, BASE_ID } from './airtable';

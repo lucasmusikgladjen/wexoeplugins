@@ -178,7 +178,7 @@ async function createNewPage(
   );
 
   // 3. CREATE tabs linked to the new LP. Preserve state order via
-  //    _clientIndex — sort Claude's output defensively in case it reordered.
+  //    _clientIndex — sort the transform output defensively in case it reordered.
   const tabIdByClientIndex: Record<number, string> = {};
   if (sortedTabs.length > 0) {
     const tabPayloads = sortedTabs.map((tab) => ({
@@ -201,7 +201,7 @@ async function createNewPage(
   //
   //    Before any download is created we validate that each entry's
   //    _tabClientIndex references a tab we actually just created —
-  //    otherwise Claude's output is malformed and silently dropping
+  //    otherwise the transform output is malformed and silently dropping
   //    downloads would leave dangling UI state with nothing in
   //    Airtable. Refuse and report instead (ported from the earlier
   //    tabIndex validation on commit 4604d94, now keyed on the new
@@ -300,7 +300,7 @@ async function updateExistingPage(
     ...transformed.landingPage,
   });
 
-  // 4. Diff tabs. We pair Claude's `tabs` output with `state.tabs` via
+  // 4. Diff tabs. We pair the transform's `tabs` output with `state.tabs` via
   //    _clientIndex. Each state tab also carries its `type` so we can
   //    compute tab-type clears for the PATCH.
   const stateTabRecordIds = new Set(
@@ -382,7 +382,7 @@ async function updateExistingPage(
   // 5. Diff downloads. Each download carries _tabClientIndex so we know
   //    which tab it belongs to. Validate every download's reference
   //    against the final tab ID map first — a malformed reference means
-  //    Claude's output is inconsistent and we'd otherwise silently drop
+  //    the transform output is inconsistent and we'd otherwise silently drop
   //    the download when grouping by parent.
   if (transformed.downloads.length > 0) {
     const downloadRefError = validateDownloadRefs({
@@ -394,7 +394,7 @@ async function updateExistingPage(
     if (downloadRefError) return downloadRefError;
   }
 
-  // Group Claude's download output by parent tab clientIndex
+  // Group the transform's download output by parent tab clientIndex
   const downloadsByTabIndex = new Map<number, LpTransformDownload[]>();
   for (const dl of transformed.downloads) {
     const list = downloadsByTabIndex.get(dl._tabClientIndex) ?? [];

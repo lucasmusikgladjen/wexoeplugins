@@ -330,7 +330,7 @@ Skapa INGEN PHP-plugin och ingen builder-editor i denna fas — bara tabell + sc
 
 ### Prompt — FAS 2 (PHP-plugin)
 
-Körs i en session med `wexoeplugins`-repot. Output: en zip-bar plugin-mapp under `New plugins/`.
+Körs i en session med `wexoeplugins`-repot. Output: en zip-bar plugin-mapp under `plugins/`.
 
 ```
 Tabellen och Core-schemat för <NAMN> är klart (`entities/<name>.php`).
@@ -343,7 +343,7 @@ Här är den annoterade HTML-prototypen:
 Läs `wexoeplugins/UTVECKLINGSGUIDE.md` § 3 (Core publikt API), § 6 (Anatomi
 av ett feature-plugin) och `wexoeplugins/NEW_PAGE_TYPE.md`.
 
-Producera under `New plugins/wexoe-<type>/wexoe-<type>.php`:
+Producera under `plugins/wexoe-<type>/wexoe-<type>.php`:
 1. Plugin-header med korrekt namn/version.
 2. Core-readiness-check.
 3. Shortcode `[wexoe_<type> slug="..." debug="false"]` som läser via

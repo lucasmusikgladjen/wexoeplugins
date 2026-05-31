@@ -7,7 +7,7 @@
  * Inga Anthropic-anrop. Flatt schema, inga child-records.
  *
  * Linkade fält (`partner_ids`, `country_ids`, `case_ids`, `category_ids`)
- * skrivs som ID-arrayer från Claude:s output. Linked target-records
+ * skrivs som ID-arrayer av transformen. Linked target-records
  * (cms_cases, cms_product_pages, core_partners) redigeras aldrig härifrån
  * — pickers väljer bara existerande poster.
  */
@@ -70,7 +70,7 @@ export const partnerServer: PageTypeServerDef<PartnerPageState, PartnerPageListI
   emptyState: emptyPartnerPageState,
   fromRecord: partnerPageStateFromRecord,
 
-  // Lager 3 — skriv-vägen går via Claude-transform.
+  // Lager 3 — skriv-vägen går via deterministisk transform (ingen Claude).
   create: partnerCreate,
   update: partnerUpdate,
 

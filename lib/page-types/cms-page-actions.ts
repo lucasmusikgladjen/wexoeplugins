@@ -3,8 +3,9 @@
  *
  * cms_pages är multi-tabell: sidans metadata (cms_pages) + polymorfa sektioner
  * (cms_page_sections) + tabs-sektionens sub-records (cms_section_tabs). Vi
- * använder Claude för att transformera state till Airtable-fält per nivå och
- * orkestrerar create/update/delete för alla tre tabellerna här.
+ * transformerar state till Airtable-fält per nivå med en deterministisk
+ * funktion (`buildCmsPageTransform`, inga Claude-anrop) och orkestrerar
+ * create/update/delete för alla tre tabellerna här.
  *
  * Sektioner och tab-sub-records är OWNED av sidan — borttagna från state ⇒
  * raderas i Airtable (samma policy som PA:s product_page_sections och
@@ -21,7 +22,7 @@
  *   2. För varje tabs-sektion: diff tabs mot dess existing tabs_tab_ids →
  *      create new + patch existing + samla orphans
  *   3. Patch tabs-sektioner med slutgiltig tabs_tab_ids
- *   4. Patch cms_pages med Claude-output + slutgiltig section_ids
+ *   4. Patch cms_pages med transform-output + slutgiltig section_ids
  *   5. Radera orphan section_tabs och orphan sections
  */
 
@@ -316,7 +317,7 @@ export async function cmsPageUpdate(
     }
   }
 
-  // 3) Patch cms_pages med Claude-output + slutgiltig section_ids-array (UI-ordning).
+  // 3) Patch cms_pages med transform-output + slutgiltig section_ids-array (UI-ordning).
   const finalSectionIdsOrdered = state.sections
     .map((_, i) => finalSectionIdByClientIndex.get(i))
     .filter((id): id is string => !!id);

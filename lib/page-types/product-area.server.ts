@@ -2,9 +2,10 @@
  * Product Area — server-side sidtypsdefinition (Lager 3).
  *
  * Product-area passar inte i Lager 2 (declarative relations) eftersom dess
- * Airtable-fält genereras av Claude. Vi använder Lager 3:s `create`/`update`-
- * overrides via factory:n och håller den befintliga Claude+products+solutions-
- * koden i `product-area-actions.ts`.
+ * Airtable-fält byggs av en deterministisk transform (inga Claude-anrop) och
+ * products/solutions skrivs som egna records i specifik ordning. Vi använder
+ * Lager 3:s `create`/`update`-overrides via factory:n och håller den koden i
+ * `product-area-actions.ts`.
  *
  * Routen får trots det samma standarder som övriga sidtyper:
  *   - Slug-validering + duplikat-koll

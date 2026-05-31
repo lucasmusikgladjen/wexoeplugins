@@ -180,7 +180,7 @@ tabell + schema. Commita och pusha när det är klart.
 🛠 **Verktyg:** Claude Code-session med **wexoeplugins**-repot. Behöver INTE Airtable MCP.
 
 📍 **Var det landar:**
-- Ny mapp: `wexoeplugins/New plugins/wexoe-<type>/wexoe-<type>.php` (committas).
+- Ny mapp: `wexoeplugins/plugins/wexoe-<type>/wexoe-<type>.php` (committas).
 
 ### 👤 Vad DU gör
 1. Öppna en ny Claude Code-session mot `wexoeplugins`-repot.
@@ -215,7 +215,7 @@ tabell + schema. Commita och pusha när det är klart.
    Sidtyp:        <NAMN>
    Aktuell fas:   FAS 2 av 4 — PHP-plugin
    Föregående:    Airtable-tabell + Core-schema är klart
-   Mål nu:        Skapa New plugins/wexoe-<type>/wexoe-<type>.php
+   Mål nu:        Skapa plugins/wexoe-<type>/wexoe-<type>.php
 
 Här är den annoterade HTML-prototypen:
 
@@ -228,11 +228,11 @@ Här är Core-schemat (`wexoe-core/entities/<entity_name>.php`):
 Läs `UTVECKLINGSGUIDE.md` § 3 (Core publikt API), § 6 (Anatomi av ett
 feature-plugin) och `NEW_PAGE_TYPE.md` § FAS 2.
 
-Studera `New plugins/wexoe-audience-hero/wexoe-audience-hero.php` som
+Studera `plugins/wexoe-audience-hero/wexoe-audience-hero.php` som
 referens för enkla sidtyper, eller `wexoe-landing-page/wexoe-landing-page.php`
 för komplexa.
 
-Producera `New plugins/wexoe-<type>/wexoe-<type>.php`:
+Producera `plugins/wexoe-<type>/wexoe-<type>.php`:
 - Plugin-header
 - Core-readiness-check
 - Shortcode [wexoe_<type> slug="..." debug="false"]
@@ -300,7 +300,7 @@ Läs `CLAUDE.md` och `NEW_PAGE_TYPE.md` i denna repo. Studera Audience
 (`lib/page-types/audience.*`, `components/audience/`) som referens för
 enkla sidtyper, eller Product Area för komplexa.
 
-Kom ihåg att alla sidor ska ha en Claude transformator, inga sidor ska skriva direkt till airtable utan Claude mellansteg oavsett hur simpel sidan är.
+Kom ihåg: spar-vägen är **deterministisk** — rena funktioner i `lib/deterministic-transform.ts` översätter state → Airtable-fält, **utan Claude-anrop**. Alla sidtyper går via Lager 3, men Claude finns kvar bara på input-/copy-åtgärder, aldrig på spar. (Claude-transformen togs bort i FAS 2.)
 
 Visa förslag på state-struktur + section-uppdelning INNAN du implementerar.
 Invänta godkännande.

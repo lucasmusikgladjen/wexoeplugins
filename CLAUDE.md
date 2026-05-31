@@ -6,6 +6,8 @@ Wexoe Page Builder ("buildern") är vår interna marknadsförar-app för att ska
 
 Stack: Next.js (App Router) + TypeScript + Tailwind. Värd på Vercel. Läs och skriv direkt mot Airtable REST-API; state→Airtable-fält sker via en **deterministisk transform** (rena funktioner, ingen Claude på spar-vägen).
 
+> **Nyligen ändrat (2026-05-31):** Spar-vägen är deterministisk sedan FAS 2 — `claude-transform.ts` är **borttagen**. Om du hittar en text (kod-kommentar, guide, prompt) som påstår att en sidtyp skriver "via Claude" / "Claude-transform" / "genereras av Claude" på spar, är den **inaktuell** — lita på koden och rätta texten. Claude finns kvar enbart på input/copy (`/api/parse`, `/api/copy`), aldrig på spar. (`ARKITEKTURPLAN.md`-loggen beskriver historik i dåtid — korrekt, rör ej.) Systerrepots feature-plugins-mapp heter numera `plugins/` (ej `New plugins/`).
+
 ---
 
 ## 1. Vision och intentioner

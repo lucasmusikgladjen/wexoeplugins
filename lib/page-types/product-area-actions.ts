@@ -1,10 +1,10 @@
 /**
  * Product Area — Lager 3 create/update-overrides.
  *
- * Product-area är inte ren CRUD: Claude transformerar state → Airtable-fält,
- * och varje "Product" och "Solution" är en separat Airtable-record. Vi
- * kunde inte använda Lager 2 (declarative relations) direkt eftersom
- * fält-transformationen är Claude-driven, inte deterministisk.
+ * Product-area är inte ren CRUD: state → Airtable-fält transformeras
+ * deterministiskt (rena funktioner), och varje "Product" och "Solution" är en
+ * separat Airtable-record. Vi kunde inte använda Lager 2 (declarative
+ * relations) direkt eftersom fält-transformationen behöver egen ordningslogik.
  *
  * Här lever den tidigare app/api/product-area/route.ts-create/update-koden,
  * lyft ut bakom `PageTypeServerDef.create` / `.update`-hooks. Returvärdet
@@ -340,7 +340,7 @@ export async function productAreaUpdate(
     );
   }
 
-  // PATCH Product Area:n med Claude-fields + nya link-array-ordningar.
+  // PATCH Product Area:n med transformens fält + nya link-array-ordningar.
   const productIdOrder = state.products
     .map((_, i) => productIdByClientIndex[i])
     .filter((id): id is string => !!id);
